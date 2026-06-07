@@ -1,0 +1,112 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    // ── Environment setup ─────────────────────────────────────────────────
+    {
+      "label": "Setup: install package (editable)",
+      "type": "shell",
+      "command": "pip install -e \".[dev]\"",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+
+    // ── Verification ──────────────────────────────────────────────────────
+    {
+      "label": "Check: environment dependencies",
+      "type": "shell",
+      "command": "sdd-pipeline check",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "PYTHONPATH": "${workspaceFolder}/src" }
+      },
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+
+    // ── Testing ───────────────────────────────────────────────────────────
+    {
+      "label": "Test: unit tests (fast)",
+      "type": "shell",
+      "command": "pytest tests/ -v --tb=short -m \"not slow\" --cov=sdd_pipeline --cov-report=term-missing",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "PYTHONPATH": "${workspaceFolder}/src" }
+      },
+      "group": { "kind": "test", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "problemMatcher": {
+        "owner": "pytest",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+):(\\d+): (.+)$",
+          "file": 1,
+          "line": 2,
+          "message": 3
+        }
+      }
+    },
+    {
+      "label": "Test: all tests (including slow)",
+      "type": "shell",
+      "command": "pytest tests/ -v --tb=short",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "PYTHONPATH": "${workspaceFolder}/src" }
+      },
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "problemMatcher": []
+    },
+
+    // ── Linting / formatting ──────────────────────────────────────────────
+    {
+      "label": "Lint: ruff check + format",
+      "type": "shell",
+      "command": "ruff format src/ tests/ && ruff check src/ tests/",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": {
+        "owner": "ruff",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+): (.+) (.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    },
+
+    // ── Pipeline tasks ────────────────────────────────────────────────────
+    {
+      "label": "Index: docs/sample/",
+      "type": "shell",
+      "command": "sdd-pipeline index docs/sample/ --model all-MiniLM-L6-v2 --verbose",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "PYTHONPATH": "${workspaceFolder}/src" }
+      },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Search: interactive query",
+      "type": "shell",
+      "command": "sdd-pipeline search \"how does token refresh work?\" --top-k 5",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "PYTHONPATH": "${workspaceFolder}/src" }
+      },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    }
+  ]
+}

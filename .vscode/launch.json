@@ -1,0 +1,125 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    // ── 1. Debug current test file ─────────────────────────────────────────
+    {
+      "name": "Pytest: current file",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${file}", "-v", "--tb=long", "--no-header"],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+
+    // ── 2. Debug entire test suite (no slow tests) ─────────────────────────
+    {
+      "name": "Pytest: all unit tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests/",
+        "-v",
+        "--tb=long",
+        "-m", "not slow"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+
+    // ── 3. Debug a specific test by name ──────────────────────────────────
+    {
+      "name": "Pytest: by name (set args)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests/",
+        "-v",
+        "-k", "${input:testName}"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+
+    // ── 4. CLI: index sample docs ─────────────────────────────────────────
+    {
+      "name": "CLI: index docs/sample/",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "sdd_pipeline.cli",
+      "args": [
+        "index",
+        "docs/sample/",
+        "--model", "all-MiniLM-L6-v2",
+        "--output", "data/chroma",
+        "--verbose"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+
+    // ── 5. CLI: search ────────────────────────────────────────────────────
+    {
+      "name": "CLI: search query",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "sdd_pipeline.cli",
+      "args": [
+        "search",
+        "${input:searchQuery}",
+        "--top-k", "5"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+
+    // ── 6. CLI: check environment ─────────────────────────────────────────
+    {
+      "name": "CLI: check environment",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "sdd_pipeline.cli",
+      "args": ["check"],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      },
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ],
+
+  "inputs": [
+    {
+      "id": "testName",
+      "type": "promptString",
+      "description": "Pytest -k expression (e.g. 'test_to_embed_text')",
+      "default": "test_"
+    },
+    {
+      "id": "searchQuery",
+      "type": "promptString",
+      "description": "Natural-language search query",
+      "default": "how does token refresh work?"
+    }
+  ]
+}

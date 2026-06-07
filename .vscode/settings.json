@@ -1,0 +1,73 @@
+{
+  // ── Python interpreter ─────────────────────────────────────────────────────
+  // Adjust to your local conda env path if needed.
+  // Devcontainer/devfile overrides this automatically.
+  "python.defaultInterpreterPath": "${workspaceFolder}/.conda/bin/python",
+
+  // ── Editor ────────────────────────────────────────────────────────────────
+  "editor.formatOnSave": true,
+  "editor.rulers": [100],
+  "editor.tabSize": 4,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+
+  // ── Python formatting / linting (Ruff) ────────────────────────────────────
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit",
+      "source.fixAll.ruff": "explicit"
+    }
+  },
+
+  // ── Pylance (static analysis) ─────────────────────────────────────────────
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.extraPaths": ["${workspaceFolder}/src"],
+  "python.analysis.importFormat": "absolute",
+
+  // ── Testing (pytest) ──────────────────────────────────────────────────────
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": [
+    "tests/",
+    "-v",
+    "--tb=short",
+    "-m", "not slow"
+  ],
+
+  // ── GitHub Copilot ────────────────────────────────────────────────────────
+  "github.copilot.enable": {
+    "*": true,
+    "markdown": true,
+    "yaml": true,
+    "plaintext": true,
+    "toml": true
+  },
+  // Tell Copilot to index the whole src/ tree
+  "github.copilot.advanced": {
+    "workspaceContext": {
+      "includePatterns": ["src/**", "tests/**", "docs/**"]
+    }
+  },
+
+  // ── File associations ─────────────────────────────────────────────────────
+  "files.associations": {
+    "devfile.yaml": "yaml",
+    "*.env*": "dotenv"
+  },
+
+  // ── Exclude from explorer / search ────────────────────────────────────────
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/*.egg-info": true,
+    "**/dist": true,
+    "**/build": true,
+    "data/chroma": true
+  },
+  "search.exclude": {
+    "data/**": true,
+    "**/*.egg-info": true
+  }
+}

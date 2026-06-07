@@ -1,0 +1,60 @@
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Tooling caches / coverage ────────────────────────────────────────────────
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# ── Secrets / local config ───────────────────────────────────────────────────
+# Never commit a real .env (it holds PIPELINE_AZURE_OPENAI_API_KEY etc.).
+.env
+.env.*
+!.env.example
+
+# ── Generated pipeline artifacts ─────────────────────────────────────────────
+# dump.py output (ast.json / enriched.json / chunks.json)
+out/
+# convert / export / index output dirs
+build/
+# ChromaDB persistence (default PIPELINE_CHROMA_PERSIST_DIR)
+data/
+# per-file export artifacts + reports, wherever they land
+*.chunks.json
+*.chunks.jsonl
+export-report.json
+conversion-report.json
+# scratch / temp
+.tmp_dc/
+# NOTE: docs/entity-vocab.json is a committed seed example — keep it tracked.
+
+# ── Editors / OS ─────────────────────────────────────────────────────────────
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Claude Code session data (local, not for the repo) ───────────────────────
+.claude/
+
+# NOTE: .vscode/, .github/, .devcontainer/ are intentionally tracked
+# (the README documents them as part of the project) — do NOT ignore them.

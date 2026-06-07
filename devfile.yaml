@@ -1,0 +1,141 @@
+schemaVersion: 2.2.0
+
+metadata:
+  name: sdd-semantic-pipeline
+  version: 0.1.0
+  description: >
+    7-stage semantic search pipeline for Confluence SDD documents.
+    Confluence markdown → pandoc AST → structural model → semantic enrichment
+    → chunking → sentence-transformer embeddings → ChromaDB vector search.
+  tags:
+    - python
+    - nlp
+    - semantic-search
+    - rag
+
+# ── Components ────────────────────────────────────────────────────────────────
+components:
+  - name: python
+    container:
+      # Python 3.11 Debian-based image; small enough for fast pulls
+      image: python:3.11-bookworm
+      memoryLimit: 6Gi
+      cpuLimit: "2"
+      mountSources: true
+      # Keep the container alive for exec commands
+      command:
+        - sleep
+        - infinity
+      env:
+        - name: PYTHONPATH
+          value: ${PROJECT_SOURCE}/src
+        - name: PIPELINE_CHROMA_PERSIST_DIR
+          value: ${PROJECT_SOURCE}/data/chroma
+        - name: PIPELINE_EMBEDDING_MODEL
+          value: all-MiniLM-L6-v2   # fast dev model; change in .env for production
+        - name: ANONYMIZED_TELEMETRY
+          value: "false"
+        - name: PIP_NO_INPUT
+          value: "1"
+      endpoints:
+        - name: chromadb-http
+          targetPort: 8000
+          exposure: internal
+          protocol: http
+      volumeMounts:
+        - name: pip-cache
+          path: /root/.cache/pip
+        - name: hf-cache
+          path: /root/.cache/huggingface
+
+  # Reusable cache volumes so model downloads survive pod restarts
+  - name: pip-cache
+    volume:
+      size: 2Gi
+  - name: hf-cache
+    volume:
+      size: 8Gi
+
+# ── Commands ──────────────────────────────────────────────────────────────────
+commands:
+  # ── 1. Bootstrap (run once after container start) ─────────────────────────
+  - id: bootstrap
+    exec:
+      label: "Bootstrap: install pandoc + Python deps"
+      component: python
+      commandLine: |
+        set -e
+        echo "==> Installing pandoc binary..."
+        apt-get update -qq && apt-get install -y -qq pandoc
+        echo "==> pandoc $(pandoc --version | head -1)"
+        echo "==> Installing Python dependencies..."
+        pip install --quiet --upgrade pip
+        pip install --quiet -e "${PROJECT_SOURCE}[dev]"
+        echo "==> All dependencies installed."
+      workingDir: ${PROJECT_SOURCE}
+
+  # ── 2. Verify environment ─────────────────────────────────────────────────
+  - id: check
+    exec:
+      label: "Check: verify all runtime dependencies"
+      component: python
+      commandLine: sdd-pipeline check
+      workingDir: ${PROJECT_SOURCE}
+
+  # ── 3. Run tests (fast, no pandoc / ML required) ──────────────────────────
+  - id: test
+    exec:
+      label: "Test: unit tests (no pandoc / ML)"
+      component: python
+      commandLine: >
+        pytest tests/ -v --tb=short
+        -m "not slow"
+        --cov=sdd_pipeline
+        --cov-report=term-missing
+      workingDir: ${PROJECT_SOURCE}
+
+  # ── 4. Run all tests including slow integration ───────────────────────────
+  - id: test-all
+    exec:
+      label: "Test: all tests including slow integration"
+      component: python
+      commandLine: pytest tests/ -v --tb=short
+      workingDir: ${PROJECT_SOURCE}
+
+  # ── 5. Index sample documents ─────────────────────────────────────────────
+  - id: index-samples
+    exec:
+      label: "Index: process docs/sample/ into ChromaDB"
+      component: python
+      commandLine: >
+        sdd-pipeline index docs/sample/
+        --model all-MiniLM-L6-v2
+        --output data/chroma
+        --verbose
+      workingDir: ${PROJECT_SOURCE}
+
+  # ── 6. Demo search ────────────────────────────────────────────────────────
+  - id: search-demo
+    exec:
+      label: "Search: demo query against indexed docs"
+      component: python
+      commandLine: >
+        sdd-pipeline search "how does token refresh work?"
+        --top-k 5
+        --index data/chroma
+      workingDir: ${PROJECT_SOURCE}
+
+  # ── 7. Format + lint ──────────────────────────────────────────────────────
+  - id: lint
+    exec:
+      label: "Lint: ruff format + check"
+      component: python
+      commandLine: |
+        ruff format src/ tests/
+        ruff check src/ tests/
+      workingDir: ${PROJECT_SOURCE}
+
+# ── Events ────────────────────────────────────────────────────────────────────
+events:
+  postStart:
+    - bootstrap

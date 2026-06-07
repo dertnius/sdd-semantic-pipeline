@@ -1,0 +1,29 @@
+{
+  "recommendations": [
+    // ── Python ─────────────────────────────────────────────────────────────
+    "ms-python.python",            // Language server + debugger
+    "ms-python.vscode-pylance",    // Static analysis (Pyright-based)
+    "charliermarsh.ruff",          // Linter + formatter (replaces flake8/black/isort)
+
+    // ── GitHub Copilot ─────────────────────────────────────────────────────
+    "GitHub.copilot",              // Inline suggestions
+    "GitHub.copilot-chat",         // Chat panel + @workspace
+
+    // ── Config file support ────────────────────────────────────────────────
+    "redhat.vscode-yaml",          // YAML + schema validation (devfile, conda env)
+    "tamasfe.even-better-toml",    // pyproject.toml syntax
+
+    // ── Testing ───────────────────────────────────────────────────────────
+    "ms-python.debugpy",           // Pytest debugger integration
+
+    // ── Quality-of-life ────────────────────────────────────────────────────
+    "streetsidesoftware.code-spell-checker",
+    "usernamehw.errorlens"         // Inline error display
+  ],
+
+  "unwantedRecommendations": [
+    "ms-python.pylint",            // replaced by ruff
+    "ms-python.flake8",            // replaced by ruff
+    "ms-python.black-formatter"    // replaced by ruff format
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  // ── VS Code Dev Container definition ──────────────────────────────────────
+  // Works with: VS Code Dev Containers extension + Docker Desktop (Windows/Mac/Linux)
+  // Documentation: https://containers.dev/
+  "name": "SDD Semantic Pipeline",
+
+  // Python 3.11 Debian-based base image
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bookworm",
+
+  // ── Dev Container Features ─────────────────────────────────────────────────
+  // Features install tooling on top of the base image cleanly
+  "features": {
+    // Pandoc binary (latest stable)
+    "ghcr.io/devcontainers-contrib/features/pandoc:1": {
+      "version": "latest"
+    },
+    // Git + GitHub CLI (useful for Copilot auth and push workflows)
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // ── Container startup ──────────────────────────────────────────────────────
+  "postCreateCommand": "pip install --quiet -e './[dev]' && sdd-pipeline check",
+  "postStartCommand": "echo 'Dev container ready. Run: sdd-pipeline --help'",
+
+  // ── Environment variables ──────────────────────────────────────────────────
+  "remoteEnv": {
+    "PYTHONPATH": "${containerWorkspaceFolder}/src",
+    "PIPELINE_CHROMA_PERSIST_DIR": "${containerWorkspaceFolder}/data/chroma",
+    "PIPELINE_EMBEDDING_MODEL": "all-MiniLM-L6-v2",
+    "ANONYMIZED_TELEMETRY": "false"
+  },
+
+  // ── Forwarded ports ────────────────────────────────────────────────────────
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "ChromaDB HTTP",
+      "onAutoForward": "silent"
+    }
+  },
+
+  // ── Mounts ─────────────────────────────────────────────────────────────────
+  // Persist pip cache across rebuilds to avoid re-downloading packages
+  "mounts": [
+    "source=sdd-pipeline-pip-cache,target=/root/.cache/pip,type=volume",
+    "source=sdd-pipeline-hf-cache,target=/root/.cache/huggingface,type=volume"
+  ],
+
+  // ── VS Code customisations ─────────────────────────────────────────────────
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["tests/", "-v", "-m", "not slow"],
+        "editor.formatOnSave": true,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff"
+        }
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml"
+      ]
+    }
+  }
+}
