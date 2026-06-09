@@ -154,6 +154,7 @@ def _section_to_chunks(
                     tags=list(section.tags),
                     depends_on=list(section.depends_on),
                     exposes=list(section.exposes),
+                    metadata={k: list(v) for k, v in section.metadata.items()},
                     space=space,
                     labels=list(labels),
                     title=title,

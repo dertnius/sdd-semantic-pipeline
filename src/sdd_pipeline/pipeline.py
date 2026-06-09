@@ -86,14 +86,26 @@ class SemanticPipeline:
         ast = generate_ast(md_path, self.config.pandoc_from_format)
         return build_structural_model(ast, doc_id=doc_id, source_path=str(md_path))
 
+    def _build_inventory(self, doc: DocumentModel):
+        """Stage 3.5: merge structural (table) + prose entity records per section."""
+        from .extract_prose import build_prose_inventory
+        from .extract_structural import build_structural_inventory
+
+        merged: dict[str, list] = {}
+        for inv in (build_structural_inventory(doc), build_prose_inventory(doc)):
+            for section_id, records in inv.items():
+                merged.setdefault(section_id, []).extend(records)
+        return merged
+
     def enrich_and_chunk(
         self,
         doc: DocumentModel,
         entity_terms: list[str],
     ) -> list[SemanticChunk]:
         """Run stages 5–6 with a given vocabulary; section- and chunk-level
-        entities share *entity_terms*."""
-        doc = enrich_document(doc, entity_terms=entity_terms)
+        entities share *entity_terms*. An inventory of structural + prose records
+        (stage 3.5) drives depends_on/exposes/metadata field routing."""
+        doc = enrich_document(doc, entity_terms=entity_terms, inventory=self._build_inventory(doc))
         chunks = chunk_document(
             doc,
             self.config.max_chunk_chars,

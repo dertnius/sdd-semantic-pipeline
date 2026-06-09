@@ -11,7 +11,9 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 
-from .models import DocumentModel, Section, SectionType
+from .direction import Direction, load_field_directions, resolve_direction
+from .models import DocumentModel, EntityInventory, EntityRecord, Section, SectionType
+from .reconcile import reconcile
 
 # ── Section-type classification rules ────────────────────────────────────────
 # ORDER MATTERS: the first matching rule wins.
@@ -351,30 +353,115 @@ def extract_tags(
     return tags
 
 
-def enrich_section(section: Section, entity_terms: Iterable[str] | None = None) -> None:
-    """Mutate *section* in place, adding section_type, entities, and tags."""
+def enrich_section(
+    section: Section,
+    entity_terms: Iterable[str] | None = None,
+    *,
+    inventory: EntityInventory | None = None,
+    directions: dict[str, Direction] | None = None,
+    confidence_threshold: float = 0.6,
+) -> None:
+    """Mutate *section* in place.
+
+    Always applies the legacy enrichment (section_type, entities, tags). When an
+    *inventory* is supplied, the records for this section are *additionally* routed
+    into depends_on/exposes/metadata by field name (see :func:`_apply_inventory`).
+    The inventory path is additive — legacy enrichment is orthogonal and always
+    runs — so existing callers that pass no inventory behave exactly as before.
+    """
     section.section_type = classify_section_type(section.title)
 
     all_text = section.title + "\n" + "\n".join(b.text for b in section.blocks)
     section.entities = extract_entities(all_text, entity_terms)
     section.tags = extract_tags(section.title, section.section_type, all_text)
 
+    if inventory:
+        records = inventory.get(section.section_id, [])
+        if records:
+            _apply_inventory(section, records, directions or {}, confidence_threshold)
+
     for sub in section.subsections:
-        enrich_section(sub, entity_terms)
+        enrich_section(
+            sub,
+            entity_terms,
+            inventory=inventory,
+            directions=directions,
+            confidence_threshold=confidence_threshold,
+        )
 
 
-def enrich_document(doc: DocumentModel, entity_terms: Iterable[str] | None = None) -> DocumentModel:
+def enrich_document(
+    doc: DocumentModel,
+    entity_terms: Iterable[str] | None = None,
+    *,
+    inventory: EntityInventory | None = None,
+    directions: dict[str, Direction] | None = None,
+    confidence_threshold: float = 0.6,
+) -> DocumentModel:
     """
     Apply semantic enrichment to all sections of *doc* and return it.
 
     *entity_terms* is an optional project vocabulary folded into entity
-    extraction (see :func:`extract_entities`). The mutation is in-place for
-    performance; the same object is returned to allow chaining:
-    ``doc = enrich_document(build_structural_model(...))``.
+    extraction (see :func:`extract_entities`). When *inventory* is supplied (and
+    *directions* is not), the reviewed ``config/field_directions.yaml`` is loaded
+    once to route directional fields. The mutation is in-place for performance;
+    the same object is returned to allow chaining.
     """
+    if inventory is not None and directions is None:
+        directions = load_field_directions()
     for section in doc.root_sections:
-        enrich_section(section, entity_terms)
+        enrich_section(
+            section,
+            entity_terms,
+            inventory=inventory,
+            directions=directions,
+            confidence_threshold=confidence_threshold,
+        )
     return doc
+
+
+def _append_unique(target: list[str], value: str) -> None:
+    if value not in target:
+        target.append(value)
+
+
+def _write_to_field(
+    section: Section, record: EntityRecord, directions: dict[str, Direction]
+) -> None:
+    """Route one above-threshold record to exactly one field.
+
+    direction (by field name) → depends_on/exposes; a named non-directional field
+    → ``metadata.<field>``; an unnamed (prose) field → ``metadata.raw_entities``.
+    Direction is decided only by name, never guessed.
+    """
+    direction = resolve_direction(record.field, directions)
+    if direction == "depends_on":
+        _append_unique(section.depends_on, record.canonical)
+    elif direction == "exposes":
+        _append_unique(section.exposes, record.canonical)
+    elif record.field:
+        _append_unique(section.metadata.setdefault(record.field, []), record.canonical)
+    else:
+        _append_unique(section.metadata.setdefault("raw_entities", []), record.canonical)
+
+
+def _apply_inventory(
+    section: Section,
+    records: list[EntityRecord],
+    directions: dict[str, Direction],
+    confidence_threshold: float,
+) -> None:
+    """Reconcile a section's records and write each to exactly one field.
+
+    Below-threshold records go to the audit-only ``metadata.raw_entities`` bucket;
+    above-threshold records route via :func:`_write_to_field`. Conservation: every
+    reconciled canonical lands in exactly one place, nothing is dropped.
+    """
+    for record in reconcile(records):
+        if record.confidence < confidence_threshold:
+            _append_unique(section.metadata.setdefault("raw_entities", []), record.canonical)
+        else:
+            _write_to_field(section, record, directions)
 
 
 # ── Cross-corpus vocabulary discovery ─────────────────────────────────────────
