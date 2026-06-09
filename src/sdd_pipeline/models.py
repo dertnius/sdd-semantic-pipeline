@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 # Languages trusted enough to embed as a `lang:` token. A source's
 # syntaxhighlighter brush is often wrong for DSLs, so unknown labels are dropped
@@ -290,3 +290,40 @@ class SemanticChunk:
             "source_url": self.source_url,
             "embed_text": self.to_embed_text(),
         }
+
+
+# ── Entity extraction contract (inventory-driven enrichment) ───────────────────
+
+# Extraction source, ordered by trust. Used to break ties in deduplication.
+EntitySource = Literal[
+    "table_cell",  # 1.0 — a cell in a structured template table
+    "allcaps_regex",  # 0.9 — ACME_SERVICE style token
+    "backtick_regex",  # 0.8 — `code`-fenced token
+    "noun_chunk",  # 0.5 — spaCy multi-word noun chunk
+    "prose",  # generic prose mention
+]
+
+
+@dataclass(frozen=True)
+class EntityRecord:
+    """One extracted entity, tagged with the template field it came from.
+
+    ``field`` is a normalised taxonomy field/column name (e.g. ``related
+    component``); enrichment routes it to depends_on/exposes/metadata. ``text``
+    is the raw value; ``canonical`` is its canonical form (defaults to ``text``).
+    """
+
+    text: str
+    field: str
+    source: EntitySource
+    confidence: float
+    section_id: str
+    canonical: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.canonical:
+            object.__setattr__(self, "canonical", self.text)
+
+
+# Inventory of extracted records, keyed by Section.section_id.
+EntityInventory = dict[str, list[EntityRecord]]
