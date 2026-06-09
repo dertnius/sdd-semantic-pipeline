@@ -1,0 +1,83 @@
+# Frozen golden set for the real-document e2e test (tests/test_e2e_real_docs.py).
+# Authored against the pinned content of the fetched docs (eval/e2e_sources.yaml)
+# plus the in-repo RetailNexus SAD. `doc` is the file basename; `section` is a
+# case-insensitive substring of the chunk breadcrumb (omit for doc-level).
+# Categories: cross-reference (directional, RetailNexus) | prose | lexical.
+
+queries:
+  # ── GitLab architecture (real component table + prose) ──────────────────────
+  - id: gl-background-jobs
+    text: "which component processes background jobs"
+    category: lexical
+    expected:
+      - { doc: gitlab-architecture.md, section: "Component list" }
+
+  - id: gl-gitaly-proxy
+    text: "transparent proxy between git clients and gitaly storage"
+    category: prose
+    expected:
+      - { doc: gitlab-architecture.md, section: "Component list" }
+
+  - id: gl-certificate-management
+    text: "certificate management with Let's Encrypt"
+    category: prose
+    expected:
+      - { doc: gitlab-architecture.md, section: "Certificate management" }
+
+  - id: gl-prometheus
+    text: "Prometheus metrics monitoring component"
+    category: lexical
+    expected:
+      - { doc: gitlab-architecture.md, section: "Prometheus" }
+
+  # ── Azure Rideshare serverless reference (prose) ────────────────────────────
+  - id: az-serverless-overview
+    text: "serverless microservices reference architecture for ride sharing"
+    category: prose
+    expected:
+      - { doc: azure-rideshare.md }
+
+  - id: az-event-driven
+    text: "event-driven communication between serverless functions"
+    category: prose
+    expected:
+      - { doc: azure-rideshare.md }
+
+  # ── rcherara microservice architecture (prose + endpoints) ──────────────────
+  - id: rc-discovery
+    text: "service discovery with Eureka discovery server"
+    category: lexical
+    expected:
+      - { doc: rcherara-microservices.md, section: "Discovery server" }
+
+  - id: rc-config-client
+    text: "Spring Cloud config client configuration"
+    category: lexical
+    expected:
+      - { doc: rcherara-microservices.md, section: "Config" }
+
+  - id: rc-vehicle-service
+    text: "vehicle service REST endpoint"
+    category: prose
+    expected:
+      - { doc: rcherara-microservices.md, section: "Vehicle service" }
+
+  # ── RetailNexus SAD (directional tables → cross-reference) ──────────────────
+  - id: rn-order-created-consumers
+    text: "which services consume the order.created event"
+    category: cross-reference
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Kafka Topic Registry" }
+
+  - id: rn-payment-exposes
+    text: "what does the payment service expose and depend on"
+    category: cross-reference
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Microservices Inventory" }
+
+  - id: rn-saga-compensation
+    text: "what triggers saga compensation when an order step fails"
+    category: cross-reference
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Architecture Decision Records" }
+      - { doc: sad-retailnexus-oms.md, section: "Order State Machine" }

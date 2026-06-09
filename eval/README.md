@@ -42,3 +42,30 @@ still works locally; it just won't run in CI without the files.
    `paraphrase` (semantic lift), `lexical-control` (must not regress).
 4. **Freeze** `queries.yaml` before recording a baseline — never edit it to chase
    a score.
+
+## E2E test on real public documents
+
+`tests/test_e2e_real_docs.py` proves the inventory-driven enrichment works on
+**real** architecture docs (not just the synthetic SAD) and measures an A/B
+retrieval comparison (enrichment on vs off). The corpus is fetched on demand —
+nothing third-party is committed.
+
+```powershell
+$env:PYTHONUTF8 = "1"
+python scripts/fetch_e2e_corpus.py          # downloads pinned docs -> eval/e2e_corpus/ (gitignored)
+pytest tests/test_e2e_real_docs.py -q -s    # functional asserts + A/B score tables
+```
+
+| Path | What it is |
+|---|---|
+| `e2e_sources.yaml` | Manifest of real docs (pinned URLs + license/attribution). |
+| `e2e_queries.yaml` | **Frozen** golden set for the e2e (GitLab / Azure / rcherara + RetailNexus). |
+| `e2e_corpus/` | Fetched docs (gitignored — never committed). |
+| `../scripts/fetch_e2e_corpus.py` | The only networked code; pipeline code stays local-only. |
+
+The test is `slow` and **skips** when `e2e_corpus/` is empty, so default CI is
+unaffected. It uses the deterministic hashing embedder (no download), so the A/B
+measures enrichment's *lexical* contribution: it asserts no regression + a
+recall@10 gain and prints both score tables. Semantic gain (e.g. directional
+`depends_on`/`exposes`) needs a real model — point `PipelineConfig` at one and
+reuse `scripts/eval_retrieval.py` to measure it.

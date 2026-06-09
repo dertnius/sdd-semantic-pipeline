@@ -82,6 +82,12 @@ try:
             "docs, persist them here (accumulating across runs), then enrich every doc with "
             "the full vocabulary. Empty disables the scan.",
         )
+        inventory_enrichment: bool = Field(
+            default=True,
+            description="Route structural (table) + prose entity records into "
+            "depends_on/exposes/metadata and fold them into embed text. Disable for "
+            "legacy enrichment only (section_type/entities/tags).",
+        )
 
         # ── Vector store ──────────────────────────────────────────────────────
         chroma_persist_dir: str = Field(
@@ -133,6 +139,7 @@ except ImportError:
         embed_char_budget: int = 1800
         entity_terms: list[str] = []
         entity_vocab_path: str = ""
+        inventory_enrichment: bool = True
         chroma_persist_dir: str = "./data/chroma"
         collection_name: str = "sdd_docs"
         hybrid_search: bool = False

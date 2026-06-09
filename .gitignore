@@ -46,6 +46,8 @@ export-report.json
 conversion-report.json
 # scratch / temp
 .tmp_dc/
+# e2e corpus: fetched on demand from eval/e2e_sources.yaml, never committed
+eval/e2e_corpus/
 # NOTE: docs/entity-vocab.json is a committed seed example — keep it tracked.
 # Regenerated each eval run; holds machine-specific absolute-path doc_id hashes.
 eval/corpus_manifest.json
