@@ -1,0 +1,158 @@
+# Frozen retrieval golden set — DO NOT edit to chase a score.
+#
+# Authored against the corpus in eval/corpus/ BEFORE any enrichment change, so
+# the Baseline is honest. Each query lists expected SECTIONS (not chunk_ids):
+#   doc      — path relative to eval/corpus/ (POSIX)
+#   section  — case-insensitive substring of the chunk breadcrumb
+#              (omit it for a doc-level matcher: any chunk in that doc counts)
+# A retrieved chunk is a hit when its (doc, breadcrumb) satisfies a matcher.
+# See scripts/eval_retrieval.py and the plan for why section-granularity.
+#
+# Categories:
+#   cross-reference — service/event/dependency questions; the queries the
+#                     depends_on/exposes enrichment is SUPPOSED to help. Lift here
+#                     is the point of the overhaul.
+#   paraphrase      — query wording deliberately differs from the section text;
+#                     tests dense/semantic retrieval.
+#   lexical-control — straightforward keyword queries that already work today;
+#                     these must NOT regress when enrichment lands.
+#
+# Note: matchers for non-SAD docs are sometimes doc-level (no `section:`) — an
+# honest "the answer is in this document" label where finer labelling wasn't done.
+
+queries:
+  # ── cross-reference (entity / dependency surface) ───────────────────────────
+  - id: xref-order-created-consumers
+    text: "Which services consume the order.created event?"
+    category: cross-reference
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Kafka Topic Registry" }
+
+  - id: xref-payment-service-db
+    text: "What database does the payment-service own and what does it expose?"
+    category: cross-reference
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Microservices Inventory" }
+
+  - id: xref-odata-integration
+    text: "Which external system integrates over the OData v4 protocol?"
+    category: cross-reference
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "External Integration Contracts" }
+
+  - id: xref-fulfillment-shipped-flow
+    text: "Who publishes fulfillment.shipped and which services consume it?"
+    category: cross-reference
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Kafka Topic Registry" }
+
+  - id: xref-saga-compensation
+    text: "What component triggers saga compensation when an order step fails?"
+    category: cross-reference
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Architecture Decision Records" }
+      - { doc: sad-retailnexus-oms.md, section: "Order State Machine" }
+
+  - id: xref-stateless-services
+    text: "Which microservices are stateless and own no database?"
+    category: cross-reference
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Microservices Inventory" }
+
+  # ── paraphrase (semantic, wording differs from the doc) ─────────────────────
+  - id: para-external-auth
+    text: "How are external users signed in to the platform?"
+    category: paraphrase
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Authentication" }
+
+  - id: para-card-data
+    text: "How does the system avoid storing customer credit card numbers?"
+    category: paraphrase
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "PCI-DSS" }
+
+  - id: para-data-isolation
+    text: "What stops one microservice from reading another service's data directly?"
+    category: paraphrase
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Database-per-Service" }
+
+  - id: para-safe-prod-release
+    text: "How are changes rolled out to production without downtime?"
+    category: paraphrase
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "CI/CD" }
+
+  - id: para-container-platform
+    text: "What runs the containerised workloads in the cloud?"
+    category: paraphrase
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "AWS Infrastructure" }
+
+  - id: para-read-model
+    text: "Why are order search queries served from a separate read store?"
+    category: paraphrase
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Architecture Decision Records" }
+
+  - id: para-remote-frontend-debug
+    text: "How do I debug the front-end remotely from my editor?"
+    category: paraphrase
+    expected:
+      - { doc: impala-vscode.md, section: "Remote Debug Frontend" }
+
+  - id: para-dev-container
+    text: "How do I develop inside a Docker container?"
+    category: paraphrase
+    expected:
+      - { doc: impala-vscode.md, section: "Dev Container" }
+
+  - id: para-modular-rationale
+    text: "Why split the pipeline into one module per stage instead of a single module?"
+    category: paraphrase
+    expected:
+      - { doc: adr-0001-modular-semantic-pipeline.md }
+
+  # ── lexical-control (must not regress) ──────────────────────────────────────
+  - id: lex-kafka-topic-registry
+    text: "Kafka Topic Registry"
+    category: lexical-control
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Kafka Topic Registry" }
+
+  - id: lex-order-state-machine
+    text: "Order State Machine"
+    category: lexical-control
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Order State Machine" }
+
+  - id: lex-risk-register
+    text: "Risk Register"
+    category: lexical-control
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Risk Register" }
+
+  - id: lex-quality-attributes
+    text: "Quality Attribute Requirements"
+    category: lexical-control
+    expected:
+      - { doc: sad-retailnexus-oms.md, section: "Quality Attribute Requirements" }
+
+  - id: lex-soql-query
+    text: "SOQLQUERY command"
+    category: lexical-control
+    expected:
+      - { doc: scripting-on-dtk.md, section: "SOQLQUERY" }
+
+  - id: lex-bulk-delete
+    text: "BULKDELETE"
+    category: lexical-control
+    expected:
+      - { doc: scripting-on-dtk.md, section: "BULKDELETE" }
+
+  - id: lex-aip107-motivation
+    text: "AIP-107 motivation"
+    category: lexical-control
+    expected:
+      - { doc: airflow-aip107.md, section: "Motivation" }
