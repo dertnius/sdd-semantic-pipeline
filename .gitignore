@@ -36,7 +36,9 @@ out/
 # convert / export / index output dirs
 build/
 # ChromaDB persistence (default PIPELINE_CHROMA_PERSIST_DIR)
-data/
+data/*
+# …but the template-derived taxonomy is a committed, regenerable artifact.
+!data/taxonomy.json
 # per-file export artifacts + reports, wherever they land
 *.chunks.json
 *.chunks.jsonl

@@ -1,0 +1,48 @@
+{
+  "definitions, acronyms, abbreviation": {
+    "fields": [
+      "abbreviation or acronym",
+      "definition"
+    ],
+    "orientation": "wide"
+  },
+  "quality attribute": {
+    "fields": [
+      "measurable metric",
+      "priority",
+      "quality attribute"
+    ],
+    "orientation": "wide"
+  },
+  "solution component 1": {
+    "fields": [
+      "covered functional requirement",
+      "description",
+      "note",
+      "related component",
+      "technology stack"
+    ],
+    "orientation": "key_value"
+  },
+  "solution component 2": {
+    "fields": [
+      "covered functional requirement",
+      "description",
+      "note",
+      "related component",
+      "technology stack"
+    ],
+    "orientation": "key_value"
+  },
+  "stakeholder": {
+    "fields": [
+      "contact architectural work request reason",
+      "key concern",
+      "requirement area",
+      "stakeholder name",
+      "stakeholder role",
+      "stakeholder side"
+    ],
+    "orientation": "wide"
+  }
+}
