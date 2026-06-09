@@ -45,6 +45,8 @@ conversion-report.json
 # scratch / temp
 .tmp_dc/
 # NOTE: docs/entity-vocab.json is a committed seed example — keep it tracked.
+# Regenerated each eval run; holds machine-specific absolute-path doc_id hashes.
+eval/corpus_manifest.json
 
 # ── Editors / OS ─────────────────────────────────────────────────────────────
 .idea/
