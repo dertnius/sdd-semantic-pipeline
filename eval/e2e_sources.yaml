@@ -1,0 +1,28 @@
+# Real public architecture documents for the e2e test.
+#
+# Fetched on demand by scripts/fetch_e2e_corpus.py into eval/e2e_corpus/ (gitignored).
+# Nothing here is redistributed — only pinned URLs + license/attribution notes.
+# Every URL is pinned to a fixed commit/tag so fetched content cannot drift and
+# break the test. All sources are Markdown (pandoc-ingestible directly).
+
+docs:
+  - name: gitlab-architecture
+    url: https://gitlab.com/gitlab-org/gitlab/-/raw/v17.7.0-ee/doc/development/architecture.md
+    dest: gitlab-architecture.md
+    format: md
+    license: "GitLab — see gitlab-org/gitlab (code MIT/EE; docs CC BY-SA 4.0)"
+    attribution: "GitLab architecture overview, gitlab-org/gitlab @ v17.7.0-ee"
+
+  - name: azure-rideshare
+    url: https://raw.githubusercontent.com/Azure-Samples/Serverless-microservices-reference-architecture/5a8f85559d33a02b49f354f996de61486b190681/README.md
+    dest: azure-rideshare.md
+    format: md
+    license: "MIT — Azure-Samples"
+    attribution: "Serverless Microservices Reference Architecture (Rideshare by Relecloud), Azure-Samples"
+
+  - name: rcherara-microservices
+    url: https://raw.githubusercontent.com/rcherara/microservice-architecture/f8104ac82efaf3edaa71e698681c4595a5d9fa4a/README.md
+    dest: rcherara-microservices.md
+    format: md
+    license: "see source repository"
+    attribution: "rcherara/microservice-architecture"

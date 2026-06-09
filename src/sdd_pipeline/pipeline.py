@@ -104,8 +104,10 @@ class SemanticPipeline:
     ) -> list[SemanticChunk]:
         """Run stages 5–6 with a given vocabulary; section- and chunk-level
         entities share *entity_terms*. An inventory of structural + prose records
-        (stage 3.5) drives depends_on/exposes/metadata field routing."""
-        doc = enrich_document(doc, entity_terms=entity_terms, inventory=self._build_inventory(doc))
+        (stage 3.5) drives depends_on/exposes/metadata field routing, unless
+        ``config.inventory_enrichment`` is disabled (legacy enrichment only)."""
+        inventory = self._build_inventory(doc) if self.config.inventory_enrichment else None
+        doc = enrich_document(doc, entity_terms=entity_terms, inventory=inventory)
         chunks = chunk_document(
             doc,
             self.config.max_chunk_chars,
