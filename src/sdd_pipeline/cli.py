@@ -474,6 +474,55 @@ def scan(
         console.print(f"  [red]x[/red] {p.name}")
 
 
+# ── scan-taxonomy ───────────────────────────────────────────────────────────────
+
+
+@app.command()
+def scan_taxonomy(
+    input_dir: Path = typer.Argument(
+        ..., exists=True, file_okay=False, help="Directory containing .md files."
+    ),
+    out: Path = typer.Option(
+        Path("data/taxonomy.json"), "--out", "-o", help="Output taxonomy JSON."
+    ),
+    vocab_out: Path = typer.Option(
+        Path("data/field_vocabulary.json"),
+        "--vocab-out",
+        help="Output field-frequency vocabulary JSON (review artifact).",
+    ),
+    min_docs: int = typer.Option(
+        2, "--min-docs", "-n", help="Keep a field only if seen in >= this many documents."
+    ),
+    glob: str = typer.Option("**/*.md", "--glob", "-g", help="Markdown file glob pattern."),
+) -> None:
+    """Derive a data-aligned section->field taxonomy by scanning the corpus's tables.
+
+    Aggregates table field names across all documents by document-frequency,
+    keeps fields seen in >= --min-docs documents, and writes a canonical
+    taxonomy.json plus a frequency-ranked field vocabulary for review (used to
+    fill config/field_directions.yaml). Pandoc-only; no model is loaded.
+    """
+    from .corpus_taxonomy import build_corpus_taxonomy, taxonomy_to_json, vocabulary_to_json
+
+    md_files = sorted(input_dir.glob(glob))
+    if not md_files:
+        console.print(f"[yellow]No markdown files matching {glob!r} under {input_dir}[/yellow]")
+        raise typer.Exit(0)
+
+    console.print(f"[cyan]Scanning {len(md_files)} markdown files in {input_dir}[/cyan]")
+    taxonomy, vocab = build_corpus_taxonomy(input_dir, min_docs=min_docs, glob=glob)
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(taxonomy_to_json(taxonomy) + "\n", encoding="utf-8")
+    vocab_out.parent.mkdir(parents=True, exist_ok=True)
+    vocab_out.write_text(vocabulary_to_json(vocab) + "\n", encoding="utf-8")
+
+    console.print(
+        f"\n[green]Done.[/green] {len(taxonomy)} sections (min_docs={min_docs}), "
+        f"{len(vocab)} distinct fields -> {out}, {vocab_out}"
+    )
+
+
 # ── search ────────────────────────────────────────────────────────────────────
 
 
