@@ -1,0 +1,37 @@
+# Dependency-direction map for enrichment routing.
+#
+# Maps a table FIELD NAME to a dependency direction. Built by reviewing the field
+# vocabulary that `sdd-pipeline scan-taxonomy` emits (data/field_vocabulary.json),
+# so the names here are grounded in what the corpus actually contains.
+#
+# Matching (M3 enrich):
+#   - Both a document's field name and the entries below are passed through
+#     header_norm.normalise_header before comparison, so you can write natural
+#     words here ("provides", "consumers") — case/plural/spacing don't matter.
+#   - A record whose field matches an `exposes` entry -> Section.exposes;
+#     a match under `depends_on` -> Section.depends_on;
+#     anything else -> metadata.<field>. Direction is NEVER inferred from a
+#     column's position — only from its (normalised) name appearing below.
+#
+# Seeded from the eval-corpus scan (fields like `expose`, `direction` are real in
+# the data). Review and extend against your own corpus's field_vocabulary.json.
+
+exposes:
+  - exposes
+  - provides
+  - publishes
+  - offers
+  - producer
+  - server
+
+depends_on:
+  - depends
+  - dependency
+  - related components
+  - consumer
+  - consumes
+  - uses
+  - direction
+  - requires
+  - upstream
+  - subscriber
