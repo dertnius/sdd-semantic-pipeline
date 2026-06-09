@@ -195,6 +195,7 @@ class TestSemanticChunk:
             "labels",
             "title",
             "source_url",
+            "metadata",
             "embed_text",
         }
 
