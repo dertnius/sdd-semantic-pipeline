@@ -14,7 +14,7 @@ license = { text = "MIT" }
 
 dependencies = [
     "panflute>=2.3",
-    "chromadb>=0.5",
+    "langchain-core>=0.3",
     "sentence-transformers>=3.0",
     "pydantic>=2.6",
     "pydantic-settings>=2.2",
@@ -31,8 +31,10 @@ dev = [
     "pytest-mock>=3.14",
     "ruff>=0.4",
     "mypy>=1.9",
+    "chromadb>=0.5",       # keeps the chroma-backend tests runnable in CI
 ]
 azure = ["openai>=1.0"]
+chroma = ["chromadb>=0.5"]
 
 [project.scripts]
 sdd-pipeline = "sdd_pipeline.cli:app"
