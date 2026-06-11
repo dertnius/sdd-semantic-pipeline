@@ -6,7 +6,8 @@ metadata:
   description: >
     7-stage semantic search pipeline for Confluence SDD documents.
     Confluence markdown → pandoc AST → structural model → semantic enrichment
-    → chunking → sentence-transformer embeddings → ChromaDB vector search.
+    → chunking → sentence-transformer embeddings → vector search
+    (in-memory store by default; ChromaDB optional).
   tags:
     - python
     - nlp
@@ -105,11 +106,12 @@ commands:
   # ── 5. Index sample documents ─────────────────────────────────────────────
   - id: index-samples
     exec:
-      label: "Index: process docs/sample/ into ChromaDB"
+      label: "Index: process docs/sample/ into the vector store (memory backend)"
       component: python
       commandLine: >
         sdd-pipeline index docs/sample/
         --model all-MiniLM-L6-v2
+        --backend memory
         --output data/chroma
         --verbose
       workingDir: ${PROJECT_SOURCE}

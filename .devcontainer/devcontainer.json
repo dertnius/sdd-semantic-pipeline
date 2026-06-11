@@ -34,7 +34,7 @@
   "forwardPorts": [8000],
   "portsAttributes": {
     "8000": {
-      "label": "ChromaDB HTTP",
+      "label": "ChromaDB HTTP (optional chroma backend)",
       "onAutoForward": "silent"
     }
   },
