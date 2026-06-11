@@ -56,8 +56,8 @@ def main() -> int:
     _write(out / "chunks.json", [c.to_dict() for c in chunks])
 
     print(
-        f"Wrote {out/'ast.json'}, {out/'enriched.json'}, "
-        f"{out/'chunks.json'} ({len(chunks)} chunks)."
+        f"Wrote {out / 'ast.json'}, {out / 'enriched.json'}, "
+        f"{out / 'chunks.json'} ({len(chunks)} chunks)."
     )
     return 0
 
