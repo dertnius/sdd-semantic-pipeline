@@ -57,13 +57,12 @@ def extract_prose(section_id: str, text: str) -> list[EntityRecord]:
     out: list[EntityRecord] = []
     seen: set[str] = set()
 
-    def add(value: str, source: str, confidence: float) -> None:
+    def add(value: str, source: EntitySource, confidence: float) -> None:
         value = value.strip()
         key = value.lower()
         if value and key not in seen:
             seen.add(key)
-            out.append(EntityRecord(value, "", source, confidence, section_id))  # type: ignore[arg-type]
-
+            out.append(EntityRecord(value, "", source, confidence, section_id))
     for tok in _ALLCAPS.findall(text):
         if len(tok) >= _MIN_ALLCAPS_LEN and tok not in _ALLCAPS_STOP:
             add(tok, "allcaps_regex", 0.9)
