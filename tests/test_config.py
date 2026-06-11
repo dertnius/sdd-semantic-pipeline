@@ -34,3 +34,11 @@ class TestEmbedAndMergeConfig:
 
     def test_merge_definitions_override(self):
         assert PipelineConfig(chunk_merge_definitions=True).chunk_merge_definitions is True
+
+
+class TestVectorStoreConfig:
+    def test_backend_default_is_memory(self):
+        assert PipelineConfig().vector_store_backend == "memory"
+
+    def test_backend_override(self):
+        assert PipelineConfig(vector_store_backend="chroma").vector_store_backend == "chroma"
