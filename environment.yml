@@ -29,16 +29,19 @@ dependencies:
 
   # ── pip-installed Python packages ─────────────────────────────────────────
   # We use pip for everything Python so version resolution is predictable and
-  # we stay compatible with PyPI-only packages (chromadb, sentence-transformers).
+  # we stay compatible with PyPI-only packages (sentence-transformers, chromadb).
   - pip:
     # Core pipeline
     - panflute>=2.3
-    - chromadb>=0.5
+    - langchain-core>=0.3
     - sentence-transformers>=3.0
     - pydantic>=2.6
     - pydantic-settings>=2.2
     - typer>=0.12
     - rich>=13.7
+
+    # Optional chroma backend (dev keeps it so the chroma tests run)
+    - chromadb>=0.5
 
     # Dev / test
     - pytest>=8.1

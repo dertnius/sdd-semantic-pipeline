@@ -82,15 +82,27 @@ try:
             "docs, persist them here (accumulating across runs), then enrich every doc with "
             "the full vocabulary. Empty disables the scan.",
         )
+        inventory_enrichment: bool = Field(
+            default=True,
+            description="Route structural (table) + prose entity records into "
+            "depends_on/exposes/metadata and fold them into embed text. Disable for "
+            "legacy enrichment only (section_type/entities/tags).",
+        )
 
         # ── Vector store ──────────────────────────────────────────────────────
+        vector_store_backend: str = Field(
+            default="memory",
+            description="Vector store backend: 'memory' (langchain-core InMemoryVectorStore, "
+            "persisted as JSON) or 'chroma' (requires pip install '.[chroma]').",
+        )
         chroma_persist_dir: str = Field(
             default="./data/chroma",
-            description="Directory where ChromaDB persists the index.",
+            description="Directory where the vector index persists (Chroma files, or "
+            "<collection>.json for the memory backend).",
         )
         collection_name: str = Field(
             default="sdd_docs",
-            description="ChromaDB collection name.",
+            description="Vector store collection name.",
         )
 
         # ── Hybrid retrieval ──────────────────────────────────────────────────
@@ -133,6 +145,8 @@ except ImportError:
         embed_char_budget: int = 1800
         entity_terms: list[str] = []
         entity_vocab_path: str = ""
+        inventory_enrichment: bool = True
+        vector_store_backend: str = "memory"
         chroma_persist_dir: str = "./data/chroma"
         collection_name: str = "sdd_docs"
         hybrid_search: bool = False

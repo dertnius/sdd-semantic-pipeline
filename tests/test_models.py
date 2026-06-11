@@ -127,7 +127,7 @@ class TestSemanticChunk:
     def test_to_metadata_lists_json_encoded(self):
         chunk = self._make_chunk(entities=["A", "B"], tags=["x"])
         meta = chunk.to_metadata()
-        # Lists must be JSON strings (ChromaDB only accepts scalars)
+        # Lists must be JSON strings (vector-store metadata is scalar-only)
         entities = json.loads(meta["entities"])
         assert entities == ["A", "B"]
         tags = json.loads(meta["tags"])
@@ -195,6 +195,7 @@ class TestSemanticChunk:
             "labels",
             "title",
             "source_url",
+            "metadata",
             "embed_text",
         }
 

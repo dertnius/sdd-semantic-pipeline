@@ -36,7 +36,9 @@ out/
 # convert / export / index output dirs
 build/
 # ChromaDB persistence (default PIPELINE_CHROMA_PERSIST_DIR)
-data/
+data/*
+# …but the template-derived taxonomy is a committed, regenerable artifact.
+!data/taxonomy.json
 # per-file export artifacts + reports, wherever they land
 *.chunks.json
 *.chunks.jsonl
@@ -44,6 +46,8 @@ export-report.json
 conversion-report.json
 # scratch / temp
 .tmp_dc/
+# e2e corpus: fetched on demand from eval/e2e_sources.yaml, never committed
+eval/e2e_corpus/
 # NOTE: docs/entity-vocab.json is a committed seed example — keep it tracked.
 # Regenerated each eval run; holds machine-specific absolute-path doc_id hashes.
 eval/corpus_manifest.json

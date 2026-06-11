@@ -178,3 +178,59 @@ class TestScanAndExportScanEndToEnd:
         report = json.loads((out / "export-report.json").read_text(encoding="utf-8"))
         assert report["entity_vocab_path"] == str(vocab)
         assert report["vocab_terms"] >= 1
+
+
+# A body with > 200 substantive chars so the content_density stub check stays quiet.
+_PROSE = (
+    "The authentication service validates incoming requests against the policy "
+    "engine and issues short-lived tokens. It records every decision for audit "
+    "and exposes health metrics to the platform monitoring stack continuously.\n"
+)
+
+
+class TestLint:
+    """The lint command is pure text analysis — no pandoc or model needed."""
+
+    def test_reports_issues_and_handles_unreadable(self, tmp_path: Path):
+        (tmp_path / "dirty.md").write_text(
+            "# Doc\n\n" + _PROSE + "\nThis {panel} leaked.\n", encoding="utf-8"
+        )
+        (tmp_path / "clean.md").write_text("# Clean\n\n" + _PROSE, encoding="utf-8")
+        (tmp_path / "bad.md").write_bytes(b"\xff\xfe# undecodable\n")
+
+        result = runner.invoke(app, ["lint", str(tmp_path)])
+        # One unreadable file → non-zero exit even without --strict.
+        assert result.exit_code == 1, result.output
+
+        report = json.loads((tmp_path / "quality-report.json").read_text(encoding="utf-8"))
+        assert report["total_files"] == 3
+        assert report["clean_files"] == 1
+        assert report["files_with_issues"] == 1
+        assert report["failed"] == 1
+        assert report["block_issues"] >= 1
+
+        sources = [f["source"] for f in report["files"]]
+        # files[] is issues-only: the clean file is counted, not listed.
+        assert not any(s.endswith("clean.md") for s in sources)
+        dirty = next(f for f in report["files"] if f["source"].endswith("dirty.md"))
+        assert dirty["is_embeddable"] is False
+        assert dirty["issues"]
+
+    def test_clean_corpus_exits_zero(self, tmp_path: Path):
+        (tmp_path / "ok.md").write_text("# Ok\n\n" + _PROSE, encoding="utf-8")
+        result = runner.invoke(app, ["lint", str(tmp_path)])
+        assert result.exit_code == 0, result.output
+        report = json.loads((tmp_path / "quality-report.json").read_text(encoding="utf-8"))
+        assert report["files_with_issues"] == 0
+        assert report["files"] == []
+
+    def test_strict_exits_nonzero_only_on_block(self, tmp_path: Path):
+        # A near-empty stub is a block-severity finding, but not a read failure.
+        (tmp_path / "stub.md").write_text("# Stub\n\nTODO\n", encoding="utf-8")
+        assert runner.invoke(app, ["lint", str(tmp_path)]).exit_code == 0
+        assert runner.invoke(app, ["lint", str(tmp_path), "--strict"]).exit_code == 1
+
+    def test_empty_dir_exits_zero(self, tmp_path: Path):
+        result = runner.invoke(app, ["lint", str(tmp_path)])
+        assert result.exit_code == 0
+        assert "No markdown files" in result.output

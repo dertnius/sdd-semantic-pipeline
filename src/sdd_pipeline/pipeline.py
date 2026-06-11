@@ -18,7 +18,7 @@ from .embeddings import EmbedderProtocol, embedder_identity, make_embedder
 from .enrichment import enrich_document, extract_entities, scan_corpus
 from .models import ContentType, DocumentModel, SectionType, SemanticChunk
 from .structural import build_structural_model
-from .vector_store import SearchResult, VectorStore
+from .vector_store import SearchResult, VectorStoreProtocol, make_vector_store
 from .vocabulary import load_vocabulary, save_vocabulary
 
 logger = logging.getLogger(__name__)
@@ -50,11 +50,11 @@ class SemanticPipeline:
         self,
         config: PipelineConfig | None = None,
         embedding_model: EmbedderProtocol | None = None,
-        vector_store: VectorStore | None = None,
+        vector_store: VectorStoreProtocol | None = None,
     ) -> None:
         self.config = config or PipelineConfig()
         self._embedder: EmbedderProtocol | None = embedding_model
-        self._store: VectorStore | None = vector_store
+        self._store: VectorStoreProtocol | None = vector_store
 
     # ── Lazy accessors ────────────────────────────────────────────────────────
 
@@ -65,12 +65,9 @@ class SemanticPipeline:
         return self._embedder
 
     @property
-    def store(self) -> VectorStore:
+    def store(self) -> VectorStoreProtocol:
         if self._store is None:
-            self._store = VectorStore(
-                persist_dir=self.config.chroma_persist_dir,
-                collection_name=self.config.collection_name,
-            )
+            self._store = make_vector_store(self.config)
         return self._store
 
     # ── Core pipeline ─────────────────────────────────────────────────────────
@@ -86,14 +83,28 @@ class SemanticPipeline:
         ast = generate_ast(md_path, self.config.pandoc_from_format)
         return build_structural_model(ast, doc_id=doc_id, source_path=str(md_path))
 
+    def _build_inventory(self, doc: DocumentModel):
+        """Stage 3.5: merge structural (table) + prose entity records per section."""
+        from .extract_prose import build_prose_inventory
+        from .extract_structural import build_structural_inventory
+
+        merged: dict[str, list] = {}
+        for inv in (build_structural_inventory(doc), build_prose_inventory(doc)):
+            for section_id, records in inv.items():
+                merged.setdefault(section_id, []).extend(records)
+        return merged
+
     def enrich_and_chunk(
         self,
         doc: DocumentModel,
         entity_terms: list[str],
     ) -> list[SemanticChunk]:
         """Run stages 5–6 with a given vocabulary; section- and chunk-level
-        entities share *entity_terms*."""
-        doc = enrich_document(doc, entity_terms=entity_terms)
+        entities share *entity_terms*. An inventory of structural + prose records
+        (stage 3.5) drives depends_on/exposes/metadata field routing, unless
+        ``config.inventory_enrichment`` is disabled (legacy enrichment only)."""
+        inventory = self._build_inventory(doc) if self.config.inventory_enrichment else None
+        doc = enrich_document(doc, entity_terms=entity_terms, inventory=inventory)
         chunks = chunk_document(
             doc,
             self.config.max_chunk_chars,

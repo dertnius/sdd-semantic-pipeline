@@ -8,7 +8,7 @@ Stages
 3+4. Structural model           structural.build_structural_model()
 5. Semantic enrichment          enrichment.enrich_document()
 6. Semantic chunking            chunking.chunk_document()
-7. Embed + index                embeddings.EmbeddingModel + vector_store.VectorStore
+7. Embed + index                embeddings.make_embedder + vector_store.make_vector_store
 
 Quick start
 -----------

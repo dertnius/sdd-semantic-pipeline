@@ -27,7 +27,7 @@ When suggesting a test command to run, default to the fast suite (`pytest tests/
 ## Architecture Guardrails
 
 - Keep `models.py` as pure data contracts (no service logic).
-- Keep `vector_store.py` as the only module containing ChromaDB operations.
+- Keep `vector_store.py` as the only module containing vector-store backend operations (langchain-core in-memory store, ChromaDB).
 - Keep `embeddings.py` as the only module loading or calling sentence-transformers.
 - Keep `pipeline.py` as orchestration and dependency wiring, with lazy initialization.
 - Keep `structural.py`, `enrichment.py`, and `chunking.py` deterministic and unit-testable.
@@ -47,7 +47,8 @@ If satisfying a request appears to require breaking an architecture boundary, do
 
 - Pandoc binary must be available for AST/integration paths.
 - First embedding run may download model artifacts and be slow.
-- Chroma metadata values should remain scalar; encode lists as JSON strings.
+- Vector-store metadata values should remain scalar; encode lists as JSON strings.
+- ChromaDB is an optional extra (`pip install "sdd-pipeline[chroma]"`); the default backend is the langchain-core in-memory store (`--backend memory`).
 
 ## Agent Behavior
 

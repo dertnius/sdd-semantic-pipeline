@@ -58,7 +58,7 @@ Confluence-MD → vector-search flow, one module per stage:
 | `chunking.py` | `DocumentModel` → `list[SemanticChunk]` (deterministic) |
 | `vocabulary.py` | JSON load/save of the cross-corpus entity vocabulary (I/O kept out of `enrichment.py`) |
 | `embeddings.py` | sentence-transformers wrapper (**only** model loader) |
-| `vector_store.py` | ChromaDB operations (**only** Chroma caller) |
+| `vector_store.py` | pluggable vector-store backends (`memory` default via langchain-core, Chroma via the `[chroma]` extra) — selected by `make_vector_store(config)` |
 | `pipeline.py` | orchestration + lazy dependency wiring |
 | `models.py` | pure dataclasses, no external deps or service logic |
 
@@ -94,6 +94,17 @@ The `sdd-pipeline scan <dir> [--vocab PATH]` command runs only the discovery hal
 — parse all docs, `scan_corpus`, persist the vocabulary JSON — so the term list
 can be reviewed/edited before an index run. Both `scan` and the scan-enabled
 `export` go through `SemanticPipeline.scan_and_persist` and load **no** model.
+
+The `sdd-pipeline lint <dir>` command (`quality.py`) is a **report-only** linter
+over **raw source `.md`** — run *before* pandoc, it flags embedding-harmful
+residue (leaked HTML, untranslated Confluence macros, whole-doc code dumps,
+TOC/nav link-dumps, near-empty stubs, empty section headings) and writes a
+`quality-report.json`. Pure stdlib `re` — **no pandoc, no model, no pipeline** —
+and it never drops/rewrites anything. Prose checks run on a *de-fenced* copy
+(fenced/indented/inline code blanked, line numbers preserved) so code *examples*
+don't false-positive; `quality.py` is the only module doing this raw-source
+audit. Point it at the real embedding corpus, not a docs tree that *documents*
+Confluence syntax.
 
 **B. HTML→GitLab-Markdown converter** (`html_to_gitlab_md.py`) — independent of
 the pipeline. 3-stage flow: BeautifulSoup pre-clean → pandoc → markdown
@@ -134,7 +145,7 @@ per-file + aggregate metrics (`sections`, `pictures`, `code_snippets`, `lists`,
   `labels`) so an exported record is citable on its own. The `convert` command's
   `--space`/`--source-url`/`--labels` write the matching YAML frontmatter keys
   that `structural._extract_metadata` reads back.
-- **Chroma metadata must be scalar** (`str | int | float | bool`). Lists are
+- **Vector-store metadata must be scalar** (`str | int | float | bool`). Lists are
   JSON-encoded strings — see `SemanticChunk.to_metadata`.
 - **Hybrid retrieval** (`search --hybrid`/`-H`, or `PIPELINE_HYBRID_SEARCH`):
   fuses the dense vector ranking with a lexical BM25 ranking via Reciprocal Rank
@@ -150,7 +161,9 @@ Preserve module boundaries unless the user explicitly asks otherwise; if a
 request seems to require breaking one, flag the conflict and confirm first.
 
 - `models.py` stays pure data contracts (no service logic).
-- `vector_store.py` is the only module touching ChromaDB.
+- `vector_store.py` is the only module touching vector-store backends
+  (langchain-core's `InMemoryVectorStore`, ChromaDB) — selected by
+  `make_vector_store(config)`.
 - `embeddings.py` is the only module that loads an embedding backend
   (sentence-transformers locally, or the Azure OpenAI SDK) — selected by
   `make_embedder(config)`.
@@ -164,6 +177,15 @@ request seems to require breaking one, flag the conflict and confirm first.
 - **First embedding run downloads the model** (~1.3 GB for the default
   `BAAI/bge-large-en-v1.5`). Use `--model all-MiniLM-L6-v2` (~80 MB) in dev, or
   switch to the Azure provider (no local download — see *Embedding providers*).
+- **chromadb is an optional extra** (`pip install ".[chroma]"`; the dev extra
+  includes it). The default backend is `memory` — an index built with
+  `--backend chroma` searched without that flag loads an empty memory store and
+  returns no results (the CLI prints an empty-index hint). The same persist dir
+  can hold both backends' files side by side as two **independent** indexes —
+  re-index after switching backends.
+- **Memory backend scale**: the whole index lives in RAM and the JSON file is
+  rewritten after every indexed file — fine at SDD-corpus scale, wrong tool for
+  very large corpora (use chroma there).
 - **Windows console encoding (cp1252)** crashes on emoji/non-ASCII when stdout is
   redirected. The `convert` command's output is deliberately ASCII-only; the
   legacy single-file script (`html_to_gitlab_md.py` `main`) and `index`/`check`
@@ -173,7 +195,9 @@ request seems to require breaking one, flag the conflict and confirm first.
 
 Settings load from env vars (prefix `PIPELINE_`) or `.env` via
 `PipelineConfig` (pydantic-settings). Common: `PIPELINE_EMBEDDING_MODEL`,
-`PIPELINE_CHROMA_PERSIST_DIR`, `PIPELINE_MAX_CHUNK_CHARS`,
+`PIPELINE_VECTOR_STORE_BACKEND` (`memory` default | `chroma`),
+`PIPELINE_CHROMA_PERSIST_DIR` (the persist dir for **both** backends, despite
+the name), `PIPELINE_MAX_CHUNK_CHARS`,
 `PIPELINE_PANDOC_FROM_FORMAT`, `PIPELINE_ENTITY_TERMS` (JSON array of domain
 vocabulary), `PIPELINE_ENTITY_VOCAB_PATH` (JSON vocabulary file; enables the
 two-pass cross-corpus scan in `index`/`export` — `docs/entity-vocab.json` is a
@@ -199,9 +223,34 @@ depend only on the protocol.
   deployment is the embedding model; `--model` is ignored. `sdd-pipeline check`
   reports `openai` availability and whether the Azure env vars are set.
 
-**Index provenance:** `index_file` records `(provider, model, dimension)` on the
-Chroma collection; `search` verifies it and raises a clear error if the configured
-embedder differs from the one that built the index (different providers/models
-produce incompatible vector spaces). Re-index or align `--provider`/`--model` to
-fix. `vector_store.set_provenance` excludes reserved `hnsw:*` keys — Chroma's
-`collection.modify` rejects a metadata payload that contains them.
+**Index provenance:** `index_file` records `(provider, model, dimension)` with
+the index — on the Chroma collection's metadata, or in a
+`<collection>.provenance.json` sidecar for the memory backend; `search` verifies
+it and raises a clear error if the configured embedder differs from the one that
+built the index (different providers/models produce incompatible vector spaces).
+Re-index or align `--provider`/`--model` to fix. Chroma's `set_provenance`
+excludes reserved `hnsw:*` keys — `collection.modify` rejects a metadata payload
+that contains them.
+
+## Vector store backends
+
+The store is pluggable via `vector_store_backend` (`memory` default | `chroma`),
+selected by `make_vector_store(config)` in `vector_store.py`. Both implement
+`VectorStoreProtocol` (`add_chunks`/`search`/`get_corpus`/`delete_document`/
+`reset`/provenance/`count`), so the pipeline and tests depend only on the
+protocol. Both backend libraries are imported lazily, so `export`/`scan`/
+`convert` work with neither installed.
+
+- **memory** — langchain-core's `InMemoryVectorStore`, persisted as
+  `<persist_dir>/<collection>.json` (atomic tmp+replace writes) plus a
+  `<collection>.provenance.json` sidecar, so index → search across separate
+  processes works. Default; no optional deps. The pipeline supplies precomputed
+  vectors by writing the documented `store` dict directly; the `Embeddings`
+  stub passed to the constructor raises if anything tries to re-embed.
+  Cosine similarity is mapped to `distance = 1 - similarity` (same space as
+  Chroma cosine), so `SearchResult.score` semantics are identical.
+- **chroma** — ChromaDB via the **optional** `chromadb` package
+  (`pip install ".[chroma]"`). Enable with `--backend chroma` on
+  `index`/`search`, or `PIPELINE_VECTOR_STORE_BACKEND=chroma`. The backend a
+  search uses must match the one that built the index. `sdd-pipeline check`
+  reports `langchain_core` as required and `chromadb` informationally.

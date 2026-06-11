@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 # Languages trusted enough to embed as a `lang:` token. A source's
 # syntaxhighlighter brush is often wrong for DSLs, so unknown labels are dropped
@@ -124,6 +124,10 @@ class Section:
     tags: list[str] = field(default_factory=list)
     depends_on: list[str] = field(default_factory=list)
     exposes: list[str] = field(default_factory=list)
+    # Inventory-driven structured fields: {normalised_field_name: [canonical values]}.
+    # Non-directional table fields land here (e.g. "technology stack", "protocol");
+    # the reserved "raw_entities" key holds below-threshold mentions for audit.
+    metadata: dict[str, list[str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -185,6 +189,8 @@ class SemanticChunk:
     # is citable on its own (the doc_id alone is an opaque hash).
     title: str = ""
     source_url: str = ""
+    # Inventory-driven structured fields copied from the Section (see Section.metadata).
+    metadata: dict[str, list[str]] = field(default_factory=dict)
 
     def to_embed_text(self) -> str:
         """
@@ -207,9 +213,21 @@ class SemanticChunk:
         elif crumb:
             parts.append(crumb)
 
-        # Keywords minus any that just repeat a breadcrumb token.
+        # Keywords: entities + inventory-derived structured field values, minus any
+        # that just repeat a breadcrumb token and the audit-only raw_entities bucket.
+        # Deduped, order-preserving (entities first).
         crumb_tokens = {b.strip().rstrip(":").lower() for b in self.breadcrumb}
-        keywords = [e for e in self.entities if e.lower() not in crumb_tokens]
+        field_values = [
+            v for key, vals in self.metadata.items() if key != "raw_entities" for v in vals
+        ]
+        seen_kw: set[str] = set()
+        keywords: list[str] = []
+        for kw in (*self.entities, *field_values):
+            low = kw.lower()
+            if low in crumb_tokens or low in seen_kw:
+                continue
+            seen_kw.add(low)
+            keywords.append(kw)
         if keywords:
             parts.append("keywords: " + ", ".join(keywords))
 
@@ -233,6 +251,13 @@ class SemanticChunk:
             and f"lang:{self.language}" not in self.tags
         ):
             parts.append(f"lang:{self.language}")
+
+        # Dependency signals fold in explicitly — the high-value retrieval cue that
+        # inventory-driven enrichment populates.
+        if self.depends_on:
+            parts.append("depends on: " + ", ".join(self.depends_on))
+        if self.exposes:
+            parts.append("exposes: " + ", ".join(self.exposes))
 
         header = " | ".join(parts)
         body = (
@@ -261,6 +286,7 @@ class SemanticChunk:
             "labels": json.dumps(self.labels),
             "title": self.title,
             "source_url": self.source_url,
+            "fields": json.dumps(self.metadata, sort_keys=True),
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -288,5 +314,43 @@ class SemanticChunk:
             "labels": list(self.labels),
             "title": self.title,
             "source_url": self.source_url,
+            "metadata": {k: list(v) for k, v in self.metadata.items()},
             "embed_text": self.to_embed_text(),
         }
+
+
+# ── Entity extraction contract (inventory-driven enrichment) ───────────────────
+
+# Extraction source, ordered by trust. Used to break ties in deduplication.
+EntitySource = Literal[
+    "table_cell",  # 1.0 — a cell in a structured template table
+    "allcaps_regex",  # 0.9 — ACME_SERVICE style token
+    "backtick_regex",  # 0.8 — `code`-fenced token
+    "noun_chunk",  # 0.5 — spaCy multi-word noun chunk
+    "prose",  # generic prose mention
+]
+
+
+@dataclass(frozen=True)
+class EntityRecord:
+    """One extracted entity, tagged with the template field it came from.
+
+    ``field`` is a normalised taxonomy field/column name (e.g. ``related
+    component``); enrichment routes it to depends_on/exposes/metadata. ``text``
+    is the raw value; ``canonical`` is its canonical form (defaults to ``text``).
+    """
+
+    text: str
+    field: str
+    source: EntitySource
+    confidence: float
+    section_id: str
+    canonical: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.canonical:
+            object.__setattr__(self, "canonical", self.text)
+
+
+# Inventory of extracted records, keyed by Section.section_id.
+EntityInventory = dict[str, list[EntityRecord]]

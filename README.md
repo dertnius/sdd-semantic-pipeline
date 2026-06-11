@@ -5,7 +5,8 @@ A 7-stage pipeline that turns **Confluence-exported markdown files** into a
 
 ```
 Confluence MD → pandoc AST → Structural model → Semantic enrichment
-             → Chunking → Embeddings → ChromaDB vector search
+             → Chunking → Embeddings → Vector search
+               (in-memory store by default; ChromaDB optional)
 ```
 
 ---
@@ -46,9 +47,10 @@ full, always-current option list is `sdd-pipeline <command> --help`.
 
 ## CLI reference
 
-Six commands: `index`, `search`, `convert`, `export`, `scan`, `check`. Only
-`index` and `search` load an embedding model; `convert`, `export`, and `scan`
-are **pandoc-only** (no model download).
+Seven commands: `index`, `search`, `convert`, `export`, `scan`, `lint`, `check`.
+Only `index` and `search` load an embedding model; `convert`, `export`, and
+`scan` are **pandoc-only** (no model download), and `lint` is **pure text**
+(neither pandoc nor a model).
 
 ### `index` — build the vector index
 
@@ -58,9 +60,10 @@ sdd-pipeline index <input_dir> [options]
 
 | Option | Default | Description |
 |---|---|---|
-| `--output` / `-o` | `./data/chroma` | ChromaDB persistence path |
+| `--output` / `-o` | `./data/chroma` | Vector index persistence path |
 | `--model` / `-m` | `BAAI/bge-large-en-v1.5` | Local embedding model (ignored when `--provider azure`) |
 | `--provider` | `local` | Embedding backend: `local` \| `azure` |
+| `--backend` | `memory` | Vector store backend: `memory` \| `chroma` (chroma needs `pip install ".[chroma]"`) |
 | `--glob` / `-g` | `**/*.md` | File glob pattern |
 | `--merge-prose` | off | Pack each section's prose into one chunk (code/tables stay separate) |
 | `--merge-definitions` | off | Pack prose **and** code into one chunk (tables separate); overrides `--merge-prose` |
@@ -79,9 +82,10 @@ sdd-pipeline search "<query>" [options]
 
 | Option | Default | Description |
 |---|---|---|
-| `--index` / `-i` | `./data/chroma` | ChromaDB persistence path to query |
+| `--index` / `-i` | `./data/chroma` | Vector index path to query |
 | `--model` / `-m` | `BAAI/bge-large-en-v1.5` | Embedding model (**must match the index**) |
 | `--provider` | `local` | Embedding backend: `local` \| `azure` (must match the index) |
+| `--backend` | `memory` | Vector store backend: `memory` \| `chroma` (must match the index) |
 | `--top-k` / `-k` | `5` | Number of results |
 | `--section-type` / `-s` | — | Filter by type (see list below) |
 | `--space` | — | Filter by Confluence space key |
@@ -157,15 +161,63 @@ sdd-pipeline scan <input_dir> [options]
 | `--glob` / `-g` | `**/*.md` | Markdown glob pattern |
 | `--verbose` / `-v` | off | Print the discovered term list |
 
+### `lint` — audit raw `.md` quality (report-only)
+
+Scans raw source markdown for embedding-harmful residue — leaked HTML tags,
+untranslated Confluence macros, whole-doc code dumps, TOC/nav link-dumps,
+near-empty stubs, and empty section headings — and writes a `quality-report.json`.
+**Pure text analysis: no pandoc, no model.** It never drops or rewrites anything.
+Point it at your real embedding corpus (not a docs tree that *documents*
+Confluence syntax — those files legitimately contain the flagged tokens).
+
+```bash
+sdd-pipeline lint <input_dir> [options]
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--glob` / `-g` | `**/*.md` | Markdown glob pattern |
+| `--report` / `-r` | `<input_dir>/quality-report.json` | JSON report path |
+| `--strict` | off | Exit non-zero if any file has a block-severity issue |
+| `--verbose` / `-v` | off | Per-file findings |
+
+> Exit code is `0` by default (finding issues isn't a failure), `1` if a file
+> can't be read, and `1` under `--strict` when any block-severity issue exists.
+> Thresholds are tuned in `quality.py` — calibrate them against your corpus.
+
 ### `check` — verify the environment
 
 ```bash
 sdd-pipeline check
 ```
 
-Reports Python, pandoc, and each Python dependency, plus optional `openai`
-availability and whether the Azure env vars are set (the API key value is never
-printed). Exits non-zero if a required dependency is missing.
+Reports Python, pandoc, and each Python dependency, plus optional `chromadb`
+and `openai` availability and whether the Azure env vars are set (the API key
+value is never printed). Exits non-zero if a required dependency is missing.
+
+---
+
+## Vector store backends
+
+The store is pluggable via `--backend` (`memory` default \| `chroma`) on
+`index` and `search`, or `PIPELINE_VECTOR_STORE_BACKEND`.
+
+- **memory** — langchain-core's `InMemoryVectorStore`, persisted as
+  `<persist-dir>/<collection>.json` plus a `<collection>.provenance.json`
+  sidecar, so `index` → `search` across separate runs works. Default; no
+  optional dependencies. Holds the index in RAM — right-sized for SDD corpora.
+- **chroma** — ChromaDB via the **optional** `chromadb` package:
+  `pip install ".[chroma]"`. Use for larger corpora or when you already have a
+  Chroma index.
+
+The backend used by `search` must match the one that built the index; the two
+backends keep **independent** indexes even in the same persist dir, so
+re-index after switching.
+
+```bash
+sdd-pipeline index docs/sample/ --backend chroma
+sdd-pipeline search "token refresh" --backend chroma
+```
 
 ---
 
@@ -287,7 +339,7 @@ Requires Docker Desktop on Windows / Mac / Linux.
 | 5 | `enrichment` | `DocumentModel` → enriched with `SectionType`, entities, tags |
 | 6 | `chunking` | `DocumentModel` → `list[SemanticChunk]` |
 | 7a | `embeddings` | `list[SemanticChunk]` → `list[list[float]]` |
-| 7b | `vector_store` | chunks + embeddings → ChromaDB index |
+| 7b | `vector_store` | chunks + embeddings → vector index (`memory` default \| `chroma`) |
 
 ### Embed-text format
 
@@ -364,8 +416,9 @@ Copy `.env.example` to `.env` and customise. Full list in
 | `PIPELINE_CHUNK_MERGE_DEFINITIONS` | `false` | Pack prose + code into one chunk (overrides merge-prose) |
 | `PIPELINE_ENTITY_TERMS` | `[]` | JSON array of domain vocabulary folded into entity extraction |
 | `PIPELINE_ENTITY_VOCAB_PATH` | `""` | JSON vocab file; when set, enables the two-pass cross-corpus scan in `index`/`export` |
-| `PIPELINE_CHROMA_PERSIST_DIR` | `./data/chroma` | ChromaDB persistence path |
-| `PIPELINE_COLLECTION_NAME` | `sdd_docs` | ChromaDB collection |
+| `PIPELINE_VECTOR_STORE_BACKEND` | `memory` | Vector store backend: `memory` \| `chroma` |
+| `PIPELINE_CHROMA_PERSIST_DIR` | `./data/chroma` | Vector index persistence path (both backends) |
+| `PIPELINE_COLLECTION_NAME` | `sdd_docs` | Vector store collection |
 | `PIPELINE_HYBRID_SEARCH` | `false` | Fuse dense + lexical (BM25) rankings via RRF (same as `search --hybrid`) |
 | `PIPELINE_HYBRID_CANDIDATE_POOL` | `50` | Per-scorer candidate depth fused before top-k |
 | `PIPELINE_RRF_K` | `60` | Reciprocal Rank Fusion constant (higher = flatter weighting) |
@@ -416,7 +469,7 @@ sdd-semantic-pipeline/
 │       ├── enrichment.py     ← rule-based semantic enrichment
 │       ├── chunking.py       ← DocumentModel → SemanticChunk[]
 │       ├── embeddings.py     ← sentence-transformers wrapper
-│       ├── vector_store.py   ← ChromaDB operations
+│       ├── vector_store.py   ← vector-store backends (memory | chroma)
 │       ├── vocabulary.py     ← cross-corpus entity vocabulary I/O
 │       ├── html_to_gitlab_md.py ← HTML → GitLab Markdown converter
 │       ├── pipeline.py       ← stage orchestrator
@@ -428,7 +481,7 @@ sdd-semantic-pipeline/
 │   ├── test_enrichment.py
 │   ├── test_chunking.py
 │   ├── test_ast_parser.py    ← pandoc tests (skipped without pandoc)
-│   ├── test_vector_store.py  ← mocked ChromaDB
+│   ├── test_vector_store.py  ← mocked ChromaDB backend
 │   └── test_pipeline.py      ← mocked orchestration + slow integration
 ├── docs/
 │   └── sample/
