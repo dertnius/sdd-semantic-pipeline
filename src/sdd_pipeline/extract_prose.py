@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import re
 
-from .models import DocumentModel, EntityInventory, EntityRecord, Section
+from .models import DocumentModel, EntityInventory, EntityRecord, EntitySource, Section
 
 _ALLCAPS = re.compile(r"\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*\b")
 _BACKTICK = re.compile(r"`([^`]+)`")
