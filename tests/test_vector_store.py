@@ -67,13 +67,13 @@ class TestSearchResult:
 @pytest.fixture
 def patched_store(mocker):
     """
-    Return a (VectorStore, mock_collection) pair without importing chromadb.
+    Return a (ChromaVectorStore, mock_collection) pair without importing chromadb.
 
     We bypass __init__ with __new__ so that the guard ``import chromadb`` inside
     __init__ is never reached — the store is wired directly to MagicMock objects.
     This makes the fixture work even when chromadb is not installed.
     """
-    from sdd_pipeline.vector_store import VectorStore
+    from sdd_pipeline.vector_store import ChromaVectorStore
 
     mock_collection = mocker.MagicMock()
     mock_collection.count.return_value = 0
@@ -84,7 +84,7 @@ def patched_store(mocker):
     mock_client.get_or_create_collection.return_value = mock_collection
 
     # Allocate instance without running __init__
-    store = VectorStore.__new__(VectorStore)
+    store = ChromaVectorStore.__new__(ChromaVectorStore)
     store._client = mock_client
     store._collection = mock_collection
 
