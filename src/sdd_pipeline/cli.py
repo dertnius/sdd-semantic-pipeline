@@ -1,5 +1,5 @@
 """
-CLI entry point: sdd-pipeline index | search | check | convert | export | scan
+CLI entry point: sdd-pipeline index | search | check | convert | export | scan | lint
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ def index(
         ..., exists=True, file_okay=False, help="Directory containing .md files."
     ),
     output_dir: str = typer.Option(
-        "./data/chroma", "--output", "-o", help="ChromaDB persistence path."
+        "./data/chroma", "--output", "-o", help="Vector index persistence path."
     ),
     model: str = typer.Option(
         "BAAI/bge-large-en-v1.5",
@@ -38,6 +38,12 @@ def index(
         help="Local embedding model. Ignored when --provider azure (deployment from env).",
     ),
     provider: str = typer.Option("local", "--provider", help="Embedding backend: local | azure."),
+    backend: str | None = typer.Option(
+        None,
+        "--backend",
+        help="Vector store backend: memory (default) | chroma. "
+        "Unset falls back to PIPELINE_VECTOR_STORE_BACKEND.",
+    ),
     glob: str = typer.Option("**/*.md", "--glob", "-g", help="File glob pattern."),
     merge_prose: bool = typer.Option(
         False,
@@ -57,14 +63,28 @@ def index(
     from .config import PipelineConfig
     from .pipeline import SemanticPipeline
 
-    config = PipelineConfig(
-        chroma_persist_dir=output_dir,
-        embedding_model=model,
-        embedding_provider=provider,
-        chunk_merge_prose=merge_prose,
-        chunk_merge_definitions=merge_definitions,
-    )
+    overrides: dict = {
+        "chroma_persist_dir": output_dir,
+        "embedding_model": model,
+        "embedding_provider": provider,
+        "chunk_merge_prose": merge_prose,
+        "chunk_merge_definitions": merge_definitions,
+    }
+    # Only override when the flag was given, so PIPELINE_VECTOR_STORE_BACKEND
+    # keeps working when --backend is omitted.
+    if backend is not None:
+        overrides["vector_store_backend"] = backend
+    config = PipelineConfig(**overrides)
     pipeline = SemanticPipeline(config=config)
+
+    # Fail fast on a missing/unknown backend instead of per-file errors
+    # (chromadb is an optional extra; a dry run never touches the store).
+    if not dry_run:
+        try:
+            _ = pipeline.store
+        except (ImportError, ValueError) as exc:
+            console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(1) from exc
 
     md_files = list(input_dir.glob(glob))
     if not md_files:
@@ -422,6 +442,136 @@ def export(
     raise typer.Exit(1 if failed else 0)
 
 
+# ── lint ──────────────────────────────────────────────────────────────────────
+
+
+@app.command()
+def lint(
+    input_dir: Path = typer.Argument(
+        ..., exists=True, file_okay=False, help="Directory of .md files (your embedding corpus)."
+    ),
+    glob: str = typer.Option("**/*.md", "--glob", "-g", help="Markdown file glob pattern."),
+    report: Path | None = typer.Option(
+        None,
+        "--report",
+        "-r",
+        help="JSON report path. Default: <input_dir>/quality-report.json",
+    ),
+    strict: bool = typer.Option(
+        False, "--strict", help="Exit non-zero if any file has a block-severity issue."
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """Lint raw source .md for embedding-harmful syntax/structure (report only).
+
+    Reports leaked HTML, untranslated Confluence macros, whole-doc code dumps,
+    TOC/nav link-dumps, near-empty stubs, and empty section headings. Pure text
+    analysis -- no pandoc, no embedding model. Point it at your real embedding
+    corpus: a docs tree that includes meta-documentation *about* Confluence
+    syntax will self-report (those files legitimately contain the flagged tokens).
+    """
+    import json
+    from datetime import UTC, datetime
+
+    from .quality import check_markdown
+
+    report_path = report if report is not None else input_dir / "quality-report.json"
+
+    md_files = sorted(input_dir.glob(glob))
+    if not md_files:
+        console.print(f"[yellow]No markdown files matching {glob!r} under {input_dir}[/yellow]")
+        raise typer.Exit(0)
+
+    console.print(f"[cyan]Linting {len(md_files)} markdown files in {input_dir}[/cyan]")
+
+    file_entries: list[dict] = []
+    rule_counts: dict[str, int] = {}
+    block_issues = 0
+    warn_issues = 0
+    files_with_issues = 0
+    failed = 0
+
+    for src in track(md_files, description="Linting..."):
+        try:
+            text = src.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeDecodeError) as exc:
+            failed += 1
+            file_entries.append(
+                {
+                    "source": str(src),
+                    "is_embeddable": False,
+                    "status": "error",
+                    "error": str(exc),
+                    "issues": [],
+                }
+            )
+            console.print(f"  [red]fail[/red] {src.name}: {exc}")
+            continue
+
+        rpt = check_markdown(str(src), text)
+        if not rpt.issues:
+            if verbose:
+                console.print(f"  [green]ok[/green]   {src.name}")
+            continue
+
+        files_with_issues += 1
+        for issue in rpt.issues:
+            rule_counts[issue.rule] = rule_counts.get(issue.rule, 0) + 1
+            if issue.severity == "block":
+                block_issues += 1
+            else:
+                warn_issues += 1
+        file_entries.append(
+            {
+                "source": str(src),
+                "is_embeddable": rpt.is_embeddable,
+                "status": "ok",
+                "error": None,
+                "issues": [
+                    {"rule": i.rule, "severity": i.severity, "detail": i.detail} for i in rpt.issues
+                ],
+            }
+        )
+        if verbose:
+            tag = "warn" if rpt.is_embeddable else "block"
+            console.print(f"  [yellow]{tag}[/yellow] {src.name} -> {len(rpt.issues)} issue(s)")
+
+    clean_files = len(md_files) - files_with_issues - failed
+    report_doc = {
+        "generated_at": datetime.now(UTC).isoformat(),
+        "input_dir": str(input_dir),
+        "glob": glob,
+        "total_files": len(md_files),
+        "clean_files": clean_files,
+        "files_with_issues": files_with_issues,
+        "failed": failed,
+        "block_issues": block_issues,
+        "warn_issues": warn_issues,
+        "rule_counts": rule_counts,
+        "files": file_entries,
+    }
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(report_doc, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    table = Table(title="Lint summary", show_lines=False)
+    table.add_column("Metric", style="cyan")
+    table.add_column("Count", justify="right", style="green")
+    table.add_row("files scanned", str(len(md_files)))
+    table.add_row("clean", str(clean_files))
+    table.add_row("with issues", str(files_with_issues))
+    table.add_row("failed to read", str(failed))
+    table.add_row("block issues", str(block_issues))
+    table.add_row("warn issues", str(warn_issues))
+    console.print(table)
+    # ASCII-safe summary line (cp1252 consoles choke on emoji when redirected).
+    console.print(
+        f"\n[green]Done.[/green] {files_with_issues} of {len(md_files)} files have issues "
+        f"({block_issues} block, {warn_issues} warn, {failed} unreadable). Report -> {report_path}"
+    )
+
+    raise typer.Exit(1 if (failed or (strict and block_issues)) else 0)
+
+
 # ── scan ──────────────────────────────────────────────────────────────────────
 
 
@@ -529,10 +679,16 @@ def scan_taxonomy(
 @app.command()
 def search(
     query: str = typer.Argument(..., help="Natural-language search query."),
-    index_dir: str = typer.Option("./data/chroma", "--index", "-i"),
+    index_dir: str = typer.Option("./data/chroma", "--index", "-i", help="Vector index path."),
     model: str = typer.Option("BAAI/bge-large-en-v1.5", "--model", "-m"),
     provider: str = typer.Option(
         "local", "--provider", help="Embedding backend: local | azure (must match the index)."
+    ),
+    backend: str | None = typer.Option(
+        None,
+        "--backend",
+        help="Vector store backend: memory (default) | chroma (must match the index). "
+        "Unset falls back to PIPELINE_VECTOR_STORE_BACKEND.",
     ),
     top_k: int = typer.Option(5, "--top-k", "-k"),
     section_type: str | None = typer.Option(
@@ -555,17 +711,32 @@ def search(
     from .models import SectionType
     from .pipeline import SemanticPipeline
 
-    config = PipelineConfig(
-        chroma_persist_dir=index_dir, embedding_model=model, embedding_provider=provider
-    )
+    overrides: dict = {
+        "chroma_persist_dir": index_dir,
+        "embedding_model": model,
+        "embedding_provider": provider,
+    }
+    # Only override when the flag was given, so PIPELINE_VECTOR_STORE_BACKEND
+    # keeps working when --backend is omitted.
+    if backend is not None:
+        overrides["vector_store_backend"] = backend
+    config = PipelineConfig(**overrides)
     pipeline = SemanticPipeline(config=config)
 
     st = SectionType(section_type) if section_type else None
     try:
+        # An empty store passes provenance verification and returns [] — usually
+        # the index was built with a different --backend or persist dir.
+        if pipeline.store.count == 0:
+            console.print(
+                f"[yellow]Index at {index_dir!r} is empty for backend "
+                f"{config.vector_store_backend!r} — was it built with a different "
+                f"--backend or persist dir?[/yellow]"
+            )
         results = pipeline.search(
             query, n_results=top_k, section_type=st, space=space, hybrid=hybrid
         )
-    except ValueError as exc:
+    except (ValueError, ImportError) as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from exc
 
@@ -614,13 +785,29 @@ def check() -> None:
     except Exception as exc:
         rows.append(("pandoc", str(exc)[:60], False))
 
-    for pkg in ["panflute", "chromadb", "sentence_transformers", "pydantic", "typer", "rich"]:
+    for pkg in ["panflute", "langchain_core", "sentence_transformers", "pydantic", "typer", "rich"]:
         try:
             mod = __import__(pkg)
             ver = getattr(mod, "__version__", "installed")
             rows.append((pkg, ver, True))
         except ImportError:
             rows.append((pkg, "NOT INSTALLED", False))
+
+    # Optional chroma backend — informational, never gates the check.
+    try:
+        import chromadb
+
+        rows.append(
+            (
+                "chromadb (chroma backend, optional)",
+                getattr(chromadb, "__version__", "installed"),
+                True,
+            )
+        )
+    except ImportError:
+        rows.append(
+            ("chromadb (chroma backend, optional)", "not installed - pip install '.[chroma]'", True)
+        )
 
     # Optional Azure provider — informational, never gates the check.
     import os

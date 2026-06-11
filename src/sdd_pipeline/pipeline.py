@@ -18,7 +18,7 @@ from .embeddings import EmbedderProtocol, embedder_identity, make_embedder
 from .enrichment import enrich_document, extract_entities, scan_corpus
 from .models import ContentType, DocumentModel, SectionType, SemanticChunk
 from .structural import build_structural_model
-from .vector_store import SearchResult, VectorStore
+from .vector_store import SearchResult, VectorStoreProtocol, make_vector_store
 from .vocabulary import load_vocabulary, save_vocabulary
 
 logger = logging.getLogger(__name__)
@@ -50,11 +50,11 @@ class SemanticPipeline:
         self,
         config: PipelineConfig | None = None,
         embedding_model: EmbedderProtocol | None = None,
-        vector_store: VectorStore | None = None,
+        vector_store: VectorStoreProtocol | None = None,
     ) -> None:
         self.config = config or PipelineConfig()
         self._embedder: EmbedderProtocol | None = embedding_model
-        self._store: VectorStore | None = vector_store
+        self._store: VectorStoreProtocol | None = vector_store
 
     # ── Lazy accessors ────────────────────────────────────────────────────────
 
@@ -65,12 +65,9 @@ class SemanticPipeline:
         return self._embedder
 
     @property
-    def store(self) -> VectorStore:
+    def store(self) -> VectorStoreProtocol:
         if self._store is None:
-            self._store = VectorStore(
-                persist_dir=self.config.chroma_persist_dir,
-                collection_name=self.config.collection_name,
-            )
+            self._store = make_vector_store(self.config)
         return self._store
 
     # ── Core pipeline ─────────────────────────────────────────────────────────
