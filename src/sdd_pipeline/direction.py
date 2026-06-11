@@ -28,7 +28,13 @@ def load_field_directions(path: str | Path = DEFAULT_DIRECTIONS_PATH) -> dict[st
     p = Path(path)
     if not p.exists():
         return {}
-    import yaml
+
+    try:
+        import yaml  # type: ignore[import-not-found]
+    except ImportError as e:
+        raise ImportError(
+            "PyYAML is required to read config/field_directions.yaml; install it with 'pip install pyyaml'."
+        ) from e
 
     raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
     out: dict[str, Direction] = {}
