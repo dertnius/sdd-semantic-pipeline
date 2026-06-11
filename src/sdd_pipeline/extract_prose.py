@@ -42,10 +42,10 @@ def _noun_chunks(text: str) -> list[str]:
         import spacy  # type: ignore[import-not-found]
     except ImportError:
         return []
+
     try:
-        nlp = spacy.blank("en")  # blank pipe has no noun_chunks; needs a parser
-        if "parser" not in nlp.pipe_names:
-            return []
+        # Use an installed English pipeline if present; otherwise treat as unavailable.
+        nlp = spacy.load("en_core_web_sm")
         doc = nlp(text)
         return [c.text for c in doc.noun_chunks if len(c.text.split()) > 1]
     except Exception:
