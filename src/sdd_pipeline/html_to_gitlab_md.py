@@ -3,20 +3,24 @@
 html_to_gitlab_md.py
 ====================
 Convert a Confluence (or generic) HTML document to a clean GitLab-flavoured
-Markdown file using a 3-stage pipeline:
+Markdown file using a 4-stage pipeline (docs/confluence-conversion-rules.md):
 
-  Stage 1 — Pre-process  : BeautifulSoup strips UI chrome, normalises
-                            Confluence macros, ADR cards, code blocks, etc.
-  Stage 2 — Convert      : pandoc converts clean HTML → GFM markdown
-  Stage 3 — Post-process : Fix fence spacing, unescape bold, inject YAML
-                           front matter and [[_TOC_]]
+  Stage A — Pre-process  : BeautifulSoup strips UI chrome and rewrites
+                            Confluence constructs into the pandoc-friendly
+                            intermediate (PFI-HTML: div/span + data-* attrs)
+  Stage B — Read         : pandoc converts clean HTML → JSON AST
+  Stage C — Filter       : in-process panflute filter (confluence_pf_filter)
+                            renders admonitions/expands/lozenges/layouts and
+                            simplifies tables on the AST
+  Stage B' — Write       : pandoc converts JSON AST → GFM markdown
+  Stage D — Post-process : fence-aware regex fixes + YAML-safe front matter
 
 Usage
 -----
   python html_to_gitlab_md.py input.html
   python html_to_gitlab_md.py input.html -o docs/architecture.md
   python html_to_gitlab_md.py input.html --selector "article.main" --title "My Doc"
-  python html_to_gitlab_md.py input.html --no-frontmatter --no-toc
+  python html_to_gitlab_md.py input.html --no-frontmatter --toc
 
 Requirements
 ------------
@@ -48,12 +52,27 @@ Changelog
         subtypes, syntaxhighlighter code blocks (brush → language), AUI status
         lozenges, expand → <details>, DC content selectors, emoticons,
         task lists, inline-comment unwrap, and page-info/children macro removal.
-  v2.1  Full conformance with docs/CONFLUENCE_FORMAT_INSTRUCTIONS.md: spec §18
-        selector priority, panel title/body, anchor macros, standalone
+  v2.1  Full conformance with docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md:
+        spec §18 selector priority, panel title/body, anchor macros, standalone
         syntaxhighlighter pres, &nbsp; cleanup, pageSection unwrap, column-layout
         flattening, merged/nested-table warnings, ac:/ri:/at: storage handlers
         (links, images, template vars + catch-all), and a ConversionNotes
         report of warnings / macro counts / languages (spec §16).
+  v3.0  Rendered-HTML scope of docs/confluence-conversion-rules.md: 4-stage
+        pipeline with an in-process panflute Stage C (PFI contract — the
+        unwrap/scrub is PFI-aware); admonitions/panels → plain blockquote
+        labels (no emoji); expand → bold paragraph (no <details>); lozenges →
+        bold text; layouts flattened with NO <hr>; anchor policy (targets
+        dropped, same-page links → plain text, ids scrubbed); emoticons →
+        plain words; HX-MENTION/-JIRA/-PROFILE/-GALLERY/-VIEWFILE handlers;
+        data-URI images → alt text; attachments/comments pageSections dropped
+        before unwrap; pre-root chrome harvest → notes.metadata feeds
+        YAML-safe frontmatter (author: singular, date:, page_id:); Stage-D
+        regexes fence-aware (angle-bracket unescape DELETED); checkbox-input
+        task lists; bare-pre language detection removed (HX-PRE).
+        BREAKING: --no-toc replaced by opt-in --toc (default OFF);
+        convert_file(add_toc=) default flipped to False; notes dict gains
+        "metadata"; the id attribute no longer survives the scrub.
 """
 
 import argparse
@@ -66,12 +85,20 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, cast
 
+import yaml
+
 # ── Optional: warn if bs4 not installed ──────────────────────────────────────
 try:
     from bs4 import BeautifulSoup, Comment
     from bs4.element import Tag
 except ImportError:
     sys.exit("ERROR: beautifulsoup4 not installed.\n  Run:  pip install beautifulsoup4 lxml")
+
+# Stage-C panflute filter (flow-B helper module; it never invokes pandoc).
+try:
+    from .confluence_pf_filter import LANG_ALIASES, apply_confluence_filter
+except ImportError:  # script mode: python html_to_gitlab_md.py
+    from sdd_pipeline.confluence_pf_filter import LANG_ALIASES, apply_confluence_filter
 
 
 class ConversionError(RuntimeError):
@@ -90,6 +117,9 @@ class ConversionNotes:
     errors: list[str] = field(default_factory=list)
     macro_counts: dict[str, int] = field(default_factory=dict)
     languages: list[str] = field(default_factory=list)
+    # Provenance harvested from page chrome (HX-CHROME-TITLE/-METADATA):
+    # title / space / author / date / page_id — feeds the frontmatter.
+    metadata: dict[str, str] = field(default_factory=dict)
 
     def warn(self, message: str) -> None:
         self.warnings.append(message)
@@ -110,6 +140,7 @@ class ConversionNotes:
             "errors": list(self.errors),
             "macro_counts": dict(self.macro_counts),
             "languages": list(self.languages),
+            "metadata": dict(self.metadata),
         }
 
 
@@ -191,8 +222,17 @@ def preprocess(
     notes = notes or ConversionNotes()
     soup: BeautifulSoup = BeautifulSoup(html, "lxml")
 
+    # ── 0. Harvest page chrome on the FULL soup (HX-CHROME-TITLE/-METADATA) ──
+    #      The harvest sources (#main-header, page-metadata) live OUTSIDE the
+    #      typical content root — read them BEFORE root selection discards them.
+    _harvest_page_chrome(soup, notes)
+
     # ── 1a. Find content root ────────────────────────────────────────────────
     content: Tag = _find_content_root(soup, selector)
+
+    # ── 1a.1 Drop attachments/comments pageSections (HX-CHROME-ATTACH/-COMMENTS)
+    #        BEFORE the generic unwrap below would leak their link dumps.
+    _drop_attachment_comment_sections(content, notes)
 
     # ── 1a.2 Unwrap structural pageSection wrappers (spec §19) ───────────────
     for el in _select(content, "div.pageSection"):
@@ -201,32 +241,55 @@ def preprocess(
     # ── 1b. Remove UI chrome ─────────────────────────────────────────────────
     _remove_ui_chrome(content)
 
-    # ── 1b.1 Emoticon images → unicode ───────────────────────────────────────
+    # ── 1b.05 Early inline-text rules (HX-TEXT-STRIKE / SMALLBIG / TIME) ─────
+    #        MUST run before any unwrap/scrub: the scrub strips style attrs and
+    #        pandoc drops self-closing <time> at read.
+    _normalise_inline_text(content)
+
+    # ── 1b.1 Emoticon images → plain words (HX-EMOTICON) ─────────────────────
     _normalise_emoticons(content, notes)
 
-    # ── 1c. Normalise Confluence macros → blockquotes ────────────────────────
-    _normalise_macros(soup, content, notes)
+    # ── 1b.2 User mentions → plain names (HX-MENTION) ────────────────────────
+    _run(notes, "mentions", lambda: _normalise_mentions(content, notes))
 
-    # ── 1c.1 Anchor macro: empty span[id] → <a id> ───────────────────────────
-    _normalise_anchors(soup, content)
+    # ── 1b.3 Jira issue spans (HX-JIRA) — before lozenges (consumes its own) ──
+    _run(notes, "jira", lambda: _normalise_jira(soup, content, notes))
+
+    # ── 1b.4 Profile macros → display names (HX-PROFILE) ─────────────────────
+    _run(notes, "profiles", lambda: _normalise_profiles(content, notes))
+
+    # ── 1c. Admonitions / panels → PFI div.adm (HX-ADMONITION / HX-PANEL) ────
+    _normalise_admonitions(soup, content, notes)
+
+    # ── 1c.0 Expand macros → PFI div.expand (HX-EXPAND — no <details>) ───────
+    _normalise_expands(soup, content, notes)
+
+    # ── 1c.1 Anchor policy: same-page links → text; empty targets dropped ────
+    _flatten_samepage_links(content, notes)
 
     # ── 1d. Flatten ADR cards ─────────────────────────────────────────────────
     _flatten_adr_cards(soup, content)
 
-    # ── 1e. Badge spans → inline code ────────────────────────────────────────
+    # ── 1e. Badge spans → inline code; status lozenges → PFI span.lozenge ────
     _normalise_badges(soup, content, notes)
 
-    # ── 1e.1 Task lists → markdown checkboxes ────────────────────────────────
+    # ── 1e.1 Task lists → real checkbox inputs (pandoc emits ``- [x]``) ──────
     _normalise_task_lists(soup, content, notes)
 
-    # ── 1f. Diagrams → placeholder (or keep SVG) ─────────────────────────────
+    # ── 1f.0 Galleries / view-files / embedded-image alt copy (HX-IMG family) ─
+    #        Order is load-bearing: the gallery consumes embedded-image cells.
+    _run(notes, "gallery", lambda: _normalise_gallery(soup, content, notes))
+    _run(notes, "viewfile", lambda: _normalise_viewfiles(soup, content, notes))
+    _run(notes, "embedded-img", lambda: _normalise_embedded_images(content))
+
+    # ── 1f. Diagrams: data-URI → alt text; SVG figures → caption (HX-IMG-DATA)
     if not keep_diagrams:
-        _replace_diagrams(soup, content)
+        _normalise_diagrams(soup, content, notes)
 
     # ── 1g. Code blocks: strip colour spans, add language class ─────────────
     _normalise_code_blocks(soup, content, notes)
 
-    # ── 1g.1 Multi-column layouts → linear sections + <hr> ───────────────────
+    # ── 1g.1 Multi-column layouts → PFI layout divs (HX-LAYOUT, no <hr>) ─────
     _run(notes, "layouts", lambda: _normalise_layouts(soup, content, notes))
 
     # ── 1g.2 Flag tables GFM can't represent (merged/nested cells) ───────────
@@ -235,8 +298,8 @@ def preprocess(
     # ── 1h. Page-props macro table ───────────────────────────────────────────
     _normalise_page_props(soup, content)
 
-    # ── 1i. TOC macro → placeholder ──────────────────────────────────────────
-    for toc in _select(content, ".toc-macro, .toc, #toc"):
+    # ── 1i. TOC macro → delete (incl. Cloud client-side variant) ─────────────
+    for toc in _select(content, ".toc-macro, .toc, #toc, .client-side-toc-macro"):
         toc.decompose()
 
     # ── 1j. Expand/details wrappers — keep GitLab-compatible <details> ───────
@@ -268,15 +331,27 @@ def preprocess(
     for wrapper in _find_all(content, "div") + _find_all(content, "span"):
         if wrapper.find_parent("pre") is not None:
             continue  # leave anything inside code blocks alone
+        if _PFI_CLASSES & set(_as_list(wrapper.get("class"))):
+            continue  # PFI carriers must reach the Stage-C filter intact (§1)
         wrapper.unwrap()
 
-    # ── 1l. Scrub attributes to a safe allow-list ────────────────────────────
-    #        Keep only attrs that carry meaning downstream; preserve "language-*"
-    #        classes on <code> so pandoc fences code with the right language.
-    allowed_attrs = {"href", "src", "alt", "title", "id", "colspan", "rowspan"}
+    # ── 1l. Scrub attributes to a safe allow-list (PFI-aware) ────────────────
+    #        Keep only attrs that carry meaning downstream. PFI elements keep
+    #        class + data-macro/data-title/data-colour (the Stage-C contract);
+    #        checkbox inputs keep type/checked (task lists); "language-*"
+    #        classes stay on <code> so pandoc fences code with the right
+    #        language. ``id`` is NOT kept — anchor policy: targets are dropped
+    #        and same-page links are plain text, so ids are zero-content HTML.
+    allowed_attrs = {"href", "src", "alt", "title", "colspan", "rowspan"}
+    pfi_attrs = {"class", "data-macro", "data-title", "data-colour"}
     for tag in _find_all(content, True):
+        is_pfi = bool(_PFI_CLASSES & set(_as_list(tag.get("class"))))
         for attr in list(tag.attrs.keys()):
             if attr in allowed_attrs:
+                continue
+            if is_pfi and attr in pfi_attrs:
+                continue
+            if tag.name == "input" and attr in ("type", "checked"):
                 continue
             # Keep language-* classes on <code> so pandoc fences them correctly
             if tag.name == "code" and attr == "class":
@@ -294,6 +369,92 @@ def preprocess(
     return clean_html
 
 
+# PFI-HTML classes (the Stage A ↔ Stage C contract, conversion-rules §1): the
+# blanket unwrap and the attribute scrub must let these carriers through, or
+# the entire Stage-C filter is dead code.
+_PFI_CLASSES = {"adm", "expand", "lozenge", "layout", "layout-col"}
+
+
+def _harvest_page_chrome(soup: BeautifulSoup, notes: ConversionNotes) -> None:
+    """Harvest title/space/author/date/page_id into ``notes.metadata``
+    (HX-CHROME-TITLE / HX-CHROME-METADATA / FM-TITLE / FM-PAGEID).
+
+    Runs on the FULL soup before ``_find_content_root`` — the sources live
+    outside the content root. Harvest only; deletion stays with the chrome
+    selectors after root selection.
+    """
+    meta = notes.metadata
+
+    title_el = _select_one(soup, "span#title-text") or _select_one(soup, "head > title")
+    if title_el is not None:
+        raw = title_el.get_text(" ", strip=True)
+        if " : " in raw:
+            space, _, title = raw.partition(" : ")
+            if space.strip():
+                meta.setdefault("space", space.strip())
+            if title.strip():
+                meta.setdefault("title", title.strip())
+        elif raw:
+            meta.setdefault("title", raw)
+
+    pm = _select_one(soup, "div.page-metadata")
+    if pm is not None:
+        author_el = _select_one(pm, "span.author") or _select_one(pm, "a.url.fn")
+        if author_el is not None:
+            author = author_el.get_text(" ", strip=True)
+            if author:
+                meta.setdefault("author", author)
+        m = re.search(r"\bon (.+?)\s*$", pm.get_text(" ", strip=True))
+        if m:
+            meta.setdefault("date", m.group(1).strip())
+
+    for el in _find_all(soup, ["img", "a"]):
+        ref = str(el.get("src") or el.get("href") or "")
+        m = re.search(r"attachments/(\d+)/", ref)
+        if m:
+            meta.setdefault("page_id", m.group(1))
+            break
+
+
+def _drop_attachment_comment_sections(content: Tag, notes: ConversionNotes) -> None:
+    """Drop the export-footer "Attachments"/"Comments" pageSections wholesale
+    (HX-CHROME-ATTACH-SECTION / HX-CHROME-COMMENTS).
+
+    When the content root is ``#content`` these sections sit INSIDE it, and the
+    generic pageSection unwrap would leak their raw link dumps into the corpus
+    — the canonical ``link_density`` failure.
+    """
+    for el in _select(content, "div.pageSection"):
+        if _select_one(el, "h2#attachments") is not None:
+            el.decompose()
+            notes.bump("attachments_section")
+        elif _select_one(el, "h2#comments") is not None:
+            el.decompose()
+            notes.bump("comments_section")
+
+
+def _normalise_inline_text(content: Tag) -> None:
+    """Early inline-text rules, BEFORE any unwrap/scrub (conversion-rules §2.1/§3):
+
+    - ``span[style*=line-through]`` → ``<del>`` (HX-TEXT-STRIKE — the scrub
+      strips the style attr and the unwrap deletes the span, erasing the
+      rejected-decision signal);
+    - ``small``/``big`` → unwrap (deprecated presentation tags);
+    - ``<time datetime>`` → ISO date text (pandoc drops self-closing ``time``
+      at read, so a Stage-C rule is physically unreachable).
+    """
+    for span in _find_all(content, "span"):
+        style = str(span.get("style") or "")
+        if "line-through" in style:
+            span.name = "del"
+            del span["style"]
+    for el in _find_all(content, ["small", "big"]):
+        el.unwrap()
+    for t in _find_all(content, "time"):
+        iso = str(t.get("datetime") or "").strip()
+        t.replace_with(iso or t.get_text(" ", strip=True))
+
+
 def _find_content_root(soup: BeautifulSoup, selector: str | None) -> Tag:
     """Try selector → common Confluence selectors → semantic HTML → body."""
     candidates: list[str] = []
@@ -301,10 +462,16 @@ def _find_content_root(soup: BeautifulSoup, selector: str | None) -> Tag:
         candidates = [selector]
 
     candidates += [
-        # Confluence DC 8.5.x export containers (spec §18 priority order)
+        # Confluence DC 8.5.x export containers (spec §18 priority order;
+        # #content-view is legacy code-derived — the research catalog documents
+        # div#content.view, added below per HX-ROOT)
         "div#content-view",
         "div.wiki-content",
         "div#main-content",
+        # Catalog-backed content wrapper; space index.html pages root at
+        # #content (its attachments/comments pageSections are dropped first).
+        "div#content.view",
+        "div#content",
         "div#page-content",
         "div.content-body",
         # Confluence Cloud export classes
@@ -364,87 +531,118 @@ def _remove_ui_chrome(content: Tag) -> None:
             el.decompose()
 
 
-# Confluence info-macro class → (blockquote label, report count key). Subtype
-# classes MUST precede the generic ``confluence-information-macro``: every DC
-# info panel carries the base class too, so the generic entry would otherwise
-# grab (and mislabel) warnings/tips/notes as INFO before the subtype matches.
-_MACRO_LABELS = {
-    "macro-info": ("ℹ️ **INFO**", "info"),
-    "macro-note": ("📝 **NOTE**", "note"),
-    "macro-warning": ("⚠️ **WARNING**", "warning"),
-    "macro-tip": ("✅ **TIP**", "tip"),
-    "confluence-information-macro-information": ("ℹ️ **INFO**", "info"),
-    "confluence-information-macro-warning": ("⚠️ **WARNING**", "warning"),
-    "confluence-information-macro-tip": ("✅ **TIP**", "tip"),
-    "confluence-information-macro-note": ("📝 **NOTE**", "note"),
-    "aui-message-info": ("ℹ️ **INFO**", "info"),
-    "aui-message-warning": ("⚠️ **WARNING**", "warning"),
-    "aui-message-error": ("❌ **ERROR**", "error"),
-    "aui-message-success": ("✅ **TIP**", "tip"),
-    "confluence-information-macro": ("ℹ️ **INFO**", "info"),  # generic — keep LAST
+# Confluence info-macro class → (PFI ``data-macro`` value, report count key).
+# Subtype classes MUST precede the generic ``confluence-information-macro``:
+# every DC info panel carries the base class too, so the generic entry would
+# otherwise grab (and mislabel) warnings/tips/notes as info before the subtype
+# matches. No emoji anywhere — PF-ADMONITION renders a plain searchable word.
+_ADMONITION_TYPES = {
+    "macro-info": ("info", "info"),
+    "macro-note": ("note", "note"),
+    "macro-warning": ("warning", "warning"),
+    "macro-tip": ("tip", "tip"),
+    "confluence-information-macro-information": ("info", "info"),
+    "confluence-information-macro-warning": ("warning", "warning"),
+    "confluence-information-macro-tip": ("tip", "tip"),
+    "confluence-information-macro-note": ("note", "note"),
+    "aui-message-info": ("info", "info"),
+    "aui-message-warning": ("warning", "warning"),
+    "aui-message-error": ("warning", "error"),
+    "aui-message-success": ("tip", "tip"),
+    "confluence-information-macro": ("info", "info"),  # generic — keep LAST
 }
 
 
-def _normalise_macros(soup: BeautifulSoup, content: Tag, notes: ConversionNotes) -> None:
-    """Convert Confluence info/note/warning/tip/panel macros to blockquotes, and
-    expand macros to ``<details>`` (spec §10a/§10b/§10c)."""
-    for cls, (label, key) in _MACRO_LABELS.items():
+def _replace_with_adm(soup: BeautifulSoup, el: Tag, macro: str, title: str, body: Tag) -> None:
+    """Replace *el* with a PFI ``div.adm[data-macro][data-title]`` whose body
+    children are moved as real blocks (no ``get_text`` flattening — lists and
+    code inside the body survive; PF-ADMONITION renders the blockquote)."""
+    div = _new_tag(soup, "div")
+    div["class"] = cast(Any, ["adm"])
+    div["data-macro"] = macro
+    if title:
+        div["data-title"] = title
+    for child in list(body.contents):
+        div.append(child.extract())
+    el.replace_with(div)
+
+
+def _normalise_admonitions(soup: BeautifulSoup, content: Tag, notes: ConversionNotes) -> None:
+    """HX-ADMONITION / HX-PANEL → PFI ``div.adm`` (all generations).
+
+    Covers modern ``confluence-information-macro`` divs, AUI messages, generic
+    panels, and legacy pre-5.x ``div.panelMacro > table.{x}Macro``.
+    """
+    for cls, (macro, key) in _ADMONITION_TYPES.items():
         for el in _select(content, f".{cls}"):
             # Skip Confluence code-macro wrappers (<div class="code panel pdl">):
             # they share macro-ish classes but are code blocks, handled later by
             # _normalise_code_blocks.
             if "code" in _as_list(el.get("class")):
                 continue
-            # Drop the inner title/icon elements — the label already identifies it
-            for t in _select(
-                el,
-                ".macro-title, .title, .aui-message-header, .aui-icon, "
-                ".confluence-information-macro-icon",
-            ):
-                t.decompose()
-            inner = el.get_text(separator=" ", strip=True)
-            bq = _new_tag(soup, "blockquote")
-            p = _new_tag(soup, "p")
-            p.string = f"{label}: {inner}"
-            bq.append(p)
-            el.replace_with(bq)
+            title = ""
+            title_el = _select_one(el, "p.title, .macro-title, .aui-message-header")
+            if title_el is not None:
+                title = title_el.get_text(" ", strip=True)
+                title_el.decompose()
+            for icon in _select(el, ".aui-icon, .confluence-information-macro-icon"):
+                icon.decompose()
+            body = _select_one(el, ".confluence-information-macro-body, .aui-message-content")
+            _replace_with_adm(soup, el, macro, title, body or el)
             notes.bump(key)
 
-    # ── Panel macro (spec §10b): title from .panelHeader, body from .panelContent
+    # ── Panel macro: title from .panelHeader, body from .panelContent ────────
     for el in _select(content, "div.panel, div.macro-panel"):
-        if "code" in _as_list(el.get("class")):
-            continue  # code panels are handled by _normalise_code_blocks
+        classes = _as_list(el.get("class"))
+        if "code" in classes or "preformatted" in classes:
+            continue  # code/noformat panels are handled by _normalise_code_blocks
         header_el = _select_one(el, ".panelHeader, .panel-heading")
         title = header_el.get_text(" ", strip=True) if header_el else ""
         if header_el:
             header_el.decompose()
         body_el = _select_one(el, ".panelContent, .panel-body")
-        panel_body = (body_el or el).get_text(" ", strip=True)
-        label = f"📋 **{title}**" if title else "📋 **PANEL**"
-        bq = _new_tag(soup, "blockquote")
-        p = _new_tag(soup, "p")
-        p.string = f"{label}: {panel_body}"
-        bq.append(p)
-        el.replace_with(bq)
+        _replace_with_adm(soup, el, "panel", title, body_el or el)
         notes.bump("panel")
 
-    # ── DC 8.5.x expand macros → native <details>/<summary> (spec §10c) ───────
-    #     div.expand-container > div.expand-control (toggle) + div.expand-content
+    # ── Legacy pre-5.x admonitions (VER-LEGACY-ADMONITION) ───────────────────
+    legacy = {
+        "infoMacro": "info",
+        "noteMacro": "note",
+        "warningMacro": "warning",
+        "tipMacro": "tip",
+    }
+    for el in _select(content, "div.panelMacro"):
+        table = _find(el, "table")
+        macro = "info"
+        if table is not None:
+            for c in _as_list(table.get("class")):
+                if c in legacy:
+                    macro = legacy[c]
+                    break
+        cells = _find_all(el, "td")
+        body_cell = cells[-1] if cells else el  # icon img sits in the first td
+        _replace_with_adm(soup, el, macro, "", body_cell)
+        notes.bump(macro)
+
+
+def _normalise_expands(soup: BeautifulSoup, content: Tag, notes: ConversionNotes) -> None:
+    """HX-EXPAND → PFI ``div.expand[data-title]`` (no ``<details>`` — raw HTML
+    in the corpus hides content from naive renderers; PF-EXPAND renders a bold
+    title paragraph + the body as first-class prose)."""
     for exp in _select(content, ".expand-container"):
         label_el = _select_one(exp, ".expand-control-text") or _select_one(exp, ".expand-control")
-        label = label_el.get_text(strip=True) if label_el else "Details"
+        label = label_el.get_text(strip=True) if label_el else ""
 
-        details = _new_tag(soup, "details")
-        summary = _new_tag(soup, "summary")
-        summary.string = label
-        details.append(summary)
-
+        div = _new_tag(soup, "div")
+        div["class"] = cast(Any, ["expand"])
+        if label:
+            div["data-title"] = label
         body = _select_one(exp, ".expand-content")
-        if body is not None:
-            for child in list(body.contents):
-                details.append(child.extract())
-
-        exp.replace_with(details)
+        for child in list((body or exp).contents):
+            div.append(child.extract())
+        for ctl in _select(div, ".expand-control"):
+            ctl.decompose()  # control row, when the body was the container itself
+        exp.replace_with(div)
         notes.bump("expand")
 
 
@@ -490,75 +688,143 @@ def _flatten_adr_cards(soup: BeautifulSoup, content: Tag) -> None:
         el.decompose()
 
 
+# AUI lozenge colour subtypes recognised for the PFI data-colour attribute.
+_LOZENGE_COLOURS = ("success", "error", "current", "complete", "moved", "warning")
+
+
 def _normalise_badges(soup: BeautifulSoup, content: Tag, notes: ConversionNotes) -> None:
-    """Replace coloured badge spans / AUI status lozenges with inline code."""
+    """Badge spans (ADR cards) → inline code; AUI status lozenges → PFI
+    ``span.lozenge[data-colour]`` (HX-STATUS).
+
+    PF-LOZENGE renders ``**text**`` — the status word is the signal; colour is
+    styling. Plain bold beats inline-code-with-emoji: backticked status text
+    gets mistaken for code entities, and emoji add no vector signal.
+    """
     for el in _select(content, "span.badge, span[class*='badge']"):
+        if "lozenge" in " ".join(_as_list(el.get("class"))):
+            continue  # lozenges are handled below
         code = _new_tag(soup, "code")
         code.string = el.get_text(strip=True)
         el.replace_with(code)
 
-    # ── DC 8.5.x AUI status lozenges → inline code w/ emoji prefix (spec §10g)
-    #     <span class="status-macro aui-lozenge aui-lozenge-success">Approved</span>
-    #     Colour subtypes are matched FIRST so a coloured status macro keeps its
-    #     emoji instead of falling through to the plain (no-prefix) handler below.
-    #     Per spec the emoji goes INSIDE the <code> and the text is left as-is.
-    lozenge_prefixes = [
-        ("span.aui-lozenge-success", "✅ "),
-        ("span.aui-lozenge-error", "❌ "),
-        ("span.aui-lozenge-warning", "⚠️ "),
-        ("span.aui-lozenge-current", "🔵 "),
-        ("span.aui-lozenge-complete", "✓ "),
-    ]
-    for selector, prefix in lozenge_prefixes:
-        for el in _select(content, selector):
-            code = _new_tag(soup, "code")
-            code.string = f"{prefix}{el.get_text(strip=True)}"
-            el.replace_with(code)
-            notes.bump("status")
-
-    # Remaining status macros / lozenges with no colour subtype → plain code.
     for el in _select(content, "span.status-macro, span.aui-lozenge"):
-        code = _new_tag(soup, "code")
-        code.string = el.get_text(strip=True)
-        el.replace_with(code)
+        colour = ""
+        for c in _as_list(el.get("class")):
+            m = re.match(r"aui-lozenge-(\w+)", c)
+            if m and m.group(1) in _LOZENGE_COLOURS:
+                colour = m.group(1)
+                break
+        span = _new_tag(soup, "span")
+        span["class"] = cast(Any, ["lozenge"])
+        if colour:
+            span["data-colour"] = colour
+        span.string = el.get_text(strip=True)
+        el.replace_with(span)
         notes.bump("status")
 
 
-# Confluence emoticon NAME → unicode (spec §11). Keys are the stripped emoticon
-# name (parens removed from the img alt, e.g. "(smile)" → "smile"). Newer exports
-# may already set the emoji as the alt, in which case it passes through unchanged.
-_EMOTICON_MAP = {
-    "smile": "😊",
-    "sad": "😞",
-    "cheeky": "😛",
-    "laugh": "😄",
-    "wink": "😉",
-    "thumbs-up": "👍",
-    "thumbs-down": "👎",
-    "information": "ℹ️",
-    "tick": "✅",
-    "cross": "❌",
-    "warning": "⚠️",
-    "star": "⭐",
-    "heart": "❤️",
-    "broken-heart": "💔",
-    "light-on": "💡",
-    "light-off": "💡",
-    "yellow-star": "⭐",
-    "red-star": "🌟",
-    "green-star": "💚",
-    "blue-star": "💙",
+def _normalise_mentions(content: Tag, notes: ConversionNotes) -> None:
+    """HX-MENTION: user-profile links → the display name as plain text.
+
+    Profile hrefs are dead outside Confluence and inflate ``link_density``;
+    the name is the entity.
+    """
+    for a in _select(content, "a.confluence-userlink"):
+        a.replace_with(a.get_text(" ", strip=True))
+        notes.bump("mention")
+
+
+def _normalise_jira(soup: BeautifulSoup, content: Tag, notes: ConversionNotes) -> None:
+    """HX-JIRA: jira-issue spans → ``[KEY](clean-url) summary (status)``.
+
+    Key + summary + status is dense, query-matching text; widget chrome is not.
+    Runs BEFORE the lozenge handler — it consumes the status lozenge inside.
+    """
+    for span in _select(content, "span.jira-issue, span.confluence-jim-macro"):
+        if span.find_parent(class_="jira-issue") is not None:
+            continue  # nested decoration — handled with its root
+        key_a = _select_one(span, "a.jira-issue-key") or _select_one(span, "a[href*='/browse/']")
+        if key_a is None:
+            inner_table = _find(span, "table")
+            if inner_table is not None:
+                span.replace_with(inner_table.extract())  # table mode: keep the table
+            else:
+                span.decompose()  # degraded error paragraph / empty widget
+            notes.bump("jira")
+            continue
+        href = re.sub(r"[?&]src=confmacro\b", "", str(key_a.get("href") or ""))
+        key_text = key_a.get_text(strip=True)
+        summary_el = _select_one(span, "span.summary")
+        summary = summary_el.get_text(" ", strip=True) if summary_el else ""
+        status_el = _select_one(span, "span.aui-lozenge")
+        status = status_el.get_text(strip=True) if status_el else ""
+        resolved = "resolved" in _as_list(span.get("class"))
+
+        a = _new_tag(soup, "a", href=href)
+        a.string = key_text or href
+        bits = [b for b in (summary, f"({status})" if status else "") if b]
+        if resolved:
+            bits.append("(resolved)")
+        parts: list[Any] = [a]
+        if bits:
+            parts.append(" " + " ".join(bits))
+        span.replace_with(*parts)
+        notes.bump("jira")
+
+    for el in _select(content, ".refresh-module, .jira-error"):
+        el.decompose()  # refresh-widget wrappers / error paragraphs
+
+
+def _normalise_profiles(content: Tag, notes: ConversionNotes) -> None:
+    """HX-PROFILE: profile-macro vcards → the display name as plain text."""
+    for el in _select(content, "div.profile-macro"):
+        img = _select_one(el, "img.userLogo")
+        name = ""
+        if img is not None:
+            name = re.sub(r"^User icon:\s*", "", str(img.get("alt") or "")).strip()
+        if not name:
+            link = _select_one(el, "a")
+            name = link.get_text(" ", strip=True) if link else el.get_text(" ", strip=True)
+        el.replace_with(name)
+        notes.bump("profile")
+
+
+# Confluence emoticon NAME → plain searchable WORD (HX-EMOTICON — never emoji:
+# a word is an ASCII token the embedder and BM25 can match; literal emoji add
+# no vector signal and trip the documented cp1252 console pitfalls). Keys are
+# the stripped emoticon name (parens removed, e.g. "(smile)" → "smile").
+_EMOTICON_WORDS = {
+    "smile": "smile",
+    "sad": "sad",
+    "cheeky": "cheeky",
+    "laugh": "laugh",
+    "wink": "wink",
+    "thumbs-up": "thumbs-up",
+    "thumbs-down": "thumbs-down",
+    "information": "info",
+    "tick": "yes",
+    "cross": "no",
+    "warning": "warning",
+    "star": "star",
+    "heart": "heart",
+    "broken-heart": "broken-heart",
+    "light-on": "idea",
+    "light-off": "idea",
+    "yellow-star": "star",
+    "red-star": "star",
+    "green-star": "star",
+    "blue-star": "star",
     # Legacy / classic alt spellings (space- and word-variants) — non-conflicting.
-    "info": "ℹ️",
-    "error": "❌",
-    "big grin": "😀",
-    "thumbs up": "👍",
-    "thumbs down": "👎",
-    "tongue": "😛",
-    "plus": "➕",
-    "minus": "➖",
-    "question": "❓",
-    "flag": "🚩",
+    "info": "info",
+    "error": "error",
+    "big grin": "grin",
+    "thumbs up": "thumbs-up",
+    "thumbs down": "thumbs-down",
+    "tongue": "cheeky",
+    "plus": "plus",
+    "minus": "minus",
+    "question": "question",
+    "flag": "flag",
 }
 
 
@@ -568,20 +834,24 @@ def _emoticon_key(raw: str) -> str:
 
 
 def _normalise_emoticons(content: Tag, notes: ConversionNotes) -> None:
-    """Replace Confluence emoticons (img or <ac:emoticon>) with unicode (spec §11)."""
+    """Replace Confluence emoticons with plain words (HX-EMOTICON).
+
+    Key preference: ``data-emoticon-name`` → stripped ``alt`` — A1/A2 symmetry
+    with the storage path's shortname→word chain; never emit emoji.
+    """
     for img in _find_all(content, "img"):
         if not any("emoticon" in c for c in _as_list(img.get("class"))):
             continue
-        alt = str(img.get("alt") or "").strip()
-        key = _emoticon_key(alt)
-        img.replace_with(_EMOTICON_MAP.get(key, alt or key))
+        raw = str(img.get("data-emoticon-name") or img.get("alt") or "").strip()
+        key = _emoticon_key(raw)
+        img.replace_with(_EMOTICON_WORDS.get(key, key))
         notes.bump("emoticon")
 
     # Storage form — best effort; <ac:emoticon> only survives some HTML exports.
     for em in _find_all(content, "ac:emoticon"):
         name = str(em.get("ac:name") or em.get("name") or "")
         key = _emoticon_key(name)
-        em.replace_with(_EMOTICON_MAP.get(key, f"({key})" if key else ""))
+        em.replace_with(_EMOTICON_WORDS.get(key, key))
         notes.bump("emoticon")
 
 
@@ -589,15 +859,18 @@ def _normalise_task_lists(soup: BeautifulSoup, content: Tag, notes: ConversionNo
     """Convert Confluence task lists to GitLab markdown checkboxes (spec §5).
 
     Handles the rendered export form (``ul.inline-task-list`` whose ``li`` items
-    carry a ``checked`` class) and the storage form (``<ac:task>`` with an
-    ``<ac:task-status>`` of ``complete``). The ``[ ]`` / ``[x]`` markers are
-    emitted as text; ``postprocess`` later unescapes pandoc's ``\\[`` to ``[``.
+    carry a ``checked`` class — synthesized as real ``<input type="checkbox">``
+    elements, which pandoc converts natively to ``- [x]`` / ``- [ ]``) and the
+    storage form (``<ac:task>`` with an ``<ac:task-status>`` of ``complete``,
+    still text markers; MD-TASKBOX in Stage D remains as its backstop).
     """
-    # Rendered export form
+    # Rendered export form → real checkbox inputs (HX-TASKLIST)
     for ul in _select(content, "ul.inline-task-list"):
         for li in _find_all(ul, "li"):
-            mark = "[x] " if "checked" in _as_list(li.get("class")) else "[ ] "
-            li.insert(0, mark)
+            attrs: dict[str, Any] = {"type": "checkbox"}
+            if "checked" in _as_list(li.get("class")):
+                attrs["checked"] = ""
+            li.insert(0, _new_tag(soup, "input", **attrs))
             notes.bump("task")
 
     # Storage form — best effort; <ac:*> tags only survive some HTML exports.
@@ -614,36 +887,48 @@ def _normalise_task_lists(soup: BeautifulSoup, content: Tag, notes: ConversionNo
         tl.name = "ul"
 
 
-def _normalise_anchors(soup: BeautifulSoup, content: Tag) -> None:
-    """Anchor macro (spec §10i): empty ``<span id="...">`` → ``<a id="...">``.
+def _flatten_samepage_links(content: Tag, notes: ConversionNotes) -> None:
+    """Anchor policy (HX-ANCHOR + SF-LINK-EXT carve-out, conversion-rules §3):
+    same-page links degrade to plain text and empty anchor targets are deleted.
 
-    GitLab Markdown supports inline HTML anchors, so this preserves in-page
-    link targets that pandoc would otherwise drop with the stripped span.
+    The rendered-export anchor-id scheme (``#PageTitle-Heading``) never matches
+    GitLab's heading slugs, and the targets are dropped anyway — a kept
+    ``[text](#anchor)`` would be a guaranteed-dead link inflating
+    ``link_density``. Heading ids fall out via the attribute scrub.
     """
-    for span in _find_all(content, "span"):
-        anchor_id = span.get("id")
-        if anchor_id and not span.get_text(strip=True) and not _find_all(span, True):
-            span.replace_with(_new_tag(soup, "a", id=str(anchor_id)))
+    for a in _find_all(content, "a"):
+        href = str(a.get("href") or "")
+        if not href.startswith("#"):
+            continue
+        if a.get_text(strip=True) or _find_all(a, True):
+            a.unwrap()
+        else:
+            a.decompose()
+        notes.bump("anchor_link_flattened")
+    for el in _find_all(content, ["a", "span"]):
+        if el.get("id") and not el.get_text(strip=True) and not _find_all(el, True):
+            el.decompose()
+            notes.bump("anchor_dropped")
 
 
 def _normalise_layouts(soup: BeautifulSoup, content: Tag, notes: ConversionNotes) -> None:
-    """Flatten Confluence multi-column layouts (spec §12).
+    """HX-LAYOUT → PFI ``div.layout`` / ``div.layout-col``.
 
-    GFM has no columns, so each cell's content is emitted linearly with an
-    ``<hr>`` between cells, and a warning is recorded for manual review.
+    PF-LAYOUT-FLATTEN linearizes the cells in document order — plain
+    concatenation, NO ``<hr>`` separators (resolved decision, conversion-rules
+    §10: columns are visual; reading order is what chunkers need).
     """
-    for layout in _select(content, "div.columnLayout"):
-        cells = _select(layout, "div.cell") or _select(layout, "div.innerCell")
-        if not cells:
-            continue
-        new_nodes: list[Any] = []
-        for i, cell in enumerate(cells):
-            if i:
-                new_nodes.append(_new_tag(soup, "hr"))
-            new_nodes.extend(child.extract() for child in list(cell.contents))
-        layout.replace_with(*new_nodes)
-        notes.warn("Layout columns flattened — review manually")
+    for inner in _select(content, "div.columnLayout div.innerCell"):
+        inner.unwrap()
+    for cell in _select(content, "div.columnLayout div.cell"):
+        cell.attrs = {}
+        cell["class"] = cast(Any, ["layout-col"])
         notes.bump("layout")
+    for layout in _select(content, "div.columnLayout"):
+        layout.attrs = {}
+        layout["class"] = cast(Any, ["layout"])
+    for outer in _select(content, "div.contentLayout2"):
+        outer.unwrap()
 
 
 def _flag_tables(content: Tag, notes: ConversionNotes) -> None:
@@ -764,27 +1049,124 @@ def _drop_leftover_ac(content: Tag, notes: ConversionNotes) -> None:
             tag.decompose()
 
 
-def _replace_diagrams(soup: BeautifulSoup, content: Tag) -> None:
-    """Replace SVG diagram wrappers with descriptive figure placeholders."""
+def _caption_para(soup: BeautifulSoup, caption: str) -> Tag:
+    """Build the ``<p><em>{caption}</em></p>`` italic caption paragraph."""
+    p = _new_tag(soup, "p")
+    em = _new_tag(soup, "em")
+    em.string = caption
+    p.append(em)
+    return p
+
+
+def _normalise_diagrams(soup: BeautifulSoup, content: Tag, notes: ConversionNotes) -> None:
+    """HX-IMG-DATA: data-URI images → alt text only; inline SVG / diagram
+    wrappers → an italic caption paragraph.
+
+    A base64 blob is pure entropy in the corpus (pandoc would emit a multi-KB
+    ``![alt](data:image/png;base64,…)`` token blob — ``src`` passes the scrub
+    allowlist); the alt/figcaption is the only retrievable content. Stage B
+    must never receive an inline SVG tree (its text children leak as garbled
+    prose). Plain figures with raster images keep their image; only the
+    caption is normalised.
+    """
+    for img in _find_all(content, "img"):
+        if str(img.get("src") or "").startswith("data:"):
+            alt = str(img.get("alt") or "").strip()
+            if alt:
+                img.replace_with(alt)
+            else:
+                img.decompose()
+            notes.bump("data_uri_image")
+
     for wrap in _select(content, ".diagram-wrap, .drawio-diagram, figure"):
+        if wrap.parent is None:
+            continue  # already removed via an ancestor
         cap_el = _find(wrap, "figcaption")
-        caption = cap_el.get_text(strip=True) if cap_el else "Architecture Diagram"
+        caption = cap_el.get_text(strip=True) if cap_el else ""
+        is_vector = _find(wrap, "svg") is not None or wrap.name != "figure"
+        if is_vector:
+            if not caption:
+                inner_img = _find(wrap, "img")
+                caption = str((inner_img.get("alt") if inner_img else "") or "").strip()
+            if caption:
+                wrap.replace_with(_caption_para(soup, caption))
+            else:
+                wrap.decompose()
+            notes.bump("diagram")
+        else:
+            # Plain figure with a raster image: keep the image, caption → italic.
+            if cap_el is not None:
+                cap_el.replace_with(_caption_para(soup, caption))
+            wrap.unwrap()
 
-        hr1 = _new_tag(soup, "hr")
-        p_cap = _new_tag(soup, "p")
-        p_cap.string = f"📊 *{caption}*"
-        bq = _new_tag(soup, "blockquote")
-        bq_p = _new_tag(soup, "p")
-        bq_p.string = (
-            "⚙️ Diagram: SVG rendered in source document. "
-            "Attach an exported image or replace with a Mermaid diagram block."
+    for svg in _find_all(content, "svg"):
+        svg.decompose()  # any bare inline SVG outside a recognised wrapper
+        notes.bump("diagram")
+
+
+def _normalise_gallery(soup: BeautifulSoup, content: Tag, notes: ConversionNotes) -> None:
+    """HX-GALLERY: thumbnail tables → one italic filenames line.
+
+    A grid of thumbnail img tags embeds as nothing; the filenames are the
+    searchable content.
+    """
+    for table in _select(content, "table.gallery"):
+        names: list[str] = []
+        for img in _select(table, "img.confluence-embedded-image"):
+            name = str(
+                img.get("data-linked-resource-default-alias") or img.get("alt") or ""
+            ).strip()
+            if not name:
+                name = Path(str(img.get("src") or "")).name
+            if name:
+                names.append(name)
+        text = (
+            f"Image gallery ({len(names)} images): {', '.join(names)}"
+            if names
+            else "Image gallery."
         )
-        hr2 = _new_tag(soup, "hr")
-        bq.append(bq_p)
+        table.replace_with(_caption_para(soup, text))
+        notes.bump("gallery")
 
-        for node in [hr1, p_cap, bq, hr2]:
-            wrap.insert_before(node)
-        wrap.decompose()
+
+def _normalise_viewfiles(soup: BeautifulSoup, content: Tag, notes: ConversionNotes) -> None:
+    """HX-VIEWFILE: embedded-file links → ``[alias](href) (nice-type)`` —
+    filename + type are the artifact's identity."""
+    for a in _select(content, "a.confluence-embedded-file"):
+        alias = (
+            str(a.get("data-linked-resource-default-alias") or "").strip()
+            or a.get_text(" ", strip=True)
+            or "attachment"
+        )
+        nice = str(a.get("data-nice-type") or "").strip()
+        new_a = _new_tag(soup, "a", href=str(a.get("href") or ""))
+        new_a.string = alias
+        parts: list[Any] = [new_a]
+        if nice:
+            parts.append(f" ({nice})")
+        a.replace_with(*parts)
+        notes.bump("viewfile")
+
+
+def _normalise_embedded_images(content: Tag) -> None:
+    """HX-IMG: copy the original filename (``data-linked-resource-default-alias``)
+    into an empty ``alt`` — the numeric-id src is opaque; the filename is the
+    only searchable token. Unwrap wrapper spans and attachment thumbnail links.
+    """
+    for img in _select(content, "img.confluence-embedded-image"):
+        alias = str(img.get("data-linked-resource-default-alias") or "").strip()
+        if alias and not str(img.get("alt") or "").strip():
+            img["alt"] = alias
+    for wrap in _select(content, "span.confluence-embedded-file-wrapper"):
+        wrap.unwrap()
+    for a in _find_all(content, "a"):
+        kids = [c for c in a.contents if not (isinstance(c, str) and not c.strip())]
+        if (
+            len(kids) == 1
+            and getattr(kids[0], "name", None) == "img"
+            and "attachments/" in str(a.get("href") or "")
+        ):
+            a.unwrap()  # thumbnail link to the full-size attachment
 
 
 # Language detection heuristics for code blocks that carry no lang class
@@ -812,44 +1194,10 @@ _LANG_PATTERNS = [
     (r"<\?xml|<[A-Z][a-zA-Z]+\s+xmlns", "xml"),
 ]
 
-# Map classes that Confluence or highlight.js may already set → pandoc lang
-_CLASS_MAP = {
-    "sql": "sql",
-    "yaml": "yaml",
-    "yml": "yaml",
-    "python": "python",
-    "py": "python",
-    "java": "java",
-    "go": "go",
-    "golang": "go",
-    "javascript": "javascript",
-    "js": "javascript",
-    "typescript": "typescript",
-    "ts": "typescript",
-    "bash": "bash",
-    "shell": "bash",
-    "sh": "bash",
-    "json": "json",
-    "xml": "xml",
-    "html": "html",
-    "dockerfile": "dockerfile",
-    "docker": "dockerfile",
-    "hcl": "hcl",
-    "terraform": "hcl",
-    "kotlin": "kotlin",
-    "scala": "scala",
-    "ruby": "ruby",
-    "rb": "ruby",
-    "csharp": "csharp",
-    "cs": "csharp",
-    "cpp": "cpp",
-    "c": "c",
-    "markdown": "markdown",
-    "md": "markdown",
-    "asyncapi": "yaml",
-    "openapi": "yaml",
-    "github_actions": "yaml",
-}
+# Map classes that Confluence or highlight.js may already set → pandoc lang.
+# Owned by the Stage-C filter module (PF-CODELANG, single source of truth);
+# aliased here for the Stage-A handlers and existing callers/tests.
+_CLASS_MAP = LANG_ALIASES
 
 
 def _detect_language(code_text: str, existing_classes: list[str]) -> str:
@@ -942,14 +1290,49 @@ def _normalise_code_blocks(soup: BeautifulSoup, content: Tag, notes: ConversionN
       4. pre > code (any remaining bare code blocks)
     Each is rebuilt as <pre><code class="language-X"> with colour spans stripped.
     """
-    # ── (§17 #1) DC 8.5.x syntaxhighlighter wrappers ─────────────────────────
+    # ── (§17 #1) DC 8.5.x syntaxhighlighter wrappers (HX-CODE) ───────────────
     for wrapper in _select(content, "div.code.panel"):
         pre = _select_one(wrapper, "pre.syntaxhighlighter-pre") or _find(wrapper, "pre")
         if pre is None:
             continue
+        raw_code = pre.get_text()
         lang = _lang_from_syntaxhighlighter(pre)
-        wrapper.replace_with(_rebuild_pre(soup, pre.get_text(), lang))
+        # Confluence defaults brush to java even for shell — distrust it ONLY
+        # when the content carries an unambiguous non-java signature (HX-CODE).
+        # Keyword-overlap languages (python/go/…) stay java: `class A{}` is
+        # plausible java and must not be re-guessed.
+        if lang == "java":
+            detected = _detect_language(raw_code, [])
+            if detected in {"bash", "sql", "dockerfile", "json", "yaml", "xml"}:
+                lang = detected
+        nodes: list[Tag] = []
+        title_el = _select_one(wrapper, ".codeHeader b")
+        if title_el is not None and title_el.get_text(strip=True):
+            p = _new_tag(soup, "p")
+            strong = _new_tag(soup, "strong")
+            strong.string = title_el.get_text(strip=True)
+            p.append(strong)
+            nodes.append(p)  # code-macro title → bold paragraph before the fence
+        nodes.append(_rebuild_pre(soup, raw_code, lang))
+        wrapper.replace_with(*nodes)
         notes.add_lang(lang)
+        notes.bump("code_block")
+
+    # ── (HX-NOFORMAT) DC noformat panels → fenced block with NO language ─────
+    for wrapper in _select(content, "div.preformatted.panel"):
+        pre = _find(wrapper, "pre")
+        if pre is None:
+            continue
+        nodes = []
+        title_el = _select_one(wrapper, ".preformattedHeader b")
+        if title_el is not None and title_el.get_text(strip=True):
+            p = _new_tag(soup, "p")
+            strong = _new_tag(soup, "strong")
+            strong.string = title_el.get_text(strip=True)
+            p.append(strong)
+            nodes.append(p)
+        nodes.append(_rebuild_pre(soup, pre.get_text(), ""))
+        wrapper.replace_with(*nodes)
         notes.bump("code_block")
 
     # ── (§17 #2) Confluence .code-block macro wrappers ───────────────────────
@@ -990,7 +1373,10 @@ def _normalise_code_blocks(soup: BeautifulSoup, content: Tag, notes: ConversionN
         notes.add_lang(lang)
         notes.bump("code_block")
 
-    # ── (§17 #4) Bare <pre> blocks (anything not already normalised) ──────────
+    # ── (§17 #4 / HX-PRE) Bare <pre> blocks: NO language detection ────────────
+    #     Pasted/legacy text is usually not code in any specific language — an
+    #     invented class would mint an untrusted ``lang:`` embed tag downstream.
+    #     Only an EXPLICIT class already on the element is honoured (mapped).
     for pre in _find_all(content, "pre"):
         code = _find(pre, "code")
         # Skip blocks already normalised above (their <code> carries language-*).
@@ -998,17 +1384,22 @@ def _normalise_code_blocks(soup: BeautifulSoup, content: Tag, notes: ConversionN
             continue
         if code:
             raw_code = code.get_text()
-            existing = _as_list(code.get("class"))
-            label = _detect_language(raw_code, existing)
+            label = ""
+            for cls in _as_list(code.get("class")):
+                cls_n = cls.lower().removeprefix("language-").strip()
+                if cls_n in _CLASS_MAP:
+                    label = _CLASS_MAP[cls_n]
+                    break
             code.string = raw_code  # strip colour spans
-            if label and not any("language-" in c for c in existing):
+            if label:
                 code["class"] = cast(Any, [f"language-{label}"])
+            elif code.get("class") is not None:
+                del code["class"]
         else:
-            # Bare <pre> with no <code> — wrap it
+            # Bare <pre> with no <code> — wrap it, no language class
             raw_code = pre.get_text()
-            label = _detect_language(raw_code, [])
-            kw: dict[str, Any] = {"attrs": {"class": [f"language-{label}"]}} if label else {}
-            new_code = _new_tag(soup, "code", **kw)
+            label = ""
+            new_code = _new_tag(soup, "code")
             new_code.string = raw_code
             pre.clear()
             pre.append(new_code)
@@ -1038,38 +1429,116 @@ def _text(el: Tag, selector: str) -> str:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def convert(clean_html: str, pandoc_path: str) -> str:
-    """Run pandoc on clean HTML and return GFM markdown string.
-
-    Raises:
-        ConversionError: if pandoc exits non-zero.
-    """
-    cmd = [
-        pandoc_path,
-        "--from",
-        "html",
-        "--to",
-        "gfm+pipe_tables",
-        "--wrap=none",
-        "--strip-comments",
-        "--no-highlight",
-    ]
-
+def _run_pandoc(pandoc_path: str, input_text: str, args: list[str]) -> str:
+    """Run one pandoc subprocess (UTF-8 in/out); raise ConversionError on failure."""
     result = subprocess.run(
-        cmd,
-        input=clean_html.encode("utf-8"),
+        [pandoc_path, *args],
+        input=input_text.encode("utf-8"),
         capture_output=True,
     )
-
     if result.returncode != 0:
         raise ConversionError(f"pandoc error:\n{result.stderr.decode()}")
-
     return result.stdout.decode("utf-8")
+
+
+def convert(clean_html: str, pandoc_path: str, notes: ConversionNotes | None = None) -> str:
+    """Stages 2+3: pandoc html→json, in-process panflute Confluence filter
+    (PF-* rules, ``confluence_pf_filter``), pandoc json→gfm.
+
+    The reader stays at HTML defaults (``+native_divs``/``+native_spans`` turn
+    the PFI elements into AST Div/Span for the filter; no ``+raw_html``). The
+    writer is plain ``gfm`` — ``pipe_tables`` is a gfm default and ``+smart``
+    is deliberately NOT added (the downstream gfm reader has ``-smart``, so
+    nothing would ever re-smarten the injected ``---``/``...`` runs).
+
+    Raises:
+        ConversionError: if either pandoc invocation exits non-zero.
+    """
+    notes = notes or ConversionNotes()
+    ast_json = _run_pandoc(
+        pandoc_path,
+        clean_html,
+        ["--from", "html", "--to", "json", "--strip-comments"],
+    )
+    filtered = apply_confluence_filter(ast_json, notes)
+    return _run_pandoc(
+        pandoc_path,
+        filtered,
+        ["--from", "json", "--to", "gfm", "--wrap=none", "--markdown-headings=atx"],
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  STAGE 3 — POST-PROCESSOR
 # ═══════════════════════════════════════════════════════════════════════════════
+
+
+def _apply_outside_fences(md: str, fn: Callable[[str], str]) -> str:
+    """Apply *fn* to prose segments only, leaving fenced code byte-identical.
+
+    Stage-D fence-awareness (conversion-rules §6): unguarded regexes silently
+    corrupt fenced code (a ``\\``-only shell-continuation line, literal ``\\*``
+    in regex examples, blank-line runs). Mirrors ``quality.py``'s de-fence
+    approach: 3+ backticks/tildes open a fence; the closer must use the same
+    marker character with at least the opener's length.
+    """
+    segments: list[str] = []
+    prose: list[str] = []
+    code: list[str] = []
+    fence_marker: str | None = None
+
+    def flush_prose() -> None:
+        if prose:
+            segments.append(fn("\n".join(prose)))
+            prose.clear()
+
+    for line in md.split("\n"):
+        stripped = line.lstrip()
+        if fence_marker is None:
+            m = re.match(r"^(`{3,}|~{3,})", stripped)
+            if m:
+                flush_prose()
+                fence_marker = m.group(1)
+                code.append(line)
+            else:
+                prose.append(line)
+        else:
+            code.append(line)
+            m = re.match(r"^(`{3,}|~{3,})\s*$", stripped)
+            if m and m.group(1)[0] == fence_marker[0] and len(m.group(1)) >= len(fence_marker):
+                segments.append("\n".join(code))
+                code.clear()
+                fence_marker = None
+    if code:
+        segments.append("\n".join(code))  # unclosed fence — keep verbatim
+    flush_prose()
+    return "\n".join(segments)
+
+
+def _dump_frontmatter(fm: dict[str, Any], notes: ConversionNotes | None) -> str:
+    """FM-YAML-SAFE: serialize via a real YAML dumper + round-trip self-check.
+
+    Naive f-string quoting breaks on embedded quotes (``OPS : Deploy "v2"``);
+    the downstream gfm reader has ``+yaml_metadata_block``, and a failed parse
+    degrades the ``---`` block into document content — title/url lines leak
+    into the first section's chunks and ALL provenance is lost.
+    """
+
+    def dump(d: dict[str, Any]) -> str:
+        text = yaml.safe_dump(d, sort_keys=False, allow_unicode=True, default_flow_style=False)
+        return cast(str, text).strip()
+
+    body = dump(fm)
+    try:
+        yaml.safe_load(body)
+    except yaml.YAMLError:
+        fm = {
+            k: (re.sub(r'[\x00-\x1f"]', "", v) if isinstance(v, str) else v) for k, v in fm.items()
+        }
+        body = dump(fm)
+        if notes is not None:
+            notes.warn("frontmatter sanitized: harvested values produced invalid YAML")
+    return f"---\n{body}\n---\n"
 
 
 def postprocess(
@@ -1082,74 +1551,59 @@ def postprocess(
     space: str = "",
     source_url: str = "",
     labels: list[str] | None = None,
+    date: str = "",
+    page_id: str = "",
+    notes: ConversionNotes | None = None,
 ) -> str:
-    """Clean up pandoc's GFM output for GitLab compatibility."""
+    """Clean up pandoc's GFM output for GitLab compatibility (fence-aware)."""
 
-    # ── Fix: &nbsp; (decoded to U+00A0) → regular space (spec §4) ────────────
-    md = md.replace(" ", " ")
+    # ── MD-NBSP (global): &nbsp; (decoded to U+00A0) → regular space ─────────
+    md = md.replace("\u00a0", " ")
 
-    # ── Fix: pandoc outputs "``` yaml" — GitLab needs "```yaml" ────────────
+    # ── MD-FENCE-SPACE — targets fence-opener lines themselves, runs global ──
     md = re.sub(r"^``` (\w)", r"```\1", md, flags=re.M)
 
-    # ── Fix: over-escaped bold/italic inside blockquotes ────────────────────
-    md = re.sub(r"\\(\*\*)", r"\1", md)
-    md = re.sub(r"\\(\*)", r"\1", md)
+    def _prose_fixes(text: str) -> str:
+        # MD-UNESCAPE-EMPH: over-escaped bold/italic inside blockquotes
+        text = re.sub(r"\\(\*\*)", r"\1", text)
+        text = re.sub(r"\\(\*)", r"\1", text)
+        # MD-TASKBOX: pandoc escapes "- [ ]" → "- \[ \]" (storage-form backstop)
+        text = re.sub(r"(^\s*[-*+] )\\\[( |x)\\\]", r"\1[\2]", text, flags=re.M)
+        # MD-TOC-ESCAPED: over-escaped [[_TOC_]] remnants
+        text = re.sub(r"\\_Table of contents[^\n]+\\\[\\\[\\?_TOC_\\\]\\\]\\_", "", text)
+        # MD-BLANKLINES: collapse 3+ blank lines (prose only — fences keep theirs)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        # MD-TRAILWS: trim trailing whitespace per line
+        return "\n".join(line.rstrip() for line in text.split("\n"))
 
-    # ── Fix: over-escaped angle brackets ────────────────────────────────────
-    md = re.sub(r"\\<", "<", md)
-    md = re.sub(r"\\>", ">", md)
-
-    # ── Fix: task-list checkboxes — pandoc escapes "- [ ]" → "- \[ \]" ───────
-    md = re.sub(r"(^\s*[-*+] )\\\[( |x)\\\]", r"\1[\2]", md, flags=re.M)
-
-    # ── Fix: over-escaped underscores in [[_TOC_]] ──────────────────────────
-    md = re.sub(
-        r"\\_Table of contents[^\n]+\\\[\\\[\\?_TOC_\\\]\\\]\\_",
-        "",
-        md,
-    )
-
-    # ── Collapse 3+ blank lines to exactly 2 ────────────────────────────────
-    md = re.sub(r"\n{3,}", "\n\n", md)
-
-    # ── Trim trailing whitespace from every line ─────────────────────────────
-    md = "\n".join(line.rstrip() for line in md.splitlines())
+    # NOTE: the draft's angle-bracket unescape was deliberately DELETED
+    # (conversion-rules §6): un-escaping pandoc's ``\<`` resurrects raw HTML —
+    # ``List\<String\>`` becomes ``List<String>``, which GitLab swallows as an
+    # unknown tag and which trips the quality lint.
+    md = _apply_outside_fences(md, _prose_fixes)
 
     # ── Ensure single trailing newline ──────────────────────────────────────
     md = md.rstrip("\n") + "\n"
 
-    # ── Build YAML front matter ──────────────────────────────────────────────
+    # ── Build YAML front matter (FM-YAML-SAFE; keys structural reads back) ───
     header_parts: list[str] = []
 
     if add_frontmatter:
-        doc_title = title or _infer_title(md, source_path)
-        doc_author = author or ""
-
-        fm_lines = [
-            "---",
-            f'title: "{doc_title}"',
-        ]
-        if doc_author:
-            fm_lines += [
-                "authors:",
-                f'  - "{doc_author}"',
-            ]
-        # Provenance keys, emitted with the exact names the pipeline's
-        # structural._extract_metadata reads back (space / url / labels), so a
-        # later `export` carries them onto every chunk.
+        fm: dict[str, Any] = {"title": title or _infer_title(md, source_path)}
+        if author:
+            fm["author"] = author  # singular — the key _extract_metadata reads
         if space:
-            fm_lines.append(f'space: "{space}"')
+            fm["space"] = space
         if source_url:
-            fm_lines.append(f'url: "{source_url}"')
+            fm["url"] = source_url
         if labels:
-            fm_lines.append("labels:")
-            fm_lines += [f'  - "{lbl}"' for lbl in labels]
-        fm_lines += [
-            f'source_file: "{source_path.name}"',
-            "---",
-            "",
-        ]
-        header_parts.append("\n".join(fm_lines))
+            fm["labels"] = list(labels)
+        if date:
+            fm["date"] = date
+        if page_id:
+            fm["page_id"] = page_id
+        fm["source_file"] = source_path.name
+        header_parts.append(_dump_frontmatter(fm, notes))
 
     if add_toc:
         header_parts.append("[[_TOC_]]\n")
@@ -1279,7 +1733,7 @@ def convert_file(
     title: str = "",
     author: str = "",
     add_frontmatter: bool = True,
-    add_toc: bool = True,
+    add_toc: bool = False,
     keep_diagrams: bool = False,
     pandoc_path: str | None = None,
     space: str = "",
@@ -1289,13 +1743,20 @@ def convert_file(
 ) -> tuple[Path, str, dict[str, int], dict[str, Any]]:
     """Convert a single HTML file to GitLab-flavoured Markdown.
 
-    Runs the full 3-stage pipeline (pre-process → pandoc → post-process) and,
-    when *write* is true, writes the result to *output* (default: ``<src>.md``).
+    Runs the full 4-stage pipeline (pre-process → pandoc html→json → panflute
+    filter → pandoc json→gfm → post-process) and, when *write* is true, writes
+    the result to *output* (default: ``<src>.md``).
+
+    ``add_toc`` defaults to **False** (MD-TOC-INJECT: a ``[[_TOC_]]`` paragraph
+    survives chunking as a junk chunk — opt in for human-docs output only).
+    Explicit ``title``/``author``/``space`` arguments win over values harvested
+    from the page chrome (``notes.metadata``).
 
     Returns:
         ``(output_path, markdown, metrics, notes)`` where ``metrics`` is
         :func:`stats` and ``notes`` is :meth:`ConversionNotes.to_dict`
-        (``warnings`` / ``errors`` / ``macro_counts`` / ``languages``).
+        (``warnings`` / ``errors`` / ``macro_counts`` / ``languages`` /
+        ``metadata``).
 
     Raises:
         ConversionError: if the source is missing or pandoc fails.
@@ -1310,17 +1771,28 @@ def convert_file(
     notes = ConversionNotes()
     html = src.read_text(encoding="utf-8")
     clean_html = preprocess(html, selector, keep_diagrams, notes)
-    raw_md = convert(clean_html, pandoc)
+    raw_md = convert(clean_html, pandoc, notes)
+
+    meta = notes.metadata
+    page_id = meta.get("page_id", "")
+    if not page_id:
+        m = re.search(r"_(\d+)\.html?$", src.name)
+        if m:
+            page_id = m.group(1)
+
     final_md = postprocess(
         md=raw_md,
-        title=title,
-        author=author,
+        title=title or meta.get("title", ""),
+        author=author or meta.get("author", ""),
         source_path=src,
         add_frontmatter=add_frontmatter,
         add_toc=add_toc,
-        space=space,
+        space=space or meta.get("space", ""),
         source_url=source_url,
         labels=labels,
+        date=meta.get("date", ""),
+        page_id=page_id,
+        notes=notes,
     )
 
     if write:
@@ -1348,7 +1820,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--title", default="", help="Document title for YAML front matter")
     p.add_argument("--author", default="", help="Author(s) for YAML front matter")
     p.add_argument("--no-frontmatter", action="store_true", help="Skip YAML front matter")
-    p.add_argument("--no-toc", action="store_true", help="Skip [[_TOC_]] directive")
+    p.add_argument(
+        "--toc",
+        action="store_true",
+        help="Inject [[_TOC_]] (human-docs profile; default OFF for the embedding corpus)",
+    )
     p.add_argument("--keep-diagrams", action="store_true", help="Keep SVG diagram HTML as-is")
     p.add_argument(
         "--confluence-version",
@@ -1399,7 +1875,7 @@ def main() -> None:
             title=args.title,
             author=args.author,
             add_frontmatter=not args.no_frontmatter,
-            add_toc=not args.no_toc,
+            add_toc=args.toc,
             keep_diagrams=args.keep_diagrams,
             pandoc_path=pandoc,
         )

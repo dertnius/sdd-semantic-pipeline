@@ -33,9 +33,11 @@ _STUB_MIN_CHARS = 200  # fewer meaningful chars after stripping syntax → block
 # ── Patterns ──────────────────────────────────────────────────────────────────
 # HTML leakage in prose. ``br`` is deliberately excluded: the converter emits
 # ``<br/>`` inside table cells on purpose, so flagging it would fire on our own
-# intended output.
+# intended output. The inline-text tags (u/sup/sub/s/del) and code/pre/img are
+# included because pandoc's gfm writer passes them through as raw HTML — the
+# converter must normalise them before they ever reach a corpus file.
 _HTML_LEAKAGE = re.compile(
-    r"<(?!--)(?:span|div|p|a|strong|em|table|td|tr|th)\b[^>]*>"
+    r"<(?!--)(?:span|div|p|a|strong|em|table|td|tr|th|u|sup|sub|s|del|code|pre|img)\b[^>]*>"
     r"|&(?:nbsp|amp|lt|gt|quot|#\d+);",
     re.IGNORECASE,
 )

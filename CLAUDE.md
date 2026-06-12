@@ -107,13 +107,26 @@ audit. Point it at the real embedding corpus, not a docs tree that *documents*
 Confluence syntax.
 
 **B. HTML→GitLab-Markdown converter** (`html_to_gitlab_md.py`) — independent of
-the pipeline. 3-stage flow: BeautifulSoup pre-clean → pandoc → markdown
-post-process. Public API: `resolve_pandoc()`, `convert_file()` (returns
-`(out_path, markdown, metrics)`), `stats()`, and `ConversionError` (raised, not
-`sys.exit`, so batch callers can collect failures). The `sdd-pipeline convert`
-CLI command batches this over `docs/**/*.html` and emits a JSON report with
-per-file + aggregate metrics (`sections`, `pictures`, `code_snippets`, `lists`,
-`tables`, `urls`).
+the pipeline. 4-stage flow (spec: `docs/confluence-conversion-rules.md`,
+rendered-HTML scope): BeautifulSoup pre-clean (rewrites Confluence constructs
+into PFI-HTML — `div`/`span` carriers with `data-*` attrs; the blanket
+unwrap/scrub is PFI-aware) → pandoc html→json → in-process panflute filter
+(`confluence_pf_filter.py`: admonitions → plain blockquote labels, expand →
+bold paragraph (no `<details>`), lozenges → bold, layouts flattened with no
+`<hr>`, unconditional table simplification incl. `\|` escaping in code-in-cells
+and `<br />` for cell line breaks) → pandoc json→gfm → fence-aware regex
+post-process + YAML-safe frontmatter. Page chrome (title/space/author/date/
+page_id) is harvested before root selection into `notes["metadata"]` and feeds
+the frontmatter (`author:` singular — the key `structural._extract_metadata`
+reads). Public API: `resolve_pandoc()`, `convert_file()` (returns
+`(out_path, markdown, metrics, notes)`), `stats()`, and `ConversionError`
+(raised, not `sys.exit`, so batch callers can collect failures). The
+`sdd-pipeline convert` CLI command batches this over `docs/**/*.html` and emits
+a JSON report with per-file + aggregate metrics (`sections`, `pictures`,
+`code_snippets`, `lists`, `tables`, `urls`). `[[_TOC_]]` injection is opt-in
+via `--toc` (default OFF — a TOC paragraph is a junk chunk in the embedding
+corpus). Storage-format (`ac:`/`ri:`) input handling beyond the legacy
+best-effort handlers is deferred — see the spec's SF-* rules and §12.
 
 ### Key design points
 

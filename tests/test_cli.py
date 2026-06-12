@@ -70,11 +70,14 @@ class TestConvertFrontmatter:
             labels=["airflow", "aip"],
         )
         # Keys must match what structural._extract_metadata reads back.
-        assert 'space: "DEMO"' in md
-        assert 'url: "https://example/aip-107"' in md
-        assert "labels:" in md
-        assert '  - "airflow"' in md
-        assert '  - "aip"' in md
+        # FM-YAML-SAFE: the block is real YAML now — assert parsed values, not
+        # the quote style.
+        import yaml
+
+        fm = yaml.safe_load(md.split("---")[1])
+        assert fm["space"] == "DEMO"
+        assert fm["url"] == "https://example/aip-107"
+        assert fm["labels"] == ["airflow", "aip"]
 
     def test_postprocess_omits_absent_provenance(self):
         from sdd_pipeline.html_to_gitlab_md import postprocess

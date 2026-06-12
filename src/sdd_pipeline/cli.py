@@ -170,7 +170,11 @@ def convert(
         "", "--labels", help="Comma-separated labels, written to frontmatter for provenance."
     ),
     no_frontmatter: bool = typer.Option(False, "--no-frontmatter", help="Skip YAML front matter."),
-    no_toc: bool = typer.Option(False, "--no-toc", help="Skip [[_TOC_]] directive."),
+    toc: bool = typer.Option(
+        False,
+        "--toc",
+        help="Inject [[_TOC_]] (human-docs profile; default OFF for the embedding corpus).",
+    ),
     keep_diagrams: bool = typer.Option(
         False, "--keep-diagrams", help="Keep SVG diagram HTML as-is."
     ),
@@ -219,7 +223,7 @@ def convert(
                 out_target,
                 selector=selector,
                 add_frontmatter=not no_frontmatter,
-                add_toc=not no_toc,
+                add_toc=toc,
                 keep_diagrams=keep_diagrams,
                 pandoc_path=pandoc_path,
                 space=space,
