@@ -1,10 +1,11 @@
 # Wiki Index
 
-_Last updated: 2026-06-11_
+_Last updated: 2026-06-12_
 
 | Page | Summary | Last Updated |
 |------|---------|--------------|
-| [confluence-storage-format-gitlab-markdown](confluence-storage-format-gitlab-markdown.md) | Confluence storage format rules for converting Confluence exports to GitLab Markdown | 2026-06-06 |
+| [confluence-conversion-rules](../docs/confluence-conversion-rules.md) | Definitive Confluence Server/DC 8.0–10.x → GitLab-Markdown conversion rules for the embedding pipeline (storage-format + rendered-HTML input; supersedes the storage-format wiki page) | 2026-06-12 |
+| [confluence-storage-format-gitlab-markdown](confluence-storage-format-gitlab-markdown.md) | **Superseded** by confluence-conversion-rules — kept for history | 2026-06-12 |
 | [convert-html-gitlab-markdown-linux](convert-html-gitlab-markdown-linux.md) | Linux instructions for running the HTML to GitLab Markdown converter | 2026-06-06 |
 | [convert-html-gitlab-markdown-windows](convert-html-gitlab-markdown-windows.md) | Windows instructions for running the HTML to GitLab Markdown converter | 2026-06-06 |
 

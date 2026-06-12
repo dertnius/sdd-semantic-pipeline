@@ -33,3 +33,5 @@
 ## 2026-06-10 | ingest | src/sdd_pipeline/pipeline.py + models.py → learn/exercises/08-use-the-library-from-scratch.md
 ## 2026-06-10 | ingest | learn/ (all pages) → learn/README.md
 ## 2026-06-11 | feature | src/sdd_pipeline/quality.py + cli.py lint command → learn/tours/11-quality-linter.md (also: tour 10 + index "seven"→"eight" typer commands)
+## 2026-06-12 | ingest | Confluence-conversion research artifacts (rules-draft + 25 critique fixes + catalog/exporthtml/tooling JSONs) → docs/confluence-conversion-rules.md (also: superseded banner on wiki/confluence-storage-format-gitlab-markdown.md)
+## 2026-06-12 | feature | docs/confluence-conversion-rules.md (rendered-HTML scope) implemented in src/sdd_pipeline/html_to_gitlab_md.py v3.0 + new confluence_pf_filter.py (4-stage pipeline, PFI contract, --toc flip)
