@@ -47,10 +47,10 @@ full, always-current option list is `sdd-pipeline <command> --help`.
 
 ## CLI reference
 
-Seven commands: `index`, `search`, `convert`, `export`, `scan`, `lint`, `check`.
-Only `index` and `search` load an embedding model; `convert`, `export`, and
-`scan` are **pandoc-only** (no model download), and `lint` is **pure text**
-(neither pandoc nor a model).
+Eight commands: `index`, `search`, `convert`, `export`, `scan`, `scan-taxonomy`,
+`lint`, `check`. Only `index` and `search` load an embedding model; `convert`,
+`export`, `scan`, and `scan-taxonomy` are **pandoc-only** (no model download),
+and `lint` is **pure text** (neither pandoc nor a model).
 
 ### `index` — build the vector index
 
@@ -115,7 +115,7 @@ sdd-pipeline convert <input_dir> [options]
 | `--source-url` | — | Canonical source URL → frontmatter (provenance) |
 | `--labels` | — | Comma-separated labels → frontmatter (provenance) |
 | `--no-frontmatter` | off | Skip the YAML frontmatter block |
-| `--no-toc` | off | Skip the `[[_TOC_]]` directive |
+| `--toc` | off | Inject `[[_TOC_]]` (opt-in; default OFF for the embedding corpus) |
 | `--keep-diagrams` | off | Keep SVG diagram HTML instead of a placeholder |
 | `--pandoc-path` | auto (`PATH`) | Path to a specific pandoc binary |
 | `--verbose` / `-v` | off | Per-file metric summary line |
@@ -161,6 +161,24 @@ sdd-pipeline scan <input_dir> [options]
 | `--glob` / `-g` | `**/*.md` | Markdown glob pattern |
 | `--verbose` / `-v` | off | Print the discovered term list |
 
+### `scan-taxonomy` — derive a section→field taxonomy (model-free)
+
+Scans every doc's **tables**, aggregates field names by document-frequency, keeps
+fields seen in ≥ `--min-docs` documents, and writes a canonical taxonomy plus a
+frequency-ranked field vocabulary for review (used to fill
+`config/field_directions.yaml`). **Pandoc-only: no model.**
+
+```bash
+sdd-pipeline scan-taxonomy <input_dir> [options]
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--out` / `-o` | `data/taxonomy.json` | Output taxonomy JSON (section → fields) |
+| `--vocab-out` | `data/field_vocabulary.json` | Frequency-ranked field vocabulary (review artifact) |
+| `--min-docs` / `-n` | `2` | Keep a field only if seen in ≥ this many documents |
+| `--glob` / `-g` | `**/*.md` | Markdown glob pattern |
+
 ### `lint` — audit raw `.md` quality (report-only)
 
 Scans raw source markdown for embedding-harmful residue — leaked HTML tags,
@@ -194,6 +212,30 @@ sdd-pipeline check
 Reports Python, pandoc, and each Python dependency, plus optional `chromadb`
 and `openai` availability and whether the Azure env vars are set (the API key
 value is never printed). Exits non-zero if a required dependency is missing.
+
+---
+
+## Full pipeline (end-to-end)
+
+The commands chain into one flow. **M** = loads an embedding model, **P** = needs
+pandoc. Steps 3–4 are optional; only `index`/`search` load a model. A minimal run
+is `convert → index → search`.
+
+| # | Command | Input required | Output expected | M | P |
+|---|---|---|---|:--:|:--:|
+| 0 | `sdd-pipeline check` | — | dependency table (stdout); exit 1 if a required dep is missing | – | – |
+| 1 | `sdd-pipeline convert <html_dir> -o build/md -r build/conversion-report.json [--space K --source-url U --labels a,b]` | dir of `*.html` (default `docs/`); **pandoc on PATH** | one `.md` per HTML (mirrors tree) + `conversion-report.json` (per-file + aggregate metrics, macro counts, warnings) | – | ● |
+| 2 | `sdd-pipeline lint build/md -r build/quality-report.json [--strict]` | dir of `*.md` (the converted corpus) | `quality-report.json` + stdout summary; `--strict` → exit 1 on any block issue | – | – |
+| 3a | `sdd-pipeline scan build/md --vocab build/entity-vocab.json` *(optional)* | `*.md` dir; **pandoc** | entity-vocabulary JSON (sorted terms) to review before indexing | – | ● |
+| 3b | `sdd-pipeline scan-taxonomy build/md -o data/taxonomy.json --vocab-out data/field_vocabulary.json [-n 2]` *(optional)* | `*.md` dir; **pandoc** | `taxonomy.json` (section → field) + `field_vocabulary.json` | – | ● |
+| 4 | `sdd-pipeline export build/md -o build/chunks --merge-prose [-f jsonl]` *(optional)* | `*.md` dir; honours `PIPELINE_ENTITY_VOCAB_PATH` (two-pass) | `.chunks.json`/`.jsonl` per file + `export-report.json` | – | ● |
+| 5 | `sdd-pipeline index build/md -o data/index --model all-MiniLM-L6-v2 [--backend chroma\|memory --merge-prose]` | `*.md` dir; **embedding model** (downloads on first run); chromadb if `--backend chroma`; optional `PIPELINE_ENTITY_VOCAB_PATH` | vector index at `-o` (memory: `<dir>/<collection>.json` + `.provenance.json`; chroma: persist dir) | ● | – |
+| 6 | `sdd-pipeline search "<query>" -i data/index --model all-MiniLM-L6-v2 [-k 5 -s architecture --space ARCH --hybrid]` | **prior index** (provider/model/backend must match) + embedding model | results table (score, breadcrumb, type, preview) on stdout | ● | – |
+
+**Dependencies:** `search` requires a prior `index` (same provider/model/backend);
+`index`/`export` consume the vocabulary from `scan` when `PIPELINE_ENTITY_VOCAB_PATH`
+is set; `lint` gates the corpus after `convert`; `check` and `scan-taxonomy` are
+standalone.
 
 ---
 
@@ -473,7 +515,7 @@ sdd-semantic-pipeline/
 │       ├── vocabulary.py     ← cross-corpus entity vocabulary I/O
 │       ├── html_to_gitlab_md.py ← HTML → GitLab Markdown converter
 │       ├── pipeline.py       ← stage orchestrator
-│       └── cli.py            ← typer CLI (index | search | convert | export | scan | check)
+│       └── cli.py            ← typer CLI (index | search | convert | export | scan | scan-taxonomy | lint | check)
 ├── tests/
 │   ├── conftest.py           ← shared fixtures + sample data
 │   ├── test_models.py

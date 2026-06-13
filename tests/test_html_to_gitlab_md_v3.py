@@ -375,3 +375,40 @@ class TestTmpDcCorpus:
             leak_rules = {i.rule for i in report.issues}
             assert "html_leakage" not in leak_rules, f"{src.name} leaked HTML"
             assert "confluence_artifacts" not in leak_rules, f"{src.name} leaked macros"
+
+
+# ── Committed example corpus (the regression net; runs in CI) ──────────────────
+
+_EXAMPLES = Path(__file__).resolve().parents[1] / "convert" / "examples"
+
+
+@requires_pandoc
+@pytest.mark.slow
+class TestConvertExamplesCorpus:
+    """Committed ``convert/examples`` fixtures — the regression net for the
+    three-tier quality bar and the multi-header-table fix. Unlike the gitignored
+    ``.tmp_dc`` gate above, these ship with the repo and run on a clean checkout.
+    """
+
+    def test_examples_pass_quality_gate(self):
+        html_files = sorted(_EXAMPLES.glob("*.html"))
+        assert len(html_files) >= 3, "expected the committed example corpus"
+        for src in html_files:
+            _, md, _, _notes = h2m.convert_file(src, write=False)
+            report = check_markdown(src.name, md)
+            blocks = [(i.rule, i.detail) for i in report.issues if i.severity == "block"]
+            assert not blocks, f"{src.name}: {blocks}"
+            # Tier-3: no raw HTML / macro residue leaks (``<br />`` in cells is allowed).
+            for residue in ("<table", "<div", "<span", "<ac:", "<ri:", "<at:", "[[_TOC_]]"):
+                assert residue not in md, f"{src.name} leaked {residue!r}"
+
+    def test_multiheader_table_does_not_leak_raw_html(self):
+        """Regression for the rowspan/tiered-``th`` raw-``<table>`` leak (Tier-1):
+        the whole table used to be dumped as raw HTML and dropped downstream."""
+        src = _EXAMPLES / "adversarial-edge-cases.html"
+        _, md, _, notes = h2m.convert_file(src, write=False)
+        assert "<table" not in md and "&#10;" not in md
+        # Every tiered-header cell survives, folded into the body as data rows.
+        for txt in ("Environment", "Endpoints", "Read", "Write", "Prod", "Stage"):
+            assert txt in md, f"lost tiered-header content: {txt!r}"
+        assert notes["macro_counts"].get("multi_header_collapsed", 0) >= 1

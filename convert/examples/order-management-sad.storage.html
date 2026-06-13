@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>ARCH : OMS Storage-Format Sample - Confluence</title>
+</head>
+<body>
+<!--
+  Confluence STORAGE-FORMAT (ac:/ri:/at:) sample — best-effort handlers only.
+  Scoped to the ELEMENT-based constructs that survive the lxml HTML parser.
+  CDATA-only constructs (ac:plain-text-body code, ac:plain-text-link-body text)
+  are deliberately omitted: lxml DROPS CDATA, so they cannot round-trip. See the
+  README "Known limitations" section.
+-->
+<div id="main-content" class="wiki-content">
+
+  <h2>Links</h2>
+  <p>See <ac:link><ri:page ri:content-title="Deployment Guide" ri:space-key="OPS"/></ac:link>
+  for rollout steps.</p>
+  <p>Download the <ac:link><ri:attachment ri:filename="runbook.pdf"/></ac:link>.</p>
+  <p>Jump to <ac:link ac:anchor="setup"><ac:plain-text-link-body>Setup</ac:plain-text-link-body></ac:link>.</p>
+
+  <h2>Images</h2>
+  <ac:image ac:alt="network topology"><ri:attachment ri:filename="net.png"/></ac:image>
+  <ac:image><ri:url ri:value="https://example.com/img/diagram.png"/></ac:image>
+
+  <h2>Template variables and placeholders</h2>
+  <p>Service name: <at:var at:name="ServiceName"/>.</p>
+  <p><ac:placeholder>Describe the decision here</ac:placeholder></p>
+
+  <h2>Task list</h2>
+  <ac:task-list>
+    <ac:task><ac:task-id>1</ac:task-id><ac:task-status>complete</ac:task-status><ac:task-body>Wire idempotency keys</ac:task-body></ac:task>
+    <ac:task><ac:task-id>2</ac:task-id><ac:task-status>incomplete</ac:task-status><ac:task-body>Publish dashboards</ac:task-body></ac:task>
+  </ac:task-list>
+
+  <h2>Emoticon</h2>
+  <p>Status looks good <ac:emoticon ac:name="tick"/>.</p>
+
+  <h2>Structured macro with a rich-text body (framing is lost; prose survives)</h2>
+  <ac:structured-macro ac:name="info">
+    <ac:parameter ac:name="title">Scope</ac:parameter>
+    <ac:rich-text-body><p>This <strong>info</strong> body survives as plain prose; the macro
+    shell and its title parameter are dropped (no <code>&gt; **Info — …:**</code> framing in
+    the storage path).</p></ac:rich-text-body>
+  </ac:structured-macro>
+
+</div>
+</body>
+</html>

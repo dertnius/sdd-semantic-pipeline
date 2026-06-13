@@ -271,3 +271,66 @@ def test_pipe_in_code_escaped_inside_cells_only():
     assert "a \\| b" in md  # escaped inside the table cell
     assert "`x | y`" in md  # untouched outside tables
     assert notes.macro_counts.get("pipe_in_code") == 1
+
+
+def _body_with_head(
+    head_rows: list[pf.TableRow], body_rows: list[pf.TableRow], n_cols: int
+) -> pf.Table:
+    """A Table whose first TableBody carries *intermediate* header rows — where
+    pandoc parks tiered/rowspan ``th`` rows (not in ``Table.head``)."""
+    return pf.Table(
+        pf.TableBody(*body_rows, head=head_rows),
+        head=pf.TableHead(),
+        colspec=[("AlignDefault", "ColWidthDefault")] * n_cols,
+    )
+
+
+def test_tiered_intermediate_header_rows_folded_no_raw_table():
+    # Pandoc parks tiered/rowspan <th> rows in TableBody.head; GFM cannot render
+    # >1 head row or a spanning header cell, so the writer would dump the whole
+    # table as raw HTML (a Tier-1 drop). The filter must fold them into the body.
+    table = _body_with_head(
+        head_rows=[
+            pf.TableRow(
+                _cell(pf.Plain(pf.Str("Environment")), rowspan=2),
+                _cell(pf.Plain(pf.Str("Endpoints")), colspan=2),
+            ),
+            pf.TableRow(_cell(pf.Plain(pf.Str("Read"))), _cell(pf.Plain(pf.Str("Write")))),
+        ],
+        body_rows=[
+            pf.TableRow(
+                _cell(pf.Plain(pf.Str("Prod"))),
+                _cell(pf.Plain(pf.Str("r.example"))),
+                _cell(pf.Plain(pf.Str("w.example"))),
+            )
+        ],
+        n_cols=3,
+    )
+    doc, notes = _run(table)
+    md = _md(doc)
+    assert "<table" not in md and "&#10;" not in md  # no raw-HTML fallback
+    for txt in ("Environment", "Endpoints", "Read", "Write", "Prod"):
+        assert txt in md  # all header content preserved, folded into the body
+    tbl = next(b for b in doc.content if isinstance(b, pf.Table))
+    assert all(len(b.head) == 0 for b in tbl.content)  # no intermediate head rows left
+    assert notes.macro_counts.get("multi_header_collapsed") == 1
+
+
+def test_lone_spanless_intermediate_header_not_collapsed():
+    # A single span-free intermediate header row renders fine on its own; folding
+    # it (and warning) would spray over every real th-in-tbody table. Leave it.
+    table = _body_with_head(
+        head_rows=[
+            pf.TableRow(_cell(pf.Plain(pf.Str("Env"))), _cell(pf.Plain(pf.Str("Endpoint"))))
+        ],
+        body_rows=[
+            pf.TableRow(_cell(pf.Plain(pf.Str("Prod"))), _cell(pf.Plain(pf.Str("r.example"))))
+        ],
+        n_cols=2,
+    )
+    doc, notes = _run(table)
+    md = _md(doc)
+    assert "<table" not in md
+    for txt in ("Env", "Endpoint", "Prod"):
+        assert txt in md
+    assert notes.macro_counts.get("multi_header_collapsed") is None

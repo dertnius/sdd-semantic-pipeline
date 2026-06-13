@@ -299,6 +299,21 @@ def _table_simplify(el: pf.Table, notes: SupportsNotes) -> None:
                 "summaries key on row 1 regardless"
             )
 
+    # Intermediate header rows (tiered/rowspan ``th`` rows pandoc parks in
+    # ``TableBody.head``) that GFM cannot render — captured BEFORE the loop below
+    # resets spans. Only >1 such row, or a spanning header cell, forces the raw
+    # ``<table>`` fallback; a lone span-free header row renders fine, so leave it.
+    unsafe_head_bodies = [
+        body
+        for body in el.content
+        if isinstance(body, pf.TableBody)
+        and len(body.head) > 0
+        and (
+            len(body.head) > 1
+            or any(c.colspan > 1 or c.rowspan > 1 for r in body.head for c in r.content)
+        )
+    ]
+
     had_span = False
     for row in _iter_rows(el):
         cells = list(row.content)
@@ -313,6 +328,34 @@ def _table_simplify(el: pf.Table, notes: SupportsNotes) -> None:
                 row.content.append(pf.TableCell(pf.Plain()))
     if had_span:
         notes.bump("merged_table_simplified")
+
+    # GFM pipe tables have at most ONE header row and no intermediate header
+    # rows. Pandoc parks tiered/rowspan ``th`` rows in ``TableBody.head`` (and,
+    # for a multi-row ``thead``, in ``Table.head``); the gfm writer can represent
+    # neither, so it dumps the WHOLE table as a raw ``<table>`` — lint-blocked AND
+    # silently dropped downstream (§1). Fold every such row into the body as an
+    # ordinary (already flattened + padded) data row: no content is lost, only the
+    # header *tiering* is flattened — which is all GFM can express.
+    collapsed = False
+    for body in unsafe_head_bodies:
+        body.content = list(body.head) + list(body.content)
+        body.head = []
+        collapsed = True
+    if el.head is not None and len(el.head.content) > 1:
+        extra = list(el.head.content[1:])
+        el.head.content = el.head.content[:1]
+        bodies = [b for b in el.content if isinstance(b, pf.TableBody)]
+        if bodies:
+            bodies[0].content = extra + list(bodies[0].content)
+        else:
+            el.content.append(pf.TableBody(*extra))
+        collapsed = True
+    if collapsed:
+        notes.bump("multi_header_collapsed")
+        notes.warn(
+            "Table had tiered/merged header rows; extra rows folded into the body "
+            "to keep a valid pipe table (header tiering is not representable in GFM)"
+        )
 
     # Post-assertion: a still-unflattened cell means a raw-<table> risk (§1).
     for row in _iter_rows(el):
@@ -330,6 +373,7 @@ def _iter_rows(table: pf.Table) -> list[pf.TableRow]:
         rows.extend(table.head.content)
     for body in table.content:
         if isinstance(body, pf.TableBody):
+            rows.extend(body.head)  # intermediate header rows (tiered/rowspan th)
             rows.extend(body.content)
     if table.foot is not None:
         rows.extend(table.foot.content)
