@@ -33,7 +33,7 @@ mkdir scratch -Force
 
 1. Sketch the program before typing: construct a `SemanticPipeline()` (the
    embedder is lazy — nothing model-related runs unless you touch `.embedder`),
-   call `pipeline.parse_file(Path("eval/corpus/impala-vscode.md"))`, then walk
+   call `pipeline.parse_file(Path("src/tools/eval/corpus/impala-vscode.md"))`, then walk
    `doc.root_sections`.
 2. `parse_file` deliberately stops *before* enrichment (its docstring says why),
    so every `section_type` would print as `content`. Add the one extra call
@@ -54,7 +54,7 @@ mkdir scratch -Force
    ```
 
 5. Stretch: take the markdown path as `sys.argv[1]` with your hardcoded path as
-   the default, and try it on `eval/corpus/sad-retailnexus-oms.md`.
+   the default, and try it on `src/tools/eval/corpus/sad-retailnexus-oms.md`.
 
 <details>
 <summary>Hint — expected output (verified against the current tree)</summary>
@@ -80,13 +80,13 @@ f-string interpolation of `.value` (or the member itself) gives `overview`.
 
 ## Verification
 
-Your output must match the section structure in `out/impala/enriched.json`
+Your output must match the section structure in `build/dump/impala/enriched.json`
 (from exercise 01): same titles in the same nesting, `Introduction` typed
 `overview`, the Dev Container section typed `deployment`, everything else
 `content`. Spot-check the JSON side:
 
 ```powershell
-Select-String -Path "out\impala\enriched.json" -Pattern '"section_type": "(overview|deployment)"'
+Select-String -Path "build\dump\impala\enriched.json" -Pattern '"section_type": "(overview|deployment)"'
 ```
 
 Success: one `overview` and one `deployment` hit — the same two non-`content`

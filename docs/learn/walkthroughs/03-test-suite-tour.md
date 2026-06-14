@@ -54,10 +54,10 @@ into `SemanticPipeline`, which only constructs real ones lazily.
   `"depends on: order-service"` in `to_embed_text()` — table → inventory → routing
   (`config/field_directions.yaml`) → chunk → vector text, in one fast test. Its `slow`
   sibling `test_real_sad_populates_directional_fields_end_to_end` repeats this on the
-  real `eval/corpus/sad-retailnexus-oms.md` via `process_file`.
+  real `src/tools/eval/corpus/sad-retailnexus-oms.md` via `process_file`.
 - **`test_e2e_real_docs.py`** proves enrichment works on *real public* architecture docs,
   not just the synthetic SAD. It is `slow`, **skips** (never fails) when
-  `eval/e2e_corpus/` is empty (fetch with `scripts/fetch_e2e_corpus.py` — the only
+  `src/tools/eval/e2e_corpus/` is empty (fetch with `src/tools/scripts/fetch_e2e_corpus.py` — the only
   networked code), reuses the eval harness's deterministic `HashingEmbedder` (no model
   download), and runs an A/B retrieval comparison with inventory enrichment on vs off —
   hard gate: no regression + the feature is live.
@@ -65,12 +65,12 @@ into `SemanticPipeline`, which only constructs real ones lazily.
 ## The third tier — retrieval *quality*, not correctness
 
 Unit tests answer "does the code do what it says?"; nothing above answers "did this
-change make **search results better or worse**?" That's `scripts/eval_retrieval.py`: it
-re-indexes `eval/corpus/` fresh each run and scores recall@5/10 + MRR against the
-**frozen** golden set `eval/queries.yaml` (categories: `cross-reference`, `paraphrase`,
+change make **search results better or worse**?" That's `src/tools/scripts/eval_retrieval.py`: it
+re-indexes `src/tools/eval/corpus/` fresh each run and scores recall@5/10 + MRR against the
+**frozen** golden set `src/tools/eval/queries.yaml` (categories: `cross-reference`, `paraphrase`,
 `lexical-control` — frozen so nobody edits it to chase a score). Results append to
-[`RETRIEVAL_LOG.md`](../../../eval/RETRIEVAL_LOG.md); the contract is *"After M5 must beat
-Baseline"*. Full protocol: [eval/README.md](../../../eval/README.md).
+[`RETRIEVAL_LOG.md`](../../../src/tools/eval/RETRIEVAL_LOG.md); the contract is *"After M5 must beat
+Baseline"*. Full protocol: [src/tools/eval/README.md](../../../src/tools/eval/README.md).
 
 ## Where would a new test go? A decision guide
 
@@ -85,7 +85,7 @@ Baseline"*. Full protocol: [eval/README.md](../../../eval/README.md).
 3. **Is it cross-stage wiring?** Build a tiny in-memory `DocumentModel` by hand, like
    `test_pipeline_inventory_e2e.py::_doc_with_table` — still fast, no fixtures needed.
 4. **Could it change ranking?** Code tests won't see it — add a query to
-   `eval/queries.yaml` *only before* a baseline is recorded, and run the eval harness.
+   `src/tools/eval/queries.yaml` *only before* a baseline is recorded, and run the eval harness.
 
 ## Self-check
 
@@ -110,6 +110,6 @@ Determinism and zero download — CI never pulls ~1.3 GB. A hashing embedder onl
 overlapping token n-grams, so the A/B measures enrichment's **lexical** contribution
 (extra terms folded into `embed_text`). It cannot prove *semantic* gain (e.g. that
 `depends on:` phrasing matches "what depends on X" queries) — per
-[eval/README.md](../../../eval/README.md), that needs a real model via
-`scripts/eval_retrieval.py`.
+[src/tools/eval/README.md](../../../src/tools/eval/README.md), that needs a real model via
+`src/tools/scripts/eval_retrieval.py`.
 </details>

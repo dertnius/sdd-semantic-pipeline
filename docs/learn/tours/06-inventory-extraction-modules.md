@@ -83,12 +83,12 @@ folds them into the vector text as `depends on: …` / `exposes: …`.
 
 ## The observable payoff (real data)
 
-Run `process_file` over [eval/corpus/sad-retailnexus-oms.md](../../../eval/corpus/sad-retailnexus-oms.md):
+Run `process_file` over [src/tools/eval/corpus/sad-retailnexus-oms.md](../../../src/tools/eval/corpus/sad-retailnexus-oms.md):
 its "External Integration Contracts" section has a `Direction` column
 (mapped to `depends_on` in [config/field_directions.yaml](../../../config/field_directions.yaml)),
 so that chunk carries `depends_on = ['Bidirectional', 'OMS → Carrier', 'OMS → ERP',
 'OMS → Provider', …]`, and "Microservices Inventory" carries `exposes` from its
-`Exposes` column. The same run over `eval/corpus/impala-vscode.md` yields **zero**
+`Exposes` column. The same run over `src/tools/eval/corpus/impala-vscode.md` yields **zero**
 `depends_on`/`exposes`: that doc contains no pipe tables at all, and prose records
 (`field=""`) only ever land in `metadata.raw_entities`. (Template fingerprinting
 for SAD-shaped docs lives in `doc_router.py` — see [tour 05](05-taxonomy-modules.md);

@@ -260,7 +260,7 @@ Settings load from env vars (prefix `PIPELINE_`) or `.env` via
 the name), `PIPELINE_MAX_CHUNK_CHARS`,
 `PIPELINE_PANDOC_FROM_FORMAT`, `PIPELINE_ENTITY_TERMS` (JSON array of domain
 vocabulary), `PIPELINE_ENTITY_VOCAB_PATH` (JSON vocabulary file; enables the
-two-pass cross-corpus scan in `index`/`export` — `docs/entity-vocab.json` is a
+two-pass cross-corpus scan in `index`/`export` — `config/entity-vocab.json` is a
 committed seed example with project terms like `XCom`/`triggerer`/`KPO`),
 `PIPELINE_EMBED_CHAR_BUDGET`, `PIPELINE_CHUNK_MERGE_DEFINITIONS`,
 `PIPELINE_HYBRID_SEARCH` (+ `PIPELINE_HYBRID_CANDIDATE_POOL`, `PIPELINE_RRF_K`).

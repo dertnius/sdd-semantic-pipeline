@@ -55,8 +55,8 @@ Prove the gap (verified against the current code):
 
    ```powershell
    $env:PYTHONUTF8 = "1"
-   .\.venv\Scripts\python.exe src\sdd_pipeline\dump.py eval\corpus\sad-retailnexus-oms.md out\retailnexus-after
-   git diff --no-index out\retailnexus\chunks.json out\retailnexus-after\chunks.json
+   .\.venv\Scripts\python.exe src\sdd_pipeline\dump.py src\tools\eval\corpus\sad-retailnexus-oms.md build\dump\retailnexus-after
+   git diff --no-index build\dump\retailnexus\chunks.json build\dump\retailnexus-after\chunks.json
    ```
 
    Predict the outcome before running. Then explain what you see.
@@ -64,10 +64,10 @@ Prove the gap (verified against the current code):
 <details>
 <summary>Hint (blast-radius outcome)</summary>
 
-The diff is **empty** — verified: no document in `eval/corpus/` contains a
+The diff is **empty** — verified: no document in `src/tools/eval/corpus/` contains a
 PascalCase `*Orchestrator` or `*Dispatcher` token. RetailNexus's
 `saga-orchestrator` is kebab-case, which the PascalCase-only `_SERVICE_PATTERN`
-can never match (check `out\retailnexus\chunks.json`: it shows up only in the
+can never match (check `build\dump\retailnexus\chunks.json`: it shows up only in the
 `metadata.raw_entities` audit bucket, not in `entities`). That *is* the lesson: a change can be correct, tested, and still have
 zero effect on your current corpus — you know that because you measured, not
 because you assumed.
@@ -85,7 +85,7 @@ one-liner — it now prints `['OrderOrchestrator', 'PaymentService']`.
 ## Cleanup
 
 ```powershell
-Remove-Item -Recurse -Force out\retailnexus-after   # scratch artifact (out/ is gitignored anyway)
+Remove-Item -Recurse -Force build\dump\retailnexus-after   # scratch artifact (build/dump is gitignored anyway)
 git add -A && git commit -m "learn: Orchestrator/Dispatcher service suffixes (exercise 05)"
 # or: git checkout -- src/sdd_pipeline/enrichment.py tests/test_enrichment.py
 ```

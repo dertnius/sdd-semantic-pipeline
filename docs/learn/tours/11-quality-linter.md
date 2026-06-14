@@ -79,7 +79,7 @@ parsed AST, by which point the evidence of these source defects is gone.
 ## Try it
 
 ```powershell
-sdd-pipeline lint eval/corpus -v      # report -> eval/corpus/quality-report.json
+sdd-pipeline lint src/tools/eval/corpus -v      # report -> src/tools/eval/corpus/quality-report.json
 ```
 On the sample corpus this flags two files with leaked `<table>` residue (block)
 and leaves the clean docs untouched — a concrete before/after for the converter.

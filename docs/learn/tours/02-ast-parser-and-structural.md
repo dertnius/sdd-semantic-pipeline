@@ -19,7 +19,7 @@ external binary keeps every later stage deterministic and unit-testable, and a
 real parser-grade AST beats regexing markdown yourself.
 
 What pandoc hands back — a real excerpt from
-[out/retailnexus/ast.json](../../../out/retailnexus/ast.json) (whitespace
+[build/dump/retailnexus/ast.json](../../../build/dump/retailnexus/ast.json) (whitespace
 reformatted):
 
 ```json
@@ -80,7 +80,7 @@ identifier becomes the `section_id` downstream.
 **absolute resolved path**, 12 chars. Consequence: the same file produces a
 different `doc_id` (and thus different chunk ids) on every machine/checkout.
 That is why the retrieval eval
-([scripts/eval_retrieval.py](../../../scripts/eval_retrieval.py)) judges hits by
+([src/tools/scripts/eval_retrieval.py](../../../src/tools/scripts/eval_retrieval.py)) judges hits by
 `(doc, breadcrumb-substring)` matching, never by ids.
 
 ## Executable documentation

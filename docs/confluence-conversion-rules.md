@@ -16,7 +16,7 @@ optimized for vector embedding.
 `template-enrichment` merges to `main`.
 
 **Supersedes** `docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md` and
-`wiki/confluence-storage-format-gitlab-markdown.md` wherever they conflict. Known divergences from those
+`docs/guides/confluence-storage-format-gitlab-markdown.md` wherever they conflict. Known divergences from those
 specs: jira macro handling (SF-MACRO-JIRA/HX-JIRA instead of untranslated residue), expand rendering (bold
 paragraph, **no** `<details>`), anchor policy (targets dropped, same-page links → plain text), placeholders
 (deleted, not `*[text]*`), the `#content-view` content root (legacy code-derived; the catalog documents

@@ -83,8 +83,8 @@ vars / `.env` (≈ `IOptions<T>` binding) — see [CLAUDE.md](../../../CLAUDE.md
 
 - [dump.py](../../../src/sdd_pipeline/dump.py) — run as a script: writes
   `ast.json` / `enriched.json` / `chunks.json` for one file; model-free.
-- [scripts/eval_retrieval.py](../../../scripts/eval_retrieval.py) — retrieval
-  quality harness over the golden set ([eval/README.md](../../../eval/README.md)).
+- [src/tools/scripts/eval_retrieval.py](../../../src/tools/scripts/eval_retrieval.py) — retrieval
+  quality harness over the golden set ([src/tools/eval/README.md](../../../src/tools/eval/README.md)).
 
 ## Executable documentation
 

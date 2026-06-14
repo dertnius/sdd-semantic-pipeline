@@ -81,7 +81,7 @@ same input. When in doubt, be more restrictive, not more creative.
 .github/
   copilot-instructions.md   ← this file (read-only)
 docs/inbox                        ← immutable drop zone (you read, never write)
-wiki/
+docs/guides/
   index.md                  ← master catalog — one row per page
   log.md                    ← append-only activity log
   *.md                      ← compiled knowledge pages (you write these)
@@ -151,7 +151,7 @@ Facts only. No opinions. No hedging words (see NEVER list below).
 
 ## Index Row Template
 
-Every wiki page must have exactly one row in `wiki/index.md`:
+Every wiki page must have exactly one row in `docs/guides/index.md`:
 
 ```
 | [page-slug](page-slug.md) | One sentence, no period at end | YYYY-MM-DD |
@@ -173,7 +173,7 @@ _Last updated: YYYY-MM-DD_
 
 **Ingest:**
 ```
-## YYYY-MM-DD | ingest | docs/inbox/<filename> → wiki/<page1>.md, wiki/<page2>.md
+## YYYY-MM-DD | ingest | docs/inbox/<filename> → docs/guides/<page1>.md, docs/guides/<page2>.md
 ```
 
 **Query:**
@@ -203,7 +203,7 @@ Execute these steps in order. Do not skip steps. Do not reorder steps.
 **Step 3 — Map to wiki pages**
 For each concept:
   - Apply the Naming Rule to get the target slug.
-  - Check `wiki/index.md` for a matching row.
+  - Check `docs/guides/index.md` for a matching row.
   - Decision: page exists → go to Step 4a. Page missing → go to Step 4b.
 
 **Step 4a — Update existing page**
@@ -217,23 +217,23 @@ For each concept:
 - Add the new source to `**Sources:**` if not already listed.
 
 **Step 4b — Create new page**
-- Create `wiki/<slug>.md` using the Wiki Page Template exactly.
+- Create `docs/guides/<slug>.md` using the Wiki Page Template exactly.
 - Fill in every section. Write *No open questions.* or *No contradictions.*
   if those sections are empty — never leave a section blank.
 
 **Step 5 — Update index**
-- Add or refresh the row for every modified page in `wiki/index.md`.
+- Add or refresh the row for every modified page in `docs/guides/index.md`.
 - Update `_Last updated:` to today.
 
 **Step 6 — Log**
-- Append the ingest log entry to `wiki/log.md`.
+- Append the ingest log entry to `docs/guides/log.md`.
 
 **Step 7 — Self-check (required)**
 Before responding, verify:
 - [ ] Every section in each modified page is present and non-empty
 - [ ] `**Sources:**` line is updated
 - [ ] `**Last Updated:**` is today's date
-- [ ] `wiki/index.md` has a row for every modified page
+- [ ] `docs/guides/index.md` has a row for every modified page
 - [ ] Log entry appended
 
 Report any failed check explicitly instead of silently skipping it.
@@ -247,7 +247,7 @@ Trigger: `/query <topic>` or a direct question.
 Execute these steps in order.
 
 **Step 1 — Locate**
-- Read `wiki/index.md`.
+- Read `docs/guides/index.md`.
 - List every page whose summary is relevant to the topic.
 - If no pages match, respond with exactly:
   `No wiki coverage for: <topic>. Suggest running /ingest on a relevant source.`
@@ -264,7 +264,7 @@ Use this exact response structure:
 
 <Answer — facts only, max 300 words, no hedging language>
 
-**Sources:** [page-name](wiki/page-name.md), [page-name-2](wiki/page-name-2.md)
+**Sources:** [page-name](docs/guides/page-name.md), [page-name-2](docs/guides/page-name-2.md)
 
 ---
 _Confidence: wiki covers this topic_ / _Confidence: wiki partially covers this topic_
@@ -279,7 +279,7 @@ After the response, ask exactly:
 `Save this as a new wiki page? (yes / no)`
 
 **Step 5 — Log**
-Append the query log entry to `wiki/log.md`.
+Append the query log entry to `docs/guides/log.md`.
 
 ---
 
@@ -290,7 +290,7 @@ Trigger: `/lint`
 Scan and report only. Do not modify any files.
 
 Check for:
-1. Pages on disk not listed in `wiki/index.md`
+1. Pages on disk not listed in `docs/guides/index.md`
 2. Links in wiki pages pointing to files that do not exist
 3. Pages missing any required section from the Wiki Page Template
 4. Pages with `**Last Updated:**` more than 90 days ago

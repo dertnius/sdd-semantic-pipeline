@@ -2,11 +2,11 @@
 
 **Goal.** Stop guessing whether hybrid retrieval helps and produce a results
 table: dense-only vs hybrid at three `rrf_k` values, scored with recall@5 and
-MRR by the eval harness (`scripts/eval_retrieval.py` + the frozen golden set
-`eval/queries.yaml`). No source files change — this is an experiment, and the
+MRR by the eval harness (`src/tools/scripts/eval_retrieval.py` + the frozen golden set
+`src/tools/eval/queries.yaml`). No source files change — this is an experiment, and the
 discipline is the deliverable. Background:
 [tour 09](../tours/09-retrieval-and-hybrid-search.md) and
-[eval/README.md](../../../eval/README.md).
+[src/tools/eval/README.md](../../../src/tools/eval/README.md).
 
 **Difficulty:** meaty
 
@@ -28,7 +28,7 @@ Two rules for every run in this exercise:
   `RETRIEVAL_LOG.md` — that file is the project's honest score history; your
   experiments go in your own scratch notes, not in it.
 - Hybrid on/off is the **`--hybrid` flag**, not the env var. Read
-  `scripts/eval_retrieval.py::run_eval`: it calls
+  `src/tools/scripts/eval_retrieval.py::run_eval`: it calls
   `pipeline.search(..., hybrid=hybrid)` with an explicit `False` when the flag
   is absent, and `SemanticPipeline.search` only falls back to
   `config.hybrid_search` when `hybrid is None` — so `PIPELINE_HYBRID_SEARCH`
@@ -44,8 +44,8 @@ None to edit. Your numbers go in your own scratch notes.
 1. **Prove the wiring with the mock embedder** (deterministic hashing, no model):
 
    ```powershell
-   .\.venv\Scripts\python.exe scripts\eval_retrieval.py --mock --no-log
-   .\.venv\Scripts\python.exe scripts\eval_retrieval.py --mock --no-log --hybrid
+   .\.venv\Scripts\python.exe src\tools\scripts\eval_retrieval.py --mock --no-log
+   .\.venv\Scripts\python.exe src\tools\scripts\eval_retrieval.py --mock --no-log --hybrid
    ```
 
 2. Sweep `rrf_k` (still mock — seconds per run):
@@ -53,7 +53,7 @@ None to edit. Your numbers go in your own scratch notes.
    ```powershell
    foreach ($k in 20, 60, 200) {
      $env:PIPELINE_RRF_K = "$k"
-     .\.venv\Scripts\python.exe scripts\eval_retrieval.py --mock --no-log --hybrid
+     .\.venv\Scripts\python.exe src\tools\scripts\eval_retrieval.py --mock --no-log --hybrid
    }
    Remove-Item Env:PIPELINE_RRF_K
    ```
@@ -110,7 +110,7 @@ differ.
 
 Each run ends with the `=== Retrieval evaluation ===` report shown in the hint
 (an `AGGREGATE` line plus three category lines), and `git status` shows **no
-change to `RETRIEVAL_LOG.md`** (the regenerated `eval/corpus_manifest.json` is
+change to `RETRIEVAL_LOG.md`** (the regenerated `src/tools/eval/corpus_manifest.json` is
 gitignored).
 
 ## Cleanup

@@ -72,7 +72,7 @@ the **signature**: parameter name → option name, annotation → parser/type, d
 @app.command()
 def search(
     query: str = typer.Argument(..., help="Natural-language search query."),
-    index_dir: str = typer.Option("./data/chroma", "--index", "-i", help="Vector index path."),
+    index_dir: str = typer.Option("./build/index", "--index", "-i", help="Vector index path."),
     top_k: int = typer.Option(5, "--top-k", "-k"),
     ...
     hybrid: bool = typer.Option(False, "--hybrid", "-H", help="Fuse dense + lexical ..."),

@@ -1,7 +1,7 @@
 # Confluence Storage Format GitLab Markdown
 
 > **SUPERSEDED (2026-06-12):** this page is superseded **wholesale** by
-> [docs/confluence-conversion-rules.md](../docs/confluence-conversion-rules.md) — the definitive
+> [docs/confluence-conversion-rules.md](../confluence-conversion-rules.md) — the definitive
 > Confluence Server/DC 8.0–10.x → GitLab-Markdown rule set for the embedding pipeline. Two statements
 > below are directly contradicted by the new document: the `#content-view` content-root **Decision**
 > (a legacy code-derived selector; the catalog documents `div#content.view` — see HX-ROOT) and the

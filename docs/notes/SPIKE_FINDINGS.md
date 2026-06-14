@@ -41,7 +41,7 @@ pseudo-headings. Section hierarchy/breadcrumb is intact.
 
 The template parses through the standard pipeline without issue. **But** the only
 SAD currently in the eval corpus,
-[eval/corpus/sad-retailnexus-oms.md](../../eval/corpus/sad-retailnexus-oms.md), does
+[src/tools/eval/corpus/sad-retailnexus-oms.md](../../src/tools/eval/corpus/sad-retailnexus-oms.md), does
 **not** follow `template.md` — it uses a different section taxonomy
 (*Microservices Inventory*, *Kafka Topic Registry*, …) with no Solution Component
 key-value tables. No template-conforming *real* document is available in-repo yet
