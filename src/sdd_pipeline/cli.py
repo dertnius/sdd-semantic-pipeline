@@ -1,5 +1,6 @@
 """
-CLI entry point: sdd-pipeline index | search | check | convert | export | scan | lint
+CLI entry point: sdd-pipeline index | search | tui | export | scan | scan-taxonomy
+| lint | convert | check | help
 """
 
 from __future__ import annotations
@@ -7,6 +8,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import click
 import typer
 from rich.console import Console
 from rich.progress import track
@@ -16,6 +18,7 @@ app = typer.Typer(
     name="sdd-pipeline",
     help="Semantic search pipeline for Confluence SDD documents.",
     add_completion=False,
+    no_args_is_help=True,  # bare `sdd-pipeline` prints the command list instead of erroring
 )
 console = Console()
 
@@ -836,6 +839,54 @@ def search(
     console.print(table)
 
 
+# ── tui ─────────────────────────────────────────────────────────────────────
+
+
+@app.command()
+def tui(
+    index_dir: str = typer.Option("./build/index", "--index", "-i", help="Vector index path."),
+    model: str = typer.Option("BAAI/bge-large-en-v1.5", "--model", "-m"),
+    provider: str = typer.Option(
+        "local", "--provider", help="Embedding backend: local | azure (must match the index)."
+    ),
+    backend: str | None = typer.Option(
+        None,
+        "--backend",
+        help="Vector store backend: memory (default) | chroma (must match the index). "
+        "Unset falls back to PIPELINE_VECTOR_STORE_BACKEND.",
+    ),
+    hybrid: bool = typer.Option(
+        False, "--hybrid", "-H", help="Start with hybrid (dense + BM25) retrieval enabled."
+    ),
+) -> None:
+    r"""Launch an interactive search browser (TUI).
+
+    Requires the optional \[tui] extra:  pip install ".\[tui]"
+    Keeps the embedding model + index warm so queries and filters are instant
+    after the first search. Needs a real terminal (not a redirected pipe).
+    """
+    from .config import PipelineConfig
+
+    overrides: dict = {
+        "chroma_persist_dir": index_dir,
+        "embedding_model": model,
+        "embedding_provider": provider,
+    }
+    if backend is not None:
+        overrides["vector_store_backend"] = backend
+    config = PipelineConfig(**overrides)
+
+    try:
+        from .tui import run_search_tui
+    except ImportError as exc:
+        console.print(
+            r'[red]Textual is not installed.[/red] Install the TUI extra: pip install ".\[tui]"'
+        )
+        raise typer.Exit(1) from exc
+
+    run_search_tui(config, hybrid=hybrid)
+
+
 # ── check ─────────────────────────────────────────────────────────────────────
 
 
@@ -916,6 +967,90 @@ def check() -> None:
 
     console.print(table)
     raise typer.Exit(0 if all_ok else 1)
+
+
+@app.command("help")
+def show_help(
+    ctx: typer.Context,
+    command: str | None = typer.Argument(
+        None, help="Show full options for one command, e.g. 'help search'."
+    ),
+) -> None:
+    """List the available commands and what each is for.
+
+    With no argument, prints a grouped overview. Pass a command name
+    (e.g. ``sdd-pipeline help index``) to see that command's full options.
+    """
+    # `help <command>` -> delegate to that command's own --help text.
+    if command:
+        group = typer.main.get_command(app)
+        sub = group.get_command(ctx, command)
+        if sub is None:
+            console.print(
+                f"[red]No such command: {command!r}.[/red] Run 'sdd-pipeline help' to see the list."
+            )
+            raise typer.Exit(2)
+        sub_ctx = click.Context(sub, info_name=command, parent=ctx.find_root())
+        typer.echo(sub.get_help(sub_ctx))
+        return
+
+    # Grouped overview. Kept ASCII-only so it survives a redirected cp1252 console.
+    groups: list[tuple[str, list[tuple[str, str]]]] = [
+        (
+            "Indexing & search (flow A: Confluence MD -> vector search)",
+            [
+                (
+                    "index",
+                    "Embed and index .md files into the vector store. (needs embedding model)",
+                ),
+                (
+                    "search",
+                    "Query the indexed corpus; add --hybrid for BM25+dense fusion. (needs model)",
+                ),
+                (
+                    "tui",
+                    r"Interactive search browser; needs the \[tui] extra. (needs model)",
+                ),
+                ("export", "Write each file's chunks to .chunks.json/.jsonl for other pipelines."),
+                ("scan", "Discover and persist the cross-corpus entity vocabulary."),
+                ("scan-taxonomy", "Derive a section->field taxonomy from the corpus's tables."),
+                ("lint", "Report embedding-harmful syntax in raw .md before indexing."),
+            ],
+        ),
+        (
+            "HTML -> Markdown (flow B: independent converter)",
+            [
+                ("convert", "Convert Confluence-rendered HTML to GitLab Markdown + a JSON report."),
+            ],
+        ),
+        (
+            "Diagnostics",
+            [
+                ("check", "Verify runtime deps (pandoc, langchain-core, chromadb, openai)."),
+                ("help", "Show this overview, or 'help <command>' for one command's options."),
+            ],
+        ),
+    ]
+
+    console.print(
+        "\n[bold]sdd-pipeline[/bold] - semantic search pipeline for Confluence SDD documents.\n"
+    )
+    # One table per group; a fixed-width command column keeps descriptions aligned
+    # across groups and stops the long group titles from squeezing the second column.
+    for title, rows in groups:
+        console.print(f"[bold]{title}[/bold]")
+        table = Table(show_header=False, box=None, pad_edge=False)
+        table.add_column("Command", style="cyan", no_wrap=True, width=16)
+        table.add_column("What it does")
+        for name, desc in rows:
+            table.add_row(f"  {name}", desc)
+        console.print(table)
+        console.print()
+    console.print(
+        "\nCommands marked '(no model)' run pandoc-only; the rest load an embedding model."
+        "\nRun [cyan]sdd-pipeline <command> --help[/cyan] or "
+        "[cyan]sdd-pipeline help <command>[/cyan] for full options.\n"
+    )
 
 
 if __name__ == "__main__":
