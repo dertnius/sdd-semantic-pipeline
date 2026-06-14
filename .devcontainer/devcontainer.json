@@ -25,7 +25,9 @@
   // ── Environment variables ──────────────────────────────────────────────────
   "remoteEnv": {
     "PYTHONPATH": "${containerWorkspaceFolder}/src",
-    "PIPELINE_CHROMA_PERSIST_DIR": "${containerWorkspaceFolder}/build/index",
+    "PIPELINE_INBOX_DIR": "${containerWorkspaceFolder}/inbox",
+    "PIPELINE_OUTBOX_DIR": "${containerWorkspaceFolder}/outbox",
+    "PIPELINE_CHROMA_PERSIST_DIR": "${containerWorkspaceFolder}/outbox/index",
     "PIPELINE_EMBEDDING_MODEL": "all-MiniLM-L6-v2",
     "ANONYMIZED_TELEMETRY": "false"
   },

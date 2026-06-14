@@ -89,19 +89,19 @@ When a file is *run* (`python dump.py`), `__name__` is `"__main__"`; when *impor
 module path — so the guard makes one file both a library and an entry point.
 `raise SystemExit(main())` ≈ `Environment.Exit(Main())` returning the exit code.
 
-## Bonus gotcha, live in this repo: the docstring escape-sequence warning
+## Bonus gotcha we fixed in this repo: the docstring escape-sequence warning
 
 dump.py's module docstring (the usage text) contains a literal Windows command:
 
 ```
-    .\.venv\Scripts\python.exe dump.py path\to\your-file.md [out-dir]
+    .\.venv\Scripts\python.exe -m sdd_pipeline.dump inbox\path\to\your-file.md [out-dir]
 ```
 
-A docstring is just a string literal, and in a normal string `\.`, `\S`, `\y` are *invalid escape
-sequences* — compile it and Python warns: `dump.py:9: SyntaxWarning: invalid escape sequence '\.'`
-(verified on this repo's venv). Worse, `\t` in `path\to` is a **valid** escape — it silently
-becomes a TAB in the printed usage. The fix is a raw string, `r"""..."""` — the exact analogue of
-a C# verbatim string `@"..."`, where backslashes are literal.
+A docstring is just a string literal, and in a *normal* string `\.`, `\p`, `\y` are *invalid escape
+sequences* — compile it and Python warns: `dump.py:9: SyntaxWarning: invalid escape sequence '\.'`.
+Worse, `\t` in `path\to` is a **valid** escape — it would silently become a TAB in the printed
+usage. The fix (now applied — the docstring opens with `r"""`) is a raw string, the exact analogue
+of a C# verbatim string `@"..."`, where backslashes are literal.
 
 ## Self-check
 

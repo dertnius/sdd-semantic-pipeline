@@ -85,9 +85,9 @@
 
     // ── Pipeline tasks ────────────────────────────────────────────────────
     {
-      "label": "Index: docs/sample/",
+      "label": "Index: inbox/sample/",
       "type": "shell",
-      "command": "sdd-pipeline index docs/sample/ --model all-MiniLM-L6-v2 --verbose",
+      "command": "sdd-pipeline index inbox/sample/ --model all-MiniLM-L6-v2 --verbose",
       "options": {
         "cwd": "${workspaceFolder}",
         "env": { "PYTHONPATH": "${workspaceFolder}/src" }

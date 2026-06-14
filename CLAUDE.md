@@ -4,10 +4,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Layout note
 
-The actual Python project lives one directory **below** this file, in the
-inner `sdd-semantic-pipeline/` folder (it contains `pyproject.toml`, `src/`,
-`tests/`, `docs/`). Run all commands from that inner project root, and use the
-project venv at `.venv/` (`.\.venv\Scripts\python.exe` on Windows).
+This directory **is** the Python project root — `pyproject.toml`, `src/`,
+`tests/`, `docs/`, `config/`, `inbox/`, and `outbox/` all live here. Run all
+commands from here, and use the project venv at `.venv/`
+(`.\.venv\Scripts\python.exe` on Windows).
+
+## Workspace contract (inbox / outbox)
+
+The CLI enforces a two-zone workspace: every pipeline **input** must live under
+`inbox/` and every **output** under `outbox/` (subfolders allowed). Defaults
+point into the zones (input → `inbox/`, outputs → `outbox/<sub>/`), so bare
+commands need no path flags. The guard lives in `workspace.py` (a CLI-layer
+module wired into every `cli.py` command and `dump.py`; it never touches the
+deterministic core). Out-of-zone paths are rejected (exit 2) unless
+`PIPELINE_ENFORCE_WORKSPACE=false`. Standard outbox sub-layout: `outbox/index/`
+(vector index), `outbox/md/` (converted markdown), `outbox/chunks/` (exported
+chunks), `outbox/reports/` (convert/lint reports), `outbox/vocab/` (entity
+vocabulary), `outbox/taxonomy/` (taxonomy + field vocabulary), `outbox/dump/`.
+The `scan`/`scan-taxonomy` outputs land in `outbox/`; promote a reviewed copy
+into committed `config/` by hand (`config/` is configuration, not an output
+zone). Tests bypass the guard via an autouse `PIPELINE_ENFORCE_WORKSPACE=false`
+fixture in `tests/conftest.py`; `tests/test_workspace.py` +
+`tests/test_cli_workspace.py` cover the contract itself.
 
 ## Commands
 
@@ -69,6 +87,7 @@ Confluence-MD → vector-search flow, one module per stage:
 | `embeddings.py` | sentence-transformers wrapper (**only** model loader) |
 | `vector_store.py` | pluggable vector-store backends (`memory` default via langchain-core, Chroma via the `[chroma]` extra) — selected by `make_vector_store(config)` |
 | `pipeline.py` | orchestration + lazy dependency wiring |
+| `workspace.py` | inbox/outbox path contract (CLI-layer guard; resolvers + `WorkspaceError`) — imported by `cli.py`/`dump.py` only |
 | `models.py` | pure dataclasses, no external deps or service logic |
 
 `pipeline.py` lazily constructs the embedder and vector store on first access,
@@ -152,11 +171,12 @@ the frontmatter (`author:` singular — the key `structural._extract_metadata`
 reads). Public API: `resolve_pandoc()`, `convert_file()` (returns
 `(out_path, markdown, metrics, notes)`), `stats()`, and `ConversionError`
 (raised, not `sys.exit`, so batch callers can collect failures). The
-`sdd-pipeline convert` CLI command batches this over `docs/**/*.html` and emits
-a JSON report with per-file + aggregate metrics (`sections`, `pictures`,
-`code_snippets`, `lists`, `tables`, `urls`). `[[_TOC_]]` injection is opt-in
-via `--toc` (default OFF — a TOC paragraph is a junk chunk in the embedding
-corpus).
+`sdd-pipeline convert` CLI command batches this over `inbox/**/*.html` (the
+default input is the inbox), writes `.md` under `outbox/md/`, and emits a JSON
+report (`outbox/reports/conversion-report.json`) with per-file + aggregate
+metrics (`sections`, `pictures`, `code_snippets`, `lists`, `tables`, `urls`).
+`[[_TOC_]]` injection is opt-in via `--toc` (default OFF — a TOC paragraph is a
+junk chunk in the embedding corpus).
 
 **Front door — rendered HTML only (`_reject_if_storage_format`).** `convert_file`
 sniffs for a literal `<ac:`/`<ri:`/`<at:` tag opener (spec §1.2); storage-format
@@ -242,6 +262,8 @@ request seems to require breaking one, flag the conflict and confirm first.
   `make_embedder(config)`.
 - `ast_parser.py` is the only module invoking pandoc (within flow A).
 - Keep `structural.py`, `enrichment.py`, `chunking.py` deterministic/unit-testable.
+- `workspace.py` (inbox/outbox path contract) is a CLI-layer concern — keep it
+  imported only by `cli.py`/`dump.py`; never wire it into the deterministic core.
 
 ## Known pitfalls
 
@@ -274,7 +296,10 @@ Settings load from env vars (prefix `PIPELINE_`) or `.env` via
 `PipelineConfig` (pydantic-settings). Common: `PIPELINE_EMBEDDING_MODEL`,
 `PIPELINE_VECTOR_STORE_BACKEND` (`memory` default | `chroma`),
 `PIPELINE_CHROMA_PERSIST_DIR` (the persist dir for **both** backends, despite
-the name), `PIPELINE_MAX_CHUNK_CHARS`,
+the name; default `./outbox/index` — must stay under the outbox),
+`PIPELINE_INBOX_DIR` / `PIPELINE_OUTBOX_DIR` / `PIPELINE_ENFORCE_WORKSPACE`
+(the workspace contract; see the *Workspace contract* section),
+`PIPELINE_MAX_CHUNK_CHARS`,
 `PIPELINE_PANDOC_FROM_FORMAT`, `PIPELINE_ENTITY_TERMS` (JSON array of domain
 vocabulary), `PIPELINE_ENTITY_VOCAB_PATH` (JSON vocabulary file; enables the
 two-pass cross-corpus scan in `index`/`export` — `config/entity-vocab.json` is a

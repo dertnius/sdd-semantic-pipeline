@@ -6,7 +6,34 @@ importable at runtime, so these exercise whichever is active.
 
 from __future__ import annotations
 
+import pytest
+
 from sdd_pipeline.config import PipelineConfig
+
+
+class TestWorkspaceConfig:
+    def test_defaults(self, monkeypatch: pytest.MonkeyPatch):
+        # conftest's autouse fixture sets these env vars; clear them to see the
+        # shipped defaults.
+        for var in ("PIPELINE_INBOX_DIR", "PIPELINE_OUTBOX_DIR", "PIPELINE_ENFORCE_WORKSPACE"):
+            monkeypatch.delenv(var, raising=False)
+        cfg = PipelineConfig()
+        assert cfg.inbox_dir == "./inbox"
+        assert cfg.outbox_dir == "./outbox"
+        assert cfg.enforce_workspace is True
+        # The vector index default now lives under the outbox.
+        assert cfg.chroma_persist_dir == "./outbox/index"
+
+    def test_enforce_workspace_env_override(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setenv("PIPELINE_ENFORCE_WORKSPACE", "false")
+        assert PipelineConfig().enforce_workspace is False
+
+    def test_roots_env_override(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setenv("PIPELINE_INBOX_DIR", "/data/inbox")
+        monkeypatch.setenv("PIPELINE_OUTBOX_DIR", "/data/outbox")
+        cfg = PipelineConfig()
+        assert cfg.inbox_dir == "/data/inbox"
+        assert cfg.outbox_dir == "/data/outbox"
 
 
 class TestEntityTerms:

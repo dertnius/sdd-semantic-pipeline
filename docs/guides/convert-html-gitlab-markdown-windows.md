@@ -13,8 +13,8 @@ This page explains how to run the HTML-to-GitLab Markdown converter on Windows. 
 - The Windows environment is expected to already have pandoc installed at `C:\Program Files\Pandoc\pandoc` and the project dependencies available in `.venv` (source: `docs/inbox/Convert.Windows.Readme.md`)
 - Windows console output must use UTF-8 because the script prints emoji and the default cp1252 encoding can raise `UnicodeEncodeError` (source: `docs/inbox/Convert.Windows.Readme.md`)
 - The recommended fix is to set `$env:PYTHONUTF8 = "1"` before running the converter (source: `docs/inbox/Convert.Windows.Readme.md`)
-- Single-file and batch conversion commands use the inner project root and the `.venv\Scripts\python.exe` interpreter (source: `docs/inbox/Convert.Windows.Readme.md`)
-- Batch conversion scans `docs\**\*.html`, mirrors the source tree under the output directory, and writes a JSON report with totals and per-file status (source: `docs/inbox/Convert.Windows.Readme.md`)
+- Single-file and batch conversion commands run from the project root with the `.venv\Scripts\python.exe` interpreter (source: `docs/inbox/Convert.Windows.Readme.md`)
+- Batch conversion scans the inbox for `**\*.html` (default `inbox\`), mirrors the source tree under the output directory (default `outbox\md\`), and writes a JSON report with totals and per-file status (source: `docs/inbox/Convert.Windows.Readme.md`)
 - Verification focuses on exit status `0`, the `✅ Done` message, and Markdown output that includes front matter, `[[_TOC_]]`, fenced code blocks, and pipe tables (source: `docs/inbox/Convert.Windows.Readme.md`)
 
 ## Decisions and Constraints

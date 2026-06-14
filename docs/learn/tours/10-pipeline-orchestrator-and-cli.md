@@ -110,7 +110,7 @@ vars / `.env` (≈ `IOptions<T>` binding) — see [CLAUDE.md](../../../CLAUDE.md
    <code>make_embedder</code> on first use.</details>
 
 2. `PIPELINE_VECTOR_STORE_BACKEND=chroma` is set and you run
-   `sdd-pipeline index docs/`. Which backend is used? And with
+   `sdd-pipeline index inbox/`. Which backend is used? And with
    `--backend memory`?
    <details><summary>Answer</summary>chroma, then memory. <code>--backend</code>
    defaults to <code>None</code> and is only copied into the overrides dict when

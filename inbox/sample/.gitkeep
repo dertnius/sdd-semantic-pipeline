@@ -1,0 +1,3 @@
+# Example input subfolder. Place a sample corpus here, e.g.
+#   inbox/sample/SAD_RetailNexus_OMS_Confluence.html  (then `sdd-pipeline convert`)
+#   inbox/sample/*.md                                 (then `sdd-pipeline index`)

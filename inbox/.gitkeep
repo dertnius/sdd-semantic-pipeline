@@ -1,0 +1,5 @@
+# Pipeline INPUT zone. Drop raw HTML (for `convert`) or .md (for index/export/
+# lint/scan) here; subfolders are allowed (e.g. inbox/sample/). With the
+# workspace contract on (default), every pipeline input must live under this
+# folder. Source files dropped here are git-ignored — only this skeleton is
+# tracked. Set PIPELINE_ENFORCE_WORKSPACE=false to bypass the contract.

@@ -1,6 +1,6 @@
 # Pipeline 101 — an operator's step-by-step guide
 
-_Last updated: 2026-06-14_
+_Last updated: 2026-06-15_
 
 A task-oriented runbook for the six things you actually do with this pipeline:
 onboard a document, update one without rebuilding everything, give a document (or a
@@ -93,7 +93,7 @@ rendered `embed_text` is how you judge quality (Section 5).
 |---|---|---|
 | Model | `--model all-MiniLM-L6-v2` (~80 MB) | default `BAAI/bge-large-en-v1.5` (~1.3 GB) |
 | Backend | `memory` (default; a JSON file) | `--backend chroma` (`pip install ".[chroma]"`) |
-| Index dir | `./build/index` (default) | a persisted Chroma dir |
+| Index dir | `./outbox/index` (default) | a persisted Chroma dir |
 
 The `memory` backend stores the whole index in one `<persist_dir>/sdd_docs.json`
 file and rewrites it after every indexed file — perfect at SDD-corpus scale, wrong
@@ -115,25 +115,43 @@ hygiene gate** (Section 5) runs at `index` time and will *block* a file whose ch
 carry markup/macro residue — so catching problems now, at chunk stage, saves a failed
 index later.
 
+### Workspace note
+
+Every command obeys the **inbox/outbox contract**: pipeline inputs live under
+`inbox/` and outputs under `outbox/` (subfolders allowed). Drop your source files
+in `inbox/` and let the defaults handle the rest. (See
+[README → Workspace contract](../../README.md#workspace-contract).)
+
 ### Steps
 
-**1. (If the source is Confluence HTML) convert it to Markdown.**
+**1. (If the source is Confluence HTML) convert it to Markdown, then promote the
+clean files into the inbox corpus.** Place the raw HTML under the inbox
+(e.g. `inbox\new-html\`):
 
 ```powershell
-sdd-pipeline convert .\incoming_html --output .\docs\new --space ENG `
+sdd-pipeline convert .\inbox\new-html --space ENG `
   --source-url "https://wiki/.../page" --labels "oms,architecture"
+# → outbox\md\  (+ outbox\reports\conversion-report.json)
 ```
 
-`convert` writes Markdown with YAML frontmatter and a `conversion-report.json`.
-Low-confidence conversions are routed to a `_quarantine/` subdir (and the command
-exits non-zero) — never index a quarantined file. If your source is already
-Markdown, skip this step.
+`convert` reads HTML from the inbox, writes Markdown with YAML frontmatter to
+`outbox\md\`, and emits `outbox\reports\conversion-report.json`. Low-confidence
+conversions are routed to a `_quarantine\` subdir (and the command exits
+non-zero) — never index a quarantined file. Review the output, then **promote the
+good Markdown into the inbox corpus** so the rest of the pipeline can consume it:
+
+```powershell
+Copy-Item .\outbox\md\* .\inbox\new\ -Recurse
+```
+
+If your source is already Markdown, skip convert and drop the `.md` straight into
+`inbox\new\`.
 
 **2. Lint the raw Markdown** (model-free, no pandoc) to catch embedding-harmful
 residue before parsing:
 
 ```powershell
-sdd-pipeline lint .\docs\new
+sdd-pipeline lint .\inbox\new        # → outbox\reports\quality-report.json
 ```
 
 See Section 5 for what it flags. Fix `block`-severity issues at the source.
@@ -141,7 +159,7 @@ See Section 5 for what it flags. Fix `block`-severity issues at the source.
 **3. Produce the chunks — model-free — with `export`:**
 
 ```powershell
-sdd-pipeline export .\docs\new --output .\build\chunks --merge-prose
+sdd-pipeline export .\inbox\new --merge-prose      # → outbox\chunks\
 ```
 
 This writes one `*.chunks.json` per input file (mirroring the tree) plus an
@@ -160,7 +178,7 @@ string the model would embed.
 **4. (Single file, deep inspection)** Dump all three model-free artifacts at once:
 
 ```powershell
-python -m sdd_pipeline.dump .\docs\new\my-page.md .\build\dump
+python -m sdd_pipeline.dump .\inbox\new\my-page.md .\outbox\dump
 ```
 
 Writes `ast.json` (raw pandoc), `enriched.json` (the `DocumentModel` with section
@@ -175,7 +193,7 @@ from pathlib import Path
 from sdd_pipeline.pipeline import SemanticPipeline
 
 pipe = SemanticPipeline()                      # embedder is lazy — never loaded here
-chunks = pipe.process_file(Path("docs/new/my-page.md"))   # stages 2–6
+chunks = pipe.process_file(Path("inbox/new/my-page.md"))   # stages 2–6
 for c in chunks:
     print(c.section_type, c.breadcrumb, "->", len(c.to_embed_text()), "chars")
     print(c.to_embed_text())
@@ -185,8 +203,8 @@ for c in chunks:
 
 ```powershell
 $env:PYTHONUTF8 = "1"
-sdd-pipeline index .\docs\new --model all-MiniLM-L6-v2 --merge-prose
-# index lives in ./build/index (memory backend, default)
+sdd-pipeline index .\inbox\new --model all-MiniLM-L6-v2 --merge-prose
+# index lives in ./outbox/index (memory backend, default)
 ```
 
 Then confirm it's searchable:
@@ -232,7 +250,7 @@ Re-index just that one file by pointing the glob at it:
 
 ```powershell
 $env:PYTHONUTF8 = "1"
-sdd-pipeline index .\docs --glob "new\my-page.md" --model all-MiniLM-L6-v2 --merge-prose
+sdd-pipeline index .\inbox --glob "new\my-page.md" --model all-MiniLM-L6-v2 --merge-prose
 ```
 
 The glob is evaluated under the input dir, so `--glob "new\my-page.md"` matches a
@@ -252,10 +270,10 @@ from sdd_pipeline.pipeline import _stable_doc_id
 
 config = PipelineConfig()          # reads PIPELINE_* env / .env
 # If you indexed to a non-default location/backend, set these to match the index:
-#   config.chroma_persist_dir = "./build/index"   (the --output / --index dir)
+#   config.chroma_persist_dir = "./outbox/index"   (the --output / --index dir)
 #   config.vector_store_backend = "memory"        (or "chroma")
 store = make_vector_store(config)
-removed = store.delete_document(_stable_doc_id(Path("docs/new/my-page.md").resolve()))
+removed = store.delete_document(_stable_doc_id(Path("inbox/new/my-page.md").resolve()))
 print(f"removed {removed} old chunks")
 ```
 
@@ -273,7 +291,7 @@ Loop the per-file index over your changed set (e.g. from git):
 $env:PYTHONUTF8 = "1"
 git diff --name-only HEAD~1 -- 'docs/**/*.md' | ForEach-Object {
     $rel = Resolve-Path $_ -Relative
-    sdd-pipeline index .\docs --glob ($_ -replace '^docs[\\/]', '') --model all-MiniLM-L6-v2 --merge-prose
+    sdd-pipeline index .\inbox --glob ($_ -replace '^docs[\\/]', '') --model all-MiniLM-L6-v2 --merge-prose
 }
 ```
 
@@ -307,7 +325,7 @@ inject them.
 ```powershell
 # A JSON array of domain terms; merged into extract_entities for this run.
 $env:PIPELINE_ENTITY_TERMS = '["XCom","triggerer","KPO","settlement-engine"]'
-sdd-pipeline export .\docs\new --output .\build\chunks --merge-prose
+sdd-pipeline export .\inbox\new --output .\outbox\chunks --merge-prose
 ```
 
 Then inspect a `.chunks.json` (or use `dump`) and read each chunk's `entities` and the
@@ -353,8 +371,8 @@ If the document has data tables and you want the field names treated as a taxono
 run `scan-taxonomy` over its folder (model-free):
 
 ```powershell
-sdd-pipeline scan-taxonomy .\docs\new --out .\config\taxonomy.json `
-  --vocab-out .\build\field_vocabulary.json --min-docs 1
+sdd-pipeline scan-taxonomy .\inbox\new --out .\outbox\taxonomy\taxonomy.json `
+  --vocab-out .\outbox\taxonomy\field_vocabulary.json --min-docs 1
 ```
 
 For a single doc, use `--min-docs 1` (a field need only appear once). This is more
@@ -389,25 +407,33 @@ an index:
 
 ```powershell
 $env:PIPELINE_ENTITY_TERMS = '["XCom","triggerer","KPO"]'   # optional seed terms
-sdd-pipeline scan .\docs\oms --vocab .\config\entity-vocab.json
+sdd-pipeline scan .\inbox\oms --vocab .\outbox\vocab\entity-vocab.json
 ```
 
-This writes a sorted, deduplicated JSON array. Open it, delete noise, add terms the
-scan missed, commit it. The discovery is recall-broad on purpose, so pruning is
-expected. (`config/entity-vocab.json` is a committed seed example with project terms
-like `XCom`/`triggerer`/`KPO`.) Re-running `scan` **accumulates** — it seeds from the
-existing file plus `PIPELINE_ENTITY_TERMS`, so your edits and prior terms survive.
+This writes a sorted, deduplicated JSON array to `outbox/vocab/`. Open it, delete
+noise, add terms the scan missed. The discovery is recall-broad on purpose, so
+pruning is expected. To keep a reviewed vocabulary, **promote it into committed
+config** — `outbox/` is gitignored, `config/` is not:
+
+```powershell
+Copy-Item .\outbox\vocab\entity-vocab.json .\config\entity-vocab.json   # then commit
+```
+
+(`config/entity-vocab.json` is a committed seed example with project terms like
+`XCom`/`triggerer`/`KPO`.) Re-running `scan` **accumulates** — point `--vocab` at
+the file you want to grow; it seeds from the existing file plus
+`PIPELINE_ENTITY_TERMS`, so your edits and prior terms survive.
 
 ### 4b. Index (or export) with the shared vocabulary
 
 Point the env var at your reviewed file; the scan now runs automatically first:
 
 ```powershell
-$env:PIPELINE_ENTITY_VOCAB_PATH = ".\config\entity-vocab.json"
+$env:PIPELINE_ENTITY_VOCAB_PATH = ".\outbox\vocab\entity-vocab.json"
 $env:PYTHONUTF8 = "1"
-sdd-pipeline index .\docs\oms --model all-MiniLM-L6-v2 --merge-prose
+sdd-pipeline index .\inbox\oms --model all-MiniLM-L6-v2 --merge-prose
 # or, model-free, to inspect chunks first:
-sdd-pipeline export .\docs\oms --output .\build\chunks --merge-prose
+sdd-pipeline export .\inbox\oms --output .\outbox\chunks --merge-prose
 ```
 
 Every doc is now enriched with the corpus-wide vocabulary. (Leaving
@@ -419,8 +445,8 @@ Derive a section→field taxonomy from the tables that recur across the set, kee
 fields seen in at least N documents:
 
 ```powershell
-sdd-pipeline scan-taxonomy .\docs\oms --out .\config\taxonomy.json `
-  --vocab-out .\build\field_vocabulary.json --min-docs 2
+sdd-pipeline scan-taxonomy .\inbox\oms --out .\outbox\taxonomy\taxonomy.json `
+  --vocab-out .\outbox\taxonomy\field_vocabulary.json --min-docs 2
 ```
 
 `taxonomy.json` holds `{section_key: {fields, orientation}}` (only fields with
@@ -440,7 +466,7 @@ Work three lenses, cheapest first. The first two are model-free.
 model). It flags embedding-harmful residue but never blocks or rewrites anything.
 
 ```powershell
-sdd-pipeline lint .\docs\new --strict     # --strict → non-zero exit on any block issue
+sdd-pipeline lint .\inbox\new --strict     # --strict → non-zero exit on any block issue
 ```
 
 It writes `quality-report.json` and flags: `html_leakage` (leaked HTML tags),
@@ -474,7 +500,7 @@ from pathlib import Path
 from sdd_pipeline.pipeline import SemanticPipeline
 
 pipe = SemanticPipeline()
-chunks = pipe.process_file(Path("docs/new/my-page.md"))
+chunks = pipe.process_file(Path("inbox/new/my-page.md"))
 for rpt in pipe.gate_chunks(chunks):          # one report per chunk, never raises
     if rpt.issues:
         print(rpt.chunk_id, [(i.rule, i.severity, i.detail) for i in rpt.issues])
@@ -582,26 +608,27 @@ were **orphaned**. Run Section 2 **Procedure B** (`delete_document` then re-inde
 .\.venv\Scripts\Activate.ps1; sdd-pipeline check
 
 # 1. onboard → chunks (model-free, fast)
-sdd-pipeline convert .\incoming --output .\docs\new           # if HTML
-sdd-pipeline lint .\docs\new                                  # source residue
-sdd-pipeline export .\docs\new -o .\build\chunks --merge-prose  # inspect chunks
-python -m sdd_pipeline.dump .\docs\new\page.md .\build\dump     # deep-dive one file
+sdd-pipeline convert .\inbox\new-html                          # if HTML → outbox\md\
+Copy-Item .\outbox\md\* .\inbox\new\ -Recurse                  # promote reviewed md to the corpus
+sdd-pipeline lint .\inbox\new                                  # source residue → outbox\reports\
+sdd-pipeline export .\inbox\new --merge-prose                  # inspect chunks → outbox\chunks\
+python -m sdd_pipeline.dump .\inbox\new\page.md .\outbox\dump  # deep-dive one file
 
 # 2. vocabulary / taxonomy
 $env:PIPELINE_ENTITY_TERMS = '["XCom","triggerer"]'          # single-doc terms
-sdd-pipeline scan .\docs\new --vocab .\config\entity-vocab.json  # cross-corpus, then edit it
-$env:PIPELINE_ENTITY_VOCAB_PATH = ".\config\entity-vocab.json"   # enable shared vocab
+sdd-pipeline scan .\inbox\new --vocab .\outbox\vocab\entity-vocab.json  # cross-corpus, then edit it
+$env:PIPELINE_ENTITY_VOCAB_PATH = ".\outbox\vocab\entity-vocab.json"   # enable shared vocab
 
 # 3. embed (only when chunks look right)
 $env:PYTHONUTF8 = "1"
-sdd-pipeline index .\docs\new --model all-MiniLM-L6-v2 --merge-prose
+sdd-pipeline index .\inbox\new --model all-MiniLM-L6-v2 --merge-prose
 
 # 4. verify & evaluate
 sdd-pipeline search "a real user question" --model all-MiniLM-L6-v2 --hybrid
 python src/tools/scripts/eval_retrieval.py --mock --no-log    # wiring; drop --mock for real
 
 # 5. update one doc (content edit) — no full rebuild
-sdd-pipeline index .\docs --glob "new\page.md" --model all-MiniLM-L6-v2 --merge-prose
+sdd-pipeline index .\inbox --glob "new\page.md" --model all-MiniLM-L6-v2 --merge-prose
 #   (structural edit? delete_document(doc_id) first — see Section 2B)
 ```
 

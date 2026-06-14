@@ -80,13 +80,13 @@ f-string interpolation of `.value` (or the member itself) gives `overview`.
 
 ## Verification
 
-Your output must match the section structure in `build/dump/impala/enriched.json`
+Your output must match the section structure in `outbox/dump/impala/enriched.json`
 (from exercise 01): same titles in the same nesting, `Introduction` typed
 `overview`, the Dev Container section typed `deployment`, everything else
 `content`. Spot-check the JSON side:
 
 ```powershell
-Select-String -Path "build\dump\impala\enriched.json" -Pattern '"section_type": "(overview|deployment)"'
+Select-String -Path "outbox\dump\impala\enriched.json" -Pattern '"section_type": "(overview|deployment)"'
 ```
 
 Success: one `overview` and one `deployment` hit — the same two non-`content`

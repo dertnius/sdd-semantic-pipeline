@@ -54,15 +54,15 @@
 
     // ── 4. CLI: index sample docs ─────────────────────────────────────────
     {
-      "name": "CLI: index docs/sample/",
+      "name": "CLI: index inbox/sample/",
       "type": "debugpy",
       "request": "launch",
       "module": "sdd_pipeline.cli",
       "args": [
         "index",
-        "docs/sample/",
+        "inbox/sample/",
         "--model", "all-MiniLM-L6-v2",
-        "--output", "build/index",
+        "--output", "outbox/index",
         "--verbose"
       ],
       "env": {

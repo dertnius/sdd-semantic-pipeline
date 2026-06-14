@@ -1,0 +1,10 @@
+# Pipeline OUTPUT zone. Every artifact the pipeline produces lands here under a
+# standard sub-layout:
+#   outbox/index/      vector index        (index --output; search/tui --index)
+#   outbox/md/         converted markdown  (convert --output)
+#   outbox/chunks/     exported chunks     (export --output)
+#   outbox/reports/    JSON run reports    (convert/lint --report)
+#   outbox/vocab/      entity vocabulary   (scan --vocab)
+#   outbox/taxonomy/   taxonomy + fields   (scan-taxonomy)
+#   outbox/dump/       diagnostic dumps    (python -m sdd_pipeline.dump)
+# Everything under outbox/ is git-ignored; only this skeleton is tracked.

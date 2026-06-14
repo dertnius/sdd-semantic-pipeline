@@ -1,14 +1,17 @@
-"""Dump the model-free artifacts for one markdown file: AST, enriched
+r"""Dump the model-free artifacts for one markdown file: AST, enriched
 structural model, and chunks.
 
 Runs pandoc -> structural -> enrich -> chunk only. No embedding model is
 loaded and nothing is downloaded. Requires pandoc on PATH.
 
-Usage (from the inner project root, with the project venv):
+Usage (from the project root, with the project venv):
 
-    .\.venv\Scripts\python.exe dump.py path\to\your-file.md [out-dir]
+    .\.venv\Scripts\python.exe -m sdd_pipeline.dump inbox\path\to\your-file.md [out-dir]
 
-Writes <out-dir>/{ast,enriched,chunks}.json (out-dir defaults to ./out).
+The input file must live under the inbox and the out-dir under the outbox (the
+workspace contract); out-dir defaults to outbox/dump. Writes
+<out-dir>/{ast,enriched,chunks}.json. Set PIPELINE_ENFORCE_WORKSPACE=false to
+bypass the contract.
 """
 
 from __future__ import annotations
@@ -21,6 +24,12 @@ from pathlib import Path
 from sdd_pipeline.ast_parser import generate_ast
 from sdd_pipeline.enrichment import enrich_document
 from sdd_pipeline.pipeline import SemanticPipeline
+from sdd_pipeline.workspace import (
+    OUTBOX_DUMP,
+    WorkspaceError,
+    resolve_input,
+    resolve_output_dir,
+)
 
 
 def _write(path: Path, obj: object) -> None:
@@ -36,10 +45,23 @@ def main() -> int:
     if not md.is_file():
         print(f"Not a file: {md}")
         return 2
-    out = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("build/dump")
-    out.mkdir(parents=True, exist_ok=True)
 
     pipe = SemanticPipeline()  # embedder is lazy; nothing below touches it
+    cfg = pipe.config
+    # Enforce the workspace contract: input under the inbox, artifacts under the
+    # outbox (default outbox/dump). resolve_output_dir creates the directory.
+    try:
+        resolve_input(md, inbox_dir=cfg.inbox_dir, enforce=cfg.enforce_workspace)
+        out = resolve_output_dir(
+            sys.argv[2] if len(sys.argv) > 2 else None,
+            outbox_dir=cfg.outbox_dir,
+            enforce=cfg.enforce_workspace,
+            default_subpath=OUTBOX_DUMP,
+        )
+    except WorkspaceError as exc:
+        print(exc)
+        return 2
+
     terms = pipe.config.entity_terms
 
     # 1) AST — raw pandoc JSON
