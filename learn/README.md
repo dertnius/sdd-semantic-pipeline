@@ -54,7 +54,7 @@ Hours are estimates — the reading **order** is the contract, not the clock. Co
 
 ## Phase 2 (deferred)
 
-`html_to_gitlab_md.py` (1,209 lines, the Confluence-HTML→Markdown converter) is deliberately **out of scope** here. It is standalone — zero imports from the pipeline — and the hardest read in the repo (BeautifulSoup walking + heavy regex). Tackle it only after you're fluent in flow A; the converter wiki pages (`wiki/convert-html-gitlab-markdown-*.md`) cover *using* it.
+The `sdd_pipeline/convert/` subpackage (the Confluence-HTML→Markdown converter — `base` shared layer + `html_to_gitlab_md` HTML path + `confluence_pf_filter` Stage-C filter) is deliberately **out of scope** here. It is standalone — zero imports from the pipeline — and the hardest read in the repo (BeautifulSoup walking + heavy regex). Tackle it only after you're fluent in flow A; the converter wiki pages (`wiki/convert-html-gitlab-markdown-*.md`) cover *using* it.
 
 ## Freshness — keeping learn/ honest as the code evolves
 

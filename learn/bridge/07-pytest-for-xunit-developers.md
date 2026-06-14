@@ -69,7 +69,7 @@ would need abstraction seams for. Real uses to read:
 - `tests/test_ast_parser.py::TestPandocVersion.test_raises_when_not_found` —
   `monkeypatch.setenv("PATH", "")` to simulate missing pandoc (reverted after the test, so the
   rest of the suite still finds it).
-- `tests/test_html_to_gitlab_md.py::_install_fake_converter` —
+- `tests/convert/test_html_to_gitlab_md.py::_install_fake_converter` —
   `monkeypatch.setattr(h2m, "convert_file", fake_convert_file)`: swapping a *module-level
   function*, the move that replaces an interface-extraction refactor in C#.
 

@@ -30,7 +30,7 @@ unconditional).
 - `[NEW]` — not implemented.
 
 Key files referenced:
-- `src/sdd_pipeline/html_to_gitlab_md.py` (converter, all three stages today)
+- `src/sdd_pipeline/convert/html_to_gitlab_md.py` (converter, all three stages today)
 - `src/sdd_pipeline/quality.py` (post-conversion lint)
 - `src/sdd_pipeline/structural.py`, `src/sdd_pipeline/models.py`, `src/sdd_pipeline/chunking.py` (downstream consumers)
 - `src/sdd_pipeline/ast_parser.py` (repo-native pandoc-JSON pattern reused by Stage B/C)
@@ -1115,7 +1115,7 @@ No code in this document — the `[CHANGE]`/`[NEW]` markers on each rule are the
 1. **lxml CDATA destruction** — `html_to_gitlab_md.py:192` parses with `BeautifulSoup(html, "lxml")` while
    the code's own comment (line 679) concedes lxml DROPS CDATA: every code/noformat body and
    `ac:plain-text-link-body` is destroyed today on storage-format input. Swap Stage A1 to `html.parser`
-   (§1). Flip `test_leftover_ac_stripped_no_xml` (tests/test_html_to_gitlab_md.py:392), which currently
+   (§1). Flip `test_leftover_ac_stripped_no_xml` (tests/convert/test_html_to_gitlab_md.py:392), which currently
    enshrines the catch-all stripping as expected behavior.
 2. **`_drop_leftover_ac` content destruction** — lines 747–764 `decompose()` every non-whitelisted `ac:*`
    element, including `ac:layout-cell` (whole columns of content) and `ac:adf-extension` (decision lists).

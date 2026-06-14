@@ -94,10 +94,10 @@ known-first-party = ["sdd_pipeline"]
 
 [tool.ruff.lint.per-file-ignores]
 # Intentional no-break-space literals: a U+00A0→space replacement in the
-# converter and the test that asserts it. allowed-confusables can't whitelist
-# NBSP, so scope the suppression to these two files.
-"src/sdd_pipeline/html_to_gitlab_md.py" = ["RUF001"]
-"tests/test_html_to_gitlab_md.py" = ["RUF001"]
+# converter's shared post-process layer and the test that asserts it.
+# allowed-confusables can't whitelist NBSP, so scope the suppression to these files.
+"src/sdd_pipeline/convert/base.py" = ["RUF001"]
+"tests/convert/test_html_to_gitlab_md.py" = ["RUF001"]
 
 [tool.ruff.format]
 quote-style = "double"

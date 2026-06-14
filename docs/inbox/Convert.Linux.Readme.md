@@ -20,7 +20,7 @@ generic) HTML export into a clean GitLab-flavoured `.md` file.
     ```
 - Sample input: `docs/sample/SAD_RetailNexus_OMS_Confluence.html`.
 
-The script (`src/sdd_pipeline/html_to_gitlab_md.py`) runs a 3-stage pipeline:
+The script (`src/sdd_pipeline/convert/html_to_gitlab_md.py`) runs a 3-stage pipeline:
 BeautifulSoup pre-clean → pandoc convert → markdown post-process. It auto-detects
 pandoc via `shutil.which("pandoc")`.
 
@@ -43,7 +43,7 @@ Run from the inner project root so the `.venv` interpreter (with bs4/lxml) is us
 
 ```bash
 cd /path/to/sdd-semantic-pipeline/sdd-semantic-pipeline
-./.venv/bin/python src/sdd_pipeline/html_to_gitlab_md.py \
+./.venv/bin/python src/sdd_pipeline/convert/html_to_gitlab_md.py \
   docs/sample/SAD_RetailNexus_OMS_Confluence.html
 ```
 
@@ -52,7 +52,7 @@ cd /path/to/sdd-semantic-pipeline/sdd-semantic-pipeline
 ### Choose an explicit output path
 
 ```bash
-./.venv/bin/python src/sdd_pipeline/html_to_gitlab_md.py \
+./.venv/bin/python src/sdd_pipeline/convert/html_to_gitlab_md.py \
   docs/sample/SAD_RetailNexus_OMS_Confluence.html \
   -o docs/architecture.md
 ```
@@ -60,12 +60,12 @@ cd /path/to/sdd-semantic-pipeline/sdd-semantic-pipeline
 ### Convert your own file
 
 ```bash
-./.venv/bin/python src/sdd_pipeline/html_to_gitlab_md.py \
+./.venv/bin/python src/sdd_pipeline/convert/html_to_gitlab_md.py \
   path/to/your.html -o docs/your-output.md -v
 ```
 
 If you activate the venv first (`source ./.venv/bin/activate`), you can just call
-`python src/sdd_pipeline/html_to_gitlab_md.py ...`.
+`python src/sdd_pipeline/convert/html_to_gitlab_md.py ...`.
 
 ## Batch conversion + JSON report (recommended)
 

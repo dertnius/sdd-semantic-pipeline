@@ -72,7 +72,7 @@ reuse `scripts/eval_retrieval.py` to measure it.
 
 ## E2E chunk-hygiene proof (model-free, non-skippable)
 
-`tests/test_html_to_gitlab_md_v3.py::TestEndToEndChunkHygiene` runs the **whole
+`tests/convert/test_html_to_gitlab_md_v3.py::TestEndToEndChunkHygiene` runs the **whole
 model-free chain** — HTML → `convert` → chunk → Arm-1 hygiene gate — over the
 *committed* rendered fixtures in `convert/examples/` (storage-format fixtures are
 refused at the door). It asserts every produced chunk is clean (no markup/macro

@@ -16,8 +16,8 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from sdd_pipeline import html_to_gitlab_md as h2m
 from sdd_pipeline.cli import app
+from sdd_pipeline.convert import html_to_gitlab_md as h2m
 from sdd_pipeline.quality import check_markdown
 
 
@@ -319,7 +319,8 @@ class TestPostprocessV3:
 
 class TestCliTocFlag:
     def _fake(self, monkeypatch, captured: dict):
-        monkeypatch.setattr(h2m, "resolve_pandoc", lambda _p=None: "pandoc")
+        # The `convert` CLI imports these from the `sdd_pipeline.convert` package.
+        monkeypatch.setattr("sdd_pipeline.convert.resolve_pandoc", lambda _p=None: "pandoc")
 
         def fake_convert_file(src, output=None, **kw):
             captured.update(kw)
@@ -337,7 +338,7 @@ class TestCliTocFlag:
             }
             return out, "# md\n", metrics, notes
 
-        monkeypatch.setattr(h2m, "convert_file", fake_convert_file)
+        monkeypatch.setattr("sdd_pipeline.convert.convert_file", fake_convert_file)
 
     def test_toc_default_off_and_opt_in(self, tmp_path: Path, monkeypatch):
         captured: dict = {}
@@ -356,7 +357,7 @@ class TestCliTocFlag:
 
 # ── Real-corpus regression gate (slow) ────────────────────────────────────────
 
-_TMP_DC = Path(__file__).resolve().parents[1] / ".tmp_dc"
+_TMP_DC = Path(__file__).resolve().parents[2] / ".tmp_dc"
 
 
 @requires_pandoc
@@ -379,7 +380,7 @@ class TestTmpDcCorpus:
 
 # ── Committed example corpus (the regression net; runs in CI) ──────────────────
 
-_EXAMPLES = Path(__file__).resolve().parents[1] / "convert" / "examples"
+_EXAMPLES = Path(__file__).resolve().parents[2] / "convert" / "examples"
 
 
 @requires_pandoc

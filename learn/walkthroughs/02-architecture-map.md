@@ -93,7 +93,7 @@ Three shapes matter: a **tree** (`DocumentModel` → recursive `Section`s), then
 ## The two flows, and what's deferred
 
 - **Flow A (this curriculum):** `.md` → AST → structure → enrich → chunk → embed → store → search. Orchestrated by `pipeline.py::SemanticPipeline`.
-- **Flow B (Phase 2, deferred):** `html_to_gitlab_md.py` — a standalone 1,209-line Confluence-HTML→Markdown converter. Zero imports from flow A. Read it only after you're fluent in flow A.
+- **Flow B (Phase 2, deferred):** the `sdd_pipeline/convert/` subpackage — a standalone Confluence-HTML→Markdown converter (`base` shared layer + `html_to_gitlab_md` HTML path + `confluence_pf_filter` Stage-C filter). Zero imports from flow A. Read it only after you're fluent in flow A.
 - **Developer tools** (not commands): `dump.py` writes the intermediate JSON of stages 2–6 for one file — your microscope for the whole curriculum. `scripts/eval_retrieval.py` measures search quality against `eval/queries.yaml`.
 
 ## Suggested code-reading order (complexity-ranked)

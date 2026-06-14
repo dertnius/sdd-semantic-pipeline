@@ -225,7 +225,7 @@ def convert(
     from datetime import UTC, datetime
 
     from .config import PipelineConfig
-    from .html_to_gitlab_md import ConversionError, convert_file, resolve_pandoc
+    from .convert import ConversionError, convert_file, resolve_pandoc
 
     _cfg = PipelineConfig()
     quarantine = _cfg.convert_quarantine if quarantine is None else quarantine

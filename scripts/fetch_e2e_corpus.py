@@ -41,7 +41,7 @@ def main() -> int:
         raw = _download(url)
         out = CORPUS / dest
         if fmt == "html":
-            from sdd_pipeline.html_to_gitlab_md import convert_file
+            from sdd_pipeline.convert import convert_file
 
             tmp = CORPUS / f"{dest}.src.html"
             tmp.write_bytes(raw)

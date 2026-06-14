@@ -45,7 +45,7 @@ Exactly **eight** `@app.command()` functions (count the decorators):
 | Command | Calls |
 |---|---|
 | `index` | `index_directory` (two-pass, when `entity_vocab_path` set) or per-file `index_file`; `process_file` for `--dry-run` |
-| `convert` | flow B: `html_to_gitlab_md.convert_file` per file + JSON report — no `SemanticPipeline` at all |
+| `convert` | flow B: `sdd_pipeline.convert.convert_file` per file + JSON report — no `SemanticPipeline` at all |
 | `export` | `process_file` per file; or `scan_and_persist` + `enrich_and_chunk` when the vocab path is set (model-free either way) |
 | `lint` | `quality.check_markdown` per file + JSON report — no `SemanticPipeline`, no pandoc, no model (pure text analysis of raw `.md`) |
 | `scan` | `scan_and_persist` only |

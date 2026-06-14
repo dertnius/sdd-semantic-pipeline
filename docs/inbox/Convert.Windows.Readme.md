@@ -11,7 +11,7 @@ The environment in this repo is already set up:
 - **beautifulsoup4** + **lxml** present in the project `.venv`.
 - Sample input: `docs/sample/SAD_RetailNexus_OMS_Confluence.html`.
 
-The script (`src/sdd_pipeline/html_to_gitlab_md.py`) runs a 3-stage pipeline:
+The script (`src/sdd_pipeline/convert/html_to_gitlab_md.py`) runs a 3-stage pipeline:
 BeautifulSoup pre-clean → pandoc convert → markdown post-process. It auto-detects
 pandoc via `shutil.which("pandoc")`.
 
@@ -42,7 +42,7 @@ Run from the inner project root so the `.venv` interpreter (with bs4/lxml) is us
 ```powershell
 cd c:\Users\midgard\dev\poc\sdd-semantic-pipeline\sdd-semantic-pipeline
 $env:PYTHONUTF8 = "1"
-.\.venv\Scripts\python.exe src\sdd_pipeline\html_to_gitlab_md.py `
+.\.venv\Scripts\python.exe src\sdd_pipeline\convert\html_to_gitlab_md.py `
   docs\sample\SAD_RetailNexus_OMS_Confluence.html
 ```
 
@@ -51,7 +51,7 @@ $env:PYTHONUTF8 = "1"
 ### Choose an explicit output path
 
 ```powershell
-.\.venv\Scripts\python.exe src\sdd_pipeline\html_to_gitlab_md.py `
+.\.venv\Scripts\python.exe src\sdd_pipeline\convert\html_to_gitlab_md.py `
   docs\sample\SAD_RetailNexus_OMS_Confluence.html `
   -o docs\architecture.md
 ```
@@ -59,7 +59,7 @@ $env:PYTHONUTF8 = "1"
 ### Convert your own file
 
 ```powershell
-.\.venv\Scripts\python.exe src\sdd_pipeline\html_to_gitlab_md.py `
+.\.venv\Scripts\python.exe src\sdd_pipeline\convert\html_to_gitlab_md.py `
   path\to\your.html -o docs\your-output.md -v
 ```
 

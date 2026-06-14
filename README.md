@@ -542,11 +542,16 @@ sdd-semantic-pipeline/
 │       ├── embeddings.py     ← sentence-transformers wrapper
 │       ├── vector_store.py   ← vector-store backends (memory | chroma)
 │       ├── vocabulary.py     ← cross-corpus entity vocabulary I/O
-│       ├── html_to_gitlab_md.py ← HTML → GitLab Markdown converter
+│       ├── convert/          ← HTML → GitLab Markdown converter (flow B)
+│       │   ├── __init__.py   ← public API (convert_file, ConversionError, …)
+│       │   ├── base.py       ← engine-agnostic shared layer (pandoc, postprocess, stats)
+│       │   ├── html_to_gitlab_md.py ← HTML path (BeautifulSoup pre-clean + handlers)
+│       │   └── confluence_pf_filter.py ← Stage-C panflute filter
 │       ├── pipeline.py       ← stage orchestrator
 │       └── cli.py            ← typer CLI (index | search | convert | export | scan | scan-taxonomy | lint | check)
 ├── tests/
 │   ├── conftest.py           ← shared fixtures + sample data
+│   ├── convert/              ← converter (flow B) test collection
 │   ├── test_models.py
 │   ├── test_structural.py
 │   ├── test_enrichment.py
