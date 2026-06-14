@@ -380,13 +380,13 @@ class TestTmpDcCorpus:
 
 # ── Committed example corpus (the regression net; runs in CI) ──────────────────
 
-_EXAMPLES = Path(__file__).resolve().parents[2] / "convert" / "examples"
+_EXAMPLES = Path(__file__).resolve().parent / "examples"
 
 
 @requires_pandoc
 @pytest.mark.slow
 class TestConvertExamplesCorpus:
-    """Committed ``convert/examples`` fixtures — the regression net for the
+    """Committed ``tests/convert/examples`` fixtures — the regression net for the
     three-tier quality bar and the multi-header-table fix. Unlike the gitignored
     ``.tmp_dc`` gate above, these ship with the repo and run on a clean checkout.
     """

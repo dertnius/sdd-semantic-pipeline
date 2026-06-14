@@ -4,7 +4,7 @@ Retrieval-evaluation harness (pre-overhaul baseline).
 
 Measures whether a change to the pipeline moves *retrieval quality* on a frozen
 golden set, so the enrichment overhaul can be judged on a number instead of a
-checkbox. See ``eval/README.md`` and ``RETRIEVAL_LOG.md``.
+checkbox. See ``eval/README.md`` and ``eval/RETRIEVAL_LOG.md``.
 
 Design (mirrors plan ``grill-this-plan-fluffy-quilt.md``):
 
@@ -295,7 +295,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--corpus", type=Path, default=repo / "eval" / "corpus")
     ap.add_argument("--queries", type=Path, default=repo / "eval" / "queries.yaml")
     ap.add_argument("--manifest", type=Path, default=repo / "eval" / "corpus_manifest.json")
-    ap.add_argument("--log", type=Path, default=repo / "RETRIEVAL_LOG.md")
+    ap.add_argument("--log", type=Path, default=repo / "eval" / "RETRIEVAL_LOG.md")
     ap.add_argument("--out", type=Path, default=None, help="Write full JSON results here.")
     ap.add_argument("--heading", default="Baseline (pre-overhaul)", help="RETRIEVAL_LOG heading.")
     ap.add_argument("--top-k", type=int, default=10)

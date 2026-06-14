@@ -12,7 +12,7 @@ gets produced honestly, **before** any enrichment code changes.
 | `queries.yaml` | **Frozen** golden set: queries + the sections that should surface. |
 | `corpus_manifest.json` | Generated `doc_id → relative-path` map (regenerated each run; `doc_id` is an absolute-path MD5, so it is *not* portable — the golden set keys on relative path instead). |
 | `../scripts/eval_retrieval.py` | The harness. |
-| `../RETRIEVAL_LOG.md` | Append-only score log; Baseline + each milestone. |
+| `RETRIEVAL_LOG.md` | Append-only score log; Baseline + each milestone. |
 
 ## Run
 
@@ -74,7 +74,7 @@ reuse `scripts/eval_retrieval.py` to measure it.
 
 `tests/convert/test_html_to_gitlab_md_v3.py::TestEndToEndChunkHygiene` runs the **whole
 model-free chain** — HTML → `convert` → chunk → Arm-1 hygiene gate — over the
-*committed* rendered fixtures in `convert/examples/` (storage-format fixtures are
+*committed* rendered fixtures in `tests/convert/examples/` (storage-format fixtures are
 refused at the door). It asserts every produced chunk is clean (no markup/macro
 residue) and that the fixtures still produce chunks. It needs pandoc but **no model
 download** and **no fetched corpus**, so unlike the retrieval e2e above it is a
