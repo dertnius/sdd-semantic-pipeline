@@ -859,11 +859,11 @@ def tui(
         False, "--hybrid", "-H", help="Start with hybrid (dense + BM25) retrieval enabled."
     ),
 ) -> None:
-    r"""Launch an interactive search browser (TUI).
+    """Launch an interactive search browser (TUI).
 
-    Requires the optional \[tui] extra:  pip install ".\[tui]"
-    Keeps the embedding model + index warm so queries and filters are instant
-    after the first search. Needs a real terminal (not a redirected pipe).
+    Requires the optional 'tui' install extra. Keeps the embedding model and
+    index warm so queries and filters are instant after the first search.
+    Needs a real terminal (not a redirected pipe).
     """
     from .config import PipelineConfig
 
@@ -1009,7 +1009,7 @@ def show_help(
                 ),
                 (
                     "tui",
-                    r"Interactive search browser; needs the \[tui] extra. (needs model)",
+                    "Interactive search browser (TUI); needs the tui extra. (needs model)",
                 ),
                 ("export", "Write each file's chunks to .chunks.json/.jsonl for other pipelines."),
                 ("scan", "Discover and persist the cross-corpus entity vocabulary."),

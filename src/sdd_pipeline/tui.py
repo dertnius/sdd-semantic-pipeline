@@ -128,6 +128,7 @@ class SearchApp(App):
         # search does, and then it stays warm for every subsequent query.
         self.pipeline = SemanticPipeline(config=config)
         self._results: list[SearchResult] = []
+        self._model_ready = False
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -192,9 +193,32 @@ class SearchApp(App):
         if query:
             self.run_search(query)
 
+    def _store_is_empty(self) -> bool:
+        """Cheap check (no model load) for a missing/empty index."""
+        try:
+            return self.pipeline.store.count == 0
+        except Exception:
+            return False  # let the search path surface a real backend error
+
+    def _clear_results(self) -> None:
+        self._results = []
+        self._fill_table([])
+        self.query_one("#preview", Static).update("")
+
     @work(exclusive=True)
     async def run_search(self, query: str) -> None:
-        self._set_status(f"Searching for {query!r}…")
+        # Guard first: an empty or missing index needs no (slow) model load.
+        if self._store_is_empty():
+            self._clear_results()
+            self._set_status(
+                f"Index {self.config.chroma_persist_dir!r} is empty — build it first "
+                "(sdd-pipeline index <dir>), or check --index / --backend.",
+                style="yellow",
+            )
+            return
+
+        hint = "" if self._model_ready else " (first query loads the model)"
+        self._set_status(f"Searching for {query!r}…{hint}")
         section = resolve_section_type(self.query_one("#section", Select).value)
         space = self.query_one("#space", Input).value.strip() or None
         hybrid = self.query_one("#hybrid", Switch).value
@@ -204,13 +228,12 @@ class SearchApp(App):
             results = await asyncio.to_thread(
                 self.pipeline.search, query, top_k, section, None, space, hybrid
             )
-        except Exception as exc:  # provenance mismatch, empty/missing index, etc.
-            self._results = []
-            self._fill_table([])
-            self.query_one("#preview", Static).update("")
+        except Exception as exc:  # provenance mismatch, backend error, etc.
+            self._clear_results()
             self._set_status(str(exc), style="red")
             return
 
+        self._model_ready = True
         self._results = results
         self._fill_table(results)
         if results:

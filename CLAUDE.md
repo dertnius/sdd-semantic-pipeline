@@ -210,6 +210,15 @@ and `--max-unrecognized` (config: `convert_quarantine`, `convert_max_unrecognize
   weighting). Filters (`--section-type`/`--space`) apply to both rankings.
 - `stats()` keeps legacy keys (`headings`, `code_blocks`) as aliases of the new
   metric names (`sections`, `code_snippets`) for back-compat.
+- **Interactive search TUI** (`sdd-pipeline tui`, module `tui.py`, optional
+  `[tui]` extra → Textual): a thin presentation layer over `SemanticPipeline`
+  that keeps the embedder + index warm across queries (live query box, section/
+  space filters, hybrid toggle, result table + content-preview pane). It imports
+  `textual` only when the command runs, so core flows never pull it in; the
+  blocking `pipeline.search` runs via `asyncio.to_thread` to keep the UI
+  responsive. Needs a real terminal (not a redirected pipe). Pure helpers
+  (`parse_top_k`/`resolve_section_type`/`format_preview`) are unit-tested and the
+  app via Textual's headless `run_test()` pilot.
 
 ## Architecture guardrails
 

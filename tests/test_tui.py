@@ -9,17 +9,22 @@ are tested directly; the app behaviour is exercised through Textual's headless
 from __future__ import annotations
 
 import asyncio
+import types
 
 import pytest
 
 pytest.importorskip("textual")
 
-from sdd_pipeline.config import PipelineConfigfrom sdd_pipeline.models import SectionTypefrom sdd_pipeline.tui import (    SearchApp,
+from sdd_pipeline.config import PipelineConfig
+from sdd_pipeline.models import SectionType
+from sdd_pipeline.tui import (
+    SearchApp,
     format_preview,
     parse_top_k,
     resolve_section_type,
 )
 from sdd_pipeline.vector_store import SearchResult
+
 
 def _result(content: str = "hello world", **meta) -> SearchResult:
     metadata = {"breadcrumb": "Service > Auth", "section_type": "api", "title": "Doc"}
@@ -27,12 +32,26 @@ def _result(content: str = "hello world", **meta) -> SearchResult:
     return SearchResult(chunk_id="c1", content=content, metadata=metadata, distance=0.25)
 
 
+def _fake_pipeline(results=None, error=None, count=2):
+    """Stand-in for SemanticPipeline: no model, controllable store.count and search."""
+
+    def search(*args, **kwargs):
+        if error is not None:
+            raise error
+        return results or []
+
+    return types.SimpleNamespace(
+        store=types.SimpleNamespace(count=count),
+        search=search,
+    )
+
+
 # ── pure helpers ────────────────────────────────────────────────────────────────
 
 
 @pytest.mark.parametrize(
     ("raw", "expected"),
-    [("5", 5), ("0", 1), ("-3", 1), ("", 10), ("abc", 10), ("  7  ".strip(), 7)],
+    [("5", 5), ("0", 1), ("-3", 1), ("", 10), ("abc", 10), ("7", 7)],
 )
 def test_parse_top_k(raw, expected):
     assert parse_top_k(raw) == expected
@@ -71,8 +90,7 @@ def test_search_populates_table_and_preview():
 
     async def scenario():
         app = SearchApp(PipelineConfig())
-        # Stub the (otherwise model-loading) search; keeps this fast and offline.
-        app.pipeline.search = lambda *a, **k: canned
+        app.pipeline = _fake_pipeline(results=canned)
         async with app.run_test() as pilot:
             await pilot.press(*"auth")
             await pilot.press("enter")
@@ -82,18 +100,15 @@ def test_search_populates_table_and_preview():
             from textual.widgets import DataTable, Static
 
             assert app.query_one("#results", DataTable).row_count == 2
-            assert "first" in app.query_one("#preview", Static).renderable.plain
+            assert "first" in str(app.query_one("#preview", Static).render())
 
     asyncio.run(scenario())
 
 
 def test_search_error_shows_status_and_clears():
-    def boom(*a, **k):
-        raise ValueError("provenance mismatch")
-
     async def scenario():
         app = SearchApp(PipelineConfig())
-        app.pipeline.search = boom
+        app.pipeline = _fake_pipeline(error=ValueError("provenance mismatch"))
         async with app.run_test() as pilot:
             await pilot.press(*"auth")
             await pilot.press("enter")
@@ -103,6 +118,30 @@ def test_search_error_shows_status_and_clears():
             from textual.widgets import DataTable, Static
 
             assert app.query_one("#results", DataTable).row_count == 0
-            assert "provenance mismatch" in app.query_one("#status", Static).renderable.plain
+            assert "provenance mismatch" in str(app.query_one("#status", Static).render())
+
+    asyncio.run(scenario())
+
+
+def test_empty_index_shows_hint_without_searching():
+    searched = []
+
+    def search(*args, **kwargs):
+        searched.append(1)
+        return []
+
+    async def scenario():
+        app = SearchApp(PipelineConfig())
+        app.pipeline = types.SimpleNamespace(store=types.SimpleNamespace(count=0), search=search)
+        async with app.run_test() as pilot:
+            await pilot.press(*"auth")
+            await pilot.press("enter")
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+
+            from textual.widgets import Static
+
+            assert "is empty" in str(app.query_one("#status", Static).render())
+            assert not searched  # short-circuited before any (model-loading) search
 
     asyncio.run(scenario())
