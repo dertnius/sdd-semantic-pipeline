@@ -4,6 +4,7 @@ _Last updated: 2026-06-12_
 
 | Page | Summary | Last Updated |
 |------|---------|--------------|
+| [pipeline-101](pipeline-101.md) | Step-by-step operator runbook: onboard a doc to chunks, update without full re-index, vocabulary/taxonomy (single + connected docs), evaluate semantic quality, and the troubleshooting loop | 2026-06-14 |
 | [confluence-conversion-rules](../confluence-conversion-rules.md) | Definitive Confluence Server/DC 8.0–10.x → GitLab-Markdown conversion rules for the embedding pipeline (storage-format + rendered-HTML input; supersedes the storage-format wiki page) | 2026-06-12 |
 | [confluence-storage-format-gitlab-markdown](confluence-storage-format-gitlab-markdown.md) | **Superseded** by confluence-conversion-rules — kept for history | 2026-06-12 |
 | [convert-html-gitlab-markdown-linux](convert-html-gitlab-markdown-linux.md) | Linux instructions for running the HTML to GitLab Markdown converter | 2026-06-06 |

@@ -43,6 +43,14 @@ tests without installing. CLI entry point: `sdd-pipeline` → `sdd_pipeline.cli:
 - `slow` — needs the pandoc binary or a real ML model. Mark any such test slow.
 - `integration` — full end-to-end with all services.
 
+To exercise the real index→search path (enrich→chunk→embed→store→search/hybrid)
+**without a model or pandoc** in the fast lane, inject the `hashing_embedder` fixture
+(deterministic, model-free; `tests/conftest.py`) into
+`SemanticPipeline(..., embedding_model=hashing_embedder)` over the pre-built
+`sample_document_model` — see `tests/test_search_offline.py`. It validates the search
+*contract* (filters narrow, output is stable, hybrid/RRF runs), not semantic relevance
+(which needs a real model and lives in the `slow` e2e tests).
+
 ## Architecture
 
 Two distinct flows share the package:

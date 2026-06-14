@@ -6,6 +6,8 @@ Fixtures here are available to every test file without explicit imports.
 
 from __future__ import annotations
 
+import hashlib
+import math
 from pathlib import Path
 
 import pytest
@@ -325,3 +327,38 @@ def sample_chunks() -> list[SemanticChunk]:
             labels=["authentication", "security"],
         ),
     ]
+
+
+# ── Model-free embedder (fast tests; no model download, no pandoc) ─────────────
+
+
+class HashingEmbedder:
+    """Deterministic, model-free embedder (hashing bag-of-words).
+
+    Mirrors the eval harness's embedder (``src/tools/scripts/eval_retrieval.py``):
+    lexically-overlapping texts get higher cosine similarity, so the full
+    index -> search path can be exercised with no model download. It is a
+    *wiring* stand-in, NOT a relevance/quality baseline.
+    """
+
+    DIM = 512
+
+    def _vec(self, text: str) -> list[float]:
+        v = [0.0] * self.DIM
+        for tok in text.lower().split():
+            h = int(hashlib.md5(tok.encode()).hexdigest(), 16)
+            v[h % self.DIM] += 1.0
+        norm = math.sqrt(sum(x * x for x in v)) or 1.0
+        return [x / norm for x in v]
+
+    def embed_chunks(self, chunks: list[SemanticChunk]) -> list[list[float]]:
+        return [self._vec(c.to_embed_text()) for c in chunks]
+
+    def embed_query(self, query: str) -> list[float]:
+        return self._vec(query)
+
+
+@pytest.fixture
+def hashing_embedder() -> HashingEmbedder:
+    """Inject into ``SemanticPipeline(embedding_model=...)`` for model-free tests."""
+    return HashingEmbedder()
