@@ -19,7 +19,7 @@ name: sdd-pipeline
 
 channels:
   - conda-forge          # primary: has pandoc binary + many ML deps
-  - defaults
+  - nodefaults           # ignore Anaconda's ToS-gated default channels entirely
 
 dependencies:
   # ── Runtime ────────────────────────────────────────────────────────────────

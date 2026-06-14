@@ -9,6 +9,7 @@ roundtrip tests double as a tripwire for layout changes in the library.
 from __future__ import annotations
 
 import json
+import types
 
 import pytest
 
@@ -260,7 +261,11 @@ class TestProtocol:
 
     def test_chroma_store_satisfies_protocol(self):
         # __new__ keeps this chromadb-free (same trick as the patched_store fixture).
+        # `count` is a property protocol member, so a runtime_checkable isinstance
+        # check evaluates it on the instance — stub _collection so it returns instead
+        # of raising AttributeError on the uninitialised object.
         chroma = ChromaVectorStore.__new__(ChromaVectorStore)
+        chroma._collection = types.SimpleNamespace(count=lambda: 0)
         assert isinstance(chroma, VectorStoreProtocol)
 
 
