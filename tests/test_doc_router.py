@@ -55,6 +55,6 @@ def test_load_taxonomy_missing_file_returns_empty(tmp_path):
 
 
 def test_load_taxonomy_reads_real_committed_file():
-    # data/taxonomy.json is generated + committed; sanity-check it loads.
+    # config/taxonomy.json is generated + committed; sanity-check it loads.
     tax = load_taxonomy()
     assert "solution component 1" in tax

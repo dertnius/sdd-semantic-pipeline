@@ -46,7 +46,7 @@ def index(
         ..., exists=True, file_okay=False, help="Directory containing .md files."
     ),
     output_dir: str = typer.Option(
-        "./data/chroma", "--output", "-o", help="Vector index persistence path."
+        "./build/index", "--output", "-o", help="Vector index persistence path."
     ),
     model: str = typer.Option(
         "BAAI/bge-large-en-v1.5",
@@ -708,10 +708,10 @@ def scan_taxonomy(
         ..., exists=True, file_okay=False, help="Directory containing .md files."
     ),
     out: Path = typer.Option(
-        Path("data/taxonomy.json"), "--out", "-o", help="Output taxonomy JSON."
+        Path("config/taxonomy.json"), "--out", "-o", help="Output taxonomy JSON."
     ),
     vocab_out: Path = typer.Option(
-        Path("data/field_vocabulary.json"),
+        Path("build/field_vocabulary.json"),
         "--vocab-out",
         help="Output field-frequency vocabulary JSON (review artifact).",
     ),
@@ -754,7 +754,7 @@ def scan_taxonomy(
 @app.command()
 def search(
     query: str = typer.Argument(..., help="Natural-language search query."),
-    index_dir: str = typer.Option("./data/chroma", "--index", "-i", help="Vector index path."),
+    index_dir: str = typer.Option("./build/index", "--index", "-i", help="Vector index path."),
     model: str = typer.Option("BAAI/bge-large-en-v1.5", "--model", "-m"),
     provider: str = typer.Option(
         "local", "--provider", help="Embedding backend: local | azure (must match the index)."

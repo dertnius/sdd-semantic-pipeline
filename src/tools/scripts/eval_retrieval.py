@@ -4,7 +4,7 @@ Retrieval-evaluation harness (pre-overhaul baseline).
 
 Measures whether a change to the pipeline moves *retrieval quality* on a frozen
 golden set, so the enrichment overhaul can be judged on a number instead of a
-checkbox. See ``eval/README.md`` and ``eval/RETRIEVAL_LOG.md``.
+checkbox. See ``src/tools/eval/README.md`` and ``src/tools/eval/RETRIEVAL_LOG.md``.
 
 Design (mirrors plan ``grill-this-plan-fluffy-quilt.md``):
 
@@ -24,8 +24,8 @@ Design (mirrors plan ``grill-this-plan-fluffy-quilt.md``):
   would be apples-to-oranges.
 
 Usage:
-    python scripts/eval_retrieval.py --corpus eval/corpus --queries eval/queries.yaml
-    python scripts/eval_retrieval.py --mock        # wiring smoke-test, no model
+    python src/tools/scripts/eval_retrieval.py --corpus src/tools/eval/corpus --queries src/tools/eval/queries.yaml
+    python src/tools/scripts/eval_retrieval.py --mock        # wiring smoke-test, no model
 """
 
 from __future__ import annotations

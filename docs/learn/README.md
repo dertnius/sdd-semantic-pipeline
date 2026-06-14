@@ -13,7 +13,7 @@ A self-study curriculum for a **senior C# developer who is new to Python** and w
 | [walkthroughs/](walkthroughs/) | Data-flow narratives with real intermediate artifacts | To see how the pieces connect |
 | [exercises/](exercises/) | Katas with verification commands (work on a `learn-exercises` git branch) | To prove to yourself you got it |
 
-**Canonical references** (linked, never duplicated here): [README.md](../../README.md) — CLI flags & setup · [CLAUDE.md](../../CLAUDE.md) — architecture & guardrails · [ADR-0001](../../docs/adr/adr-0001-modular-semantic-pipeline.md) — why it's modular · [eval/README.md](../../eval/README.md) — retrieval evaluation. *Those say what the system does; docs/learn/ teaches how the code works.*
+**Canonical references** (linked, never duplicated here): [README.md](../../README.md) — CLI flags & setup · [CLAUDE.md](../../CLAUDE.md) — architecture & guardrails · [ADR-0001](../../docs/adr/adr-0001-modular-semantic-pipeline.md) — why it's modular · [src/tools/eval/README.md](../../src/tools/eval/README.md) — retrieval evaluation. *Those say what the system does; docs/learn/ teaches how the code works.*
 
 ## The 5-day intensive plan
 
@@ -54,11 +54,11 @@ Hours are estimates — the reading **order** is the contract, not the clock. Co
 
 ## Phase 2 (deferred)
 
-The `sdd_pipeline/convert/` subpackage (the Confluence-HTML→Markdown converter — `base` shared layer + `html_to_gitlab_md` HTML path + `confluence_pf_filter` Stage-C filter) is deliberately **out of scope** here. It is standalone — zero imports from the pipeline — and the hardest read in the repo (BeautifulSoup walking + heavy regex). Tackle it only after you're fluent in flow A; the converter wiki pages (`wiki/convert-html-gitlab-markdown-*.md`) cover *using* it.
+The `sdd_pipeline/convert/` subpackage (the Confluence-HTML→Markdown converter — `base` shared layer + `html_to_gitlab_md` HTML path + `confluence_pf_filter` Stage-C filter) is deliberately **out of scope** here. It is standalone — zero imports from the pipeline — and the hardest read in the repo (BeautifulSoup walking + heavy regex). Tackle it only after you're fluent in flow A; the converter guide pages (`docs/guides/convert-html-gitlab-markdown-*.md`) cover *using* it.
 
 ## Freshness — keeping learn/ honest as the code evolves
 
-Pages cite code as `module.py::symbol` (greppable). After changing a module, check this table, grep `learn/` for that module's symbols, fix stale claims, and log the update in `wiki/log.md`.
+Pages cite code as `module.py::symbol` (greppable). After changing a module, check this table, grep `learn/` for that module's symbols, fix stale claims, and log the update in `docs/guides/log.md`.
 
 | Page(s) | Source files cited |
 |---|---|
@@ -80,9 +80,9 @@ Pages cite code as `module.py::symbol` (greppable). After changing a module, che
 | tours/09 | retrieval.py, pipeline.py, config.py |
 | tours/10 | pipeline.py, cli.py |
 | tours/11 | quality.py, cli.py |
-| walkthroughs/01 | dump.py + **regenerate `out/` excerpts after any stage change** (the command is in the page) |
+| walkthroughs/01 | dump.py + **regenerate `build/dump` excerpts after any stage change** (the command is in the page) |
 | walkthroughs/02 | all of src (dependency graph), CLAUDE.md guardrails |
-| walkthroughs/03 | tests/, pyproject.toml, scripts/eval_retrieval.py |
+| walkthroughs/03 | tests/, pyproject.toml, src/tools/scripts/eval_retrieval.py |
 | exercises/* | the module each exercise modifies (see each page's Files section) |
 
 Most drift-prone: **walkthroughs/01** (quotes real JSON) and **exercise answer keys** (quote real outputs). Re-run their commands after pipeline changes.

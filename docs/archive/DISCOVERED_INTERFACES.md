@@ -48,7 +48,7 @@ All dataclasses are **mutable** (`@dataclass`, not frozen).
 ## T0.3 — retrieval baseline harness
 
 **Already built and committed** this session (branch history: `eval-retrieval-harness`,
-now on `template-enrichment`): [scripts/eval_retrieval.py](../../scripts/eval_retrieval.py),
-[eval/queries.yaml](../../eval/queries.yaml), [RETRIEVAL_LOG.md](../../eval/RETRIEVAL_LOG.md).
+now on `template-enrichment`): [src/tools/scripts/eval_retrieval.py](../../src/tools/scripts/eval_retrieval.py),
+[src/tools/eval/queries.yaml](../../src/tools/eval/queries.yaml), [RETRIEVAL_LOG.md](../../src/tools/eval/RETRIEVAL_LOG.md).
 Section-granularity recall@5/@10 + MRR, model-agnostic embedder. Reuse it; the real
 Baseline is pending template-conforming docs + a configured embedder.

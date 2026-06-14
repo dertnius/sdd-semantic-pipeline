@@ -24,18 +24,18 @@ git checkout -b learn-exercises    # or: git checkout learn-exercises
 
 ## Files
 
-None to edit. You only read `out/impala/*.json`, `out/retailnexus/*.json`,
+None to edit. You only read `build/dump/impala/*.json`, `build/dump/retailnexus/*.json`,
 and `src/sdd_pipeline/dump.py`.
 
 ## Steps
 
-1. Generate the artifacts (skip if `out/impala/` and `out/retailnexus/` already
+1. Generate the artifacts (skip if `build/dump/impala/` and `build/dump/retailnexus/` already
    exist — they are pre-generated and deterministic):
 
    ```powershell
    $env:PYTHONUTF8 = "1"   # Windows cp1252 console crashes on the arrow glyphs otherwise
-   .\.venv\Scripts\python.exe src\sdd_pipeline\dump.py eval\corpus\impala-vscode.md out\impala
-   .\.venv\Scripts\python.exe src\sdd_pipeline\dump.py eval\corpus\sad-retailnexus-oms.md out\retailnexus
+   .\.venv\Scripts\python.exe src\sdd_pipeline\dump.py src\tools\eval\corpus\impala-vscode.md build\dump\impala
+   .\.venv\Scripts\python.exe src\sdd_pipeline\dump.py src\tools\eval\corpus\sad-retailnexus-oms.md build\dump\retailnexus
    ```
 
 2. Answer these five questions **from the artifacts** (write your answers down
@@ -66,25 +66,25 @@ and `src/sdd_pipeline/dump.py`.
   (`chunking.chunk_document(entity_fn=…)`), so an entity that appears only in a
   *heading* shows up on the Section but on no chunk.
 - Q4: structural records come from pipe tables (the inventory). Search
-  `eval/corpus/impala-vscode.md` for a `|` table row.
+  `src/tools/eval/corpus/impala-vscode.md` for a `|` table row.
 - Q5: Python docstrings are ordinary strings — `\.` is not a valid escape.
 </details>
 
 ## Verification
 
 ```powershell
-Select-String -Path "out\retailnexus\chunks.json","out\impala\chunks.json" -Pattern '"depends_on": \[$'
+Select-String -Path "build\dump\retailnexus\chunks.json","build\dump\impala\chunks.json" -Pattern '"depends_on": \[$'
 ```
 
-Success: **exactly one** match, in `out\retailnexus\chunks.json` (around line
+Success: **exactly one** match, in `build\dump\retailnexus\chunks.json` (around line
 904) — the only chunk in either file whose `depends_on` array is non-empty.
 (Empty arrays serialize as `"depends_on": []` on one line, so the
 open-bracket-at-end-of-line pattern finds only populated ones.)
 
 ## Cleanup
 
-Nothing was modified (`out/` is gitignored). `git status` should be clean apart
-from `out/`; nothing to commit or revert.
+Nothing was modified (`build/dump` is gitignored). `git status` should be clean apart
+from `build/dump`; nothing to commit or revert.
 
 <details>
 <summary>Answer key (computed from the real artifacts)</summary>
@@ -94,7 +94,7 @@ from `out/`; nothing to commit or revert.
    Contracts`; the title contains "contract**s**", which matches the API rule
    keyword `"contract"` in `_SECTION_RULES` (leading-word-boundary match allows
    the plural).
-3. **Docker.** In `out/impala/enriched.json` the section "Using Dev Container
+3. **Docker.** In `build/dump/impala/enriched.json` the section "Using Dev Container
    (Developing Inside Docker Container)" has `entities: ["Docker"]`; retailnexus
    has `"docker"` (lower case — `_TECH_PATTERN` is case-insensitive and keeps the
    matched casing from `docker build` in the CI YAML). At **chunk** level, every

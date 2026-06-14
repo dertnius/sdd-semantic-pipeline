@@ -18,8 +18,8 @@ gets produced honestly, **before** any enrichment code changes.
 
 ```powershell
 $env:PYTHONUTF8 = "1"                       # avoid the cp1252 pandoc crash on Windows
-python scripts/eval_retrieval.py            # real embedder from PipelineConfig
-python scripts/eval_retrieval.py --mock --no-log   # wiring check, no model download
+python src/tools/scripts/eval_retrieval.py            # real embedder from PipelineConfig
+python src/tools/scripts/eval_retrieval.py --mock --no-log   # wiring check, no model download
 ```
 
 ## Corpus provenance & disclosure
@@ -28,7 +28,7 @@ The seed corpus was produced by converting the SDD-shaped HTML in `.tmp_dc/`
 (a sample Software Architecture Document, an Airflow AIP, plus dev guides) with
 `sdd-pipeline convert`, plus the committed `adr-0001`. **Committing internal SDDs
 is a disclosure decision you own.** If any corpus doc is confidential, add
-`eval/corpus/` to `.gitignore` — the golden set references relative paths and
+`src/tools/eval/corpus/` to `.gitignore` — the golden set references relative paths and
 still works locally; it just won't run in CI without the files.
 
 ## Adding documents (recommended — grows the metric from directional to robust)
@@ -52,7 +52,7 @@ nothing third-party is committed.
 
 ```powershell
 $env:PYTHONUTF8 = "1"
-python scripts/fetch_e2e_corpus.py          # downloads pinned docs -> eval/e2e_corpus/ (gitignored)
+python src/tools/scripts/fetch_e2e_corpus.py          # downloads pinned docs -> src/tools/eval/e2e_corpus/ (gitignored)
 pytest tests/test_e2e_real_docs.py -q -s    # functional asserts + A/B score tables
 ```
 
@@ -68,7 +68,7 @@ unaffected. It uses the deterministic hashing embedder (no download), so the A/B
 measures enrichment's *lexical* contribution: it asserts no regression + a
 recall@10 gain and prints both score tables. Semantic gain (e.g. directional
 `depends_on`/`exposes`) needs a real model — point `PipelineConfig` at one and
-reuse `scripts/eval_retrieval.py` to measure it.
+reuse `src/tools/scripts/eval_retrieval.py` to measure it.
 
 ## E2E chunk-hygiene proof (model-free, non-skippable)
 

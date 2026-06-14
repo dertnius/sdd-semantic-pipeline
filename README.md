@@ -32,7 +32,7 @@ sdd-pipeline check
 # export chunks for reuse by another pipeline …
 sdd-pipeline export docs/sample/ --output build/chunks --merge-prose
 # … or discover the cross-corpus entity vocabulary for review before indexing
-sdd-pipeline scan docs/sample/ --vocab docs/entity-vocab.json
+sdd-pipeline scan docs/sample/ --vocab config/entity-vocab.json
 ```
 
 > `convert` scans the input directory recursively for `*.html`, writes a `.md`
@@ -60,7 +60,7 @@ sdd-pipeline index <input_dir> [options]
 
 | Option | Default | Description |
 |---|---|---|
-| `--output` / `-o` | `./data/chroma` | Vector index persistence path |
+| `--output` / `-o` | `./build/index` | Vector index persistence path |
 | `--model` / `-m` | `BAAI/bge-large-en-v1.5` | Local embedding model (ignored when `--provider azure`) |
 | `--provider` | `local` | Embedding backend: `local` \| `azure` |
 | `--backend` | `memory` | Vector store backend: `memory` \| `chroma` (chroma needs `pip install ".[chroma]"`) |
@@ -89,7 +89,7 @@ sdd-pipeline search "<query>" [options]
 
 | Option | Default | Description |
 |---|---|---|
-| `--index` / `-i` | `./data/chroma` | Vector index path to query |
+| `--index` / `-i` | `./build/index` | Vector index path to query |
 | `--model` / `-m` | `BAAI/bge-large-en-v1.5` | Embedding model (**must match the index**) |
 | `--provider` | `local` | Embedding backend: `local` \| `azure` (must match the index) |
 | `--backend` | `memory` | Vector store backend: `memory` \| `chroma` (must match the index) |
@@ -195,8 +195,8 @@ sdd-pipeline scan-taxonomy <input_dir> [options]
 
 | Option | Default | Description |
 |---|---|---|
-| `--out` / `-o` | `data/taxonomy.json` | Output taxonomy JSON (section → fields) |
-| `--vocab-out` | `data/field_vocabulary.json` | Frequency-ranked field vocabulary (review artifact) |
+| `--out` / `-o` | `config/taxonomy.json` | Output taxonomy JSON (section → fields) |
+| `--vocab-out` | `build/field_vocabulary.json` | Frequency-ranked field vocabulary (review artifact) |
 | `--min-docs` / `-n` | `2` | Keep a field only if seen in ≥ this many documents |
 | `--glob` / `-g` | `**/*.md` | Markdown glob pattern |
 
@@ -252,10 +252,10 @@ is `convert → index → search`.
 | 1 | `sdd-pipeline convert <html_dir> -o build/md -r build/conversion-report.json [--space K --source-url U --labels a,b]` | dir of `*.html` (default `docs/`); **pandoc on PATH** | one `.md` per HTML (mirrors tree) + `conversion-report.json` (per-file + aggregate metrics, macro counts, warnings) | – | ● |
 | 2 | `sdd-pipeline lint build/md -r build/quality-report.json [--strict]` | dir of `*.md` (the converted corpus) | `quality-report.json` + stdout summary; `--strict` → exit 1 on any block issue | – | – |
 | 3a | `sdd-pipeline scan build/md --vocab build/entity-vocab.json` *(optional)* | `*.md` dir; **pandoc** | entity-vocabulary JSON (sorted terms) to review before indexing | – | ● |
-| 3b | `sdd-pipeline scan-taxonomy build/md -o data/taxonomy.json --vocab-out data/field_vocabulary.json [-n 2]` *(optional)* | `*.md` dir; **pandoc** | `taxonomy.json` (section → field) + `field_vocabulary.json` | – | ● |
+| 3b | `sdd-pipeline scan-taxonomy build/md -o config/taxonomy.json --vocab-out build/field_vocabulary.json [-n 2]` *(optional)* | `*.md` dir; **pandoc** | `taxonomy.json` (section → field) + `field_vocabulary.json` | – | ● |
 | 4 | `sdd-pipeline export build/md -o build/chunks --merge-prose [-f jsonl]` *(optional)* | `*.md` dir; honours `PIPELINE_ENTITY_VOCAB_PATH` (two-pass) | `.chunks.json`/`.jsonl` per file + `export-report.json` | – | ● |
-| 5 | `sdd-pipeline index build/md -o data/index --model all-MiniLM-L6-v2 [--backend chroma\|memory --merge-prose]` | `*.md` dir; **embedding model** (downloads on first run); chromadb if `--backend chroma`; optional `PIPELINE_ENTITY_VOCAB_PATH` | vector index at `-o` (memory: `<dir>/<collection>.json` + `.provenance.json`; chroma: persist dir) | ● | – |
-| 6 | `sdd-pipeline search "<query>" -i data/index --model all-MiniLM-L6-v2 [-k 5 -s architecture --space ARCH --hybrid]` | **prior index** (provider/model/backend must match) + embedding model | results table (score, breadcrumb, type, preview) on stdout | ● | – |
+| 5 | `sdd-pipeline index build/md -o build/index --model all-MiniLM-L6-v2 [--backend chroma\|memory --merge-prose]` | `*.md` dir; **embedding model** (downloads on first run); chromadb if `--backend chroma`; optional `PIPELINE_ENTITY_VOCAB_PATH` | vector index at `-o` (memory: `<dir>/<collection>.json` + `.provenance.json`; chroma: persist dir) | ● | – |
+| 6 | `sdd-pipeline search "<query>" -i build/index --model all-MiniLM-L6-v2 [-k 5 -s architecture --space ARCH --hybrid]` | **prior index** (provider/model/backend must match) + embedding model | results table (score, breadcrumb, type, preview) on stdout | ● | – |
 
 **Dependencies:** `search` requires a prior `index` (same provider/model/backend);
 `index`/`export` consume the vocabulary from `scan` when `PIPELINE_ENTITY_VOCAB_PATH`
@@ -443,7 +443,7 @@ from sdd_pipeline import SemanticPipeline, PipelineConfig, SectionType
 
 config = PipelineConfig(
     embedding_model="all-MiniLM-L6-v2",
-    chroma_persist_dir="./data/chroma",
+    chroma_persist_dir="./build/index",
 )
 pipeline = SemanticPipeline(config=config)
 
@@ -488,7 +488,7 @@ Copy `.env.example` to `.env` and customise. Full list in
 | `PIPELINE_ENTITY_TERMS` | `[]` | JSON array of domain vocabulary folded into entity extraction |
 | `PIPELINE_ENTITY_VOCAB_PATH` | `""` | JSON vocab file; when set, enables the two-pass cross-corpus scan in `index`/`export` |
 | `PIPELINE_VECTOR_STORE_BACKEND` | `memory` | Vector store backend: `memory` \| `chroma` |
-| `PIPELINE_CHROMA_PERSIST_DIR` | `./data/chroma` | Vector index persistence path (both backends) |
+| `PIPELINE_CHROMA_PERSIST_DIR` | `./build/index` | Vector index persistence path (both backends) |
 | `PIPELINE_COLLECTION_NAME` | `sdd_docs` | Vector store collection |
 | `PIPELINE_HYBRID_SEARCH` | `false` | Fuse dense + lexical (BM25) rankings via RRF (same as `search --hybrid`) |
 | `PIPELINE_HYBRID_CANDIDATE_POOL` | `50` | Per-scorer candidate depth fused before top-k |
@@ -531,43 +531,33 @@ pytest tests/test_enrichment.py -v -k "test_extract_entities"
 ```
 sdd-semantic-pipeline/
 ├── src/
-│   └── sdd_pipeline/
-│       ├── __init__.py       ← public API exports
-│       ├── config.py         ← PipelineConfig (pydantic-settings)
-│       ├── models.py         ← data types only (no external deps)
-│       ├── ast_parser.py     ← pandoc subprocess wrapper
-│       ├── structural.py     ← AST → DocumentModel (panflute)
-│       ├── enrichment.py     ← rule-based semantic enrichment
-│       ├── chunking.py       ← DocumentModel → SemanticChunk[]
-│       ├── embeddings.py     ← sentence-transformers wrapper
-│       ├── vector_store.py   ← vector-store backends (memory | chroma)
-│       ├── vocabulary.py     ← cross-corpus entity vocabulary I/O
-│       ├── convert/          ← HTML → GitLab Markdown converter (flow B)
-│       │   ├── __init__.py   ← public API (convert_file, ConversionError, …)
-│       │   ├── base.py       ← engine-agnostic shared layer (pandoc, postprocess, stats)
-│       │   ├── html_to_gitlab_md.py ← HTML path (BeautifulSoup pre-clean + handlers)
-│       │   └── confluence_pf_filter.py ← Stage-C panflute filter
-│       ├── pipeline.py       ← stage orchestrator
-│       └── cli.py            ← typer CLI (index | search | convert | export | scan | scan-taxonomy | lint | check)
-├── tests/
-│   ├── conftest.py           ← shared fixtures + sample data
-│   ├── convert/              ← converter (flow B) test collection
-│   ├── test_models.py
-│   ├── test_structural.py
-│   ├── test_enrichment.py
-│   ├── test_chunking.py
-│   ├── test_ast_parser.py    ← pandoc tests (skipped without pandoc)
-│   ├── test_vector_store.py  ← mocked ChromaDB backend
-│   └── test_pipeline.py      ← mocked orchestration + slow integration
+│   ├── sdd_pipeline/         ← the shipped package (flow A indexing + flow B convert)
+│   │   ├── __init__.py       ← public API exports
+│   │   ├── config.py         ← PipelineConfig (pydantic-settings)
+│   │   ├── models.py         ← data types only (no external deps)
+│   │   ├── ast_parser.py     ← pandoc subprocess wrapper
+│   │   ├── structural.py     ← AST → DocumentModel (panflute)
+│   │   ├── enrichment.py     ← rule-based semantic enrichment
+│   │   ├── chunking.py       ← DocumentModel → SemanticChunk[]
+│   │   ├── embeddings.py     ← sentence-transformers wrapper
+│   │   ├── vector_store.py   ← vector-store backends (memory | chroma)
+│   │   ├── vocabulary.py     ← cross-corpus entity vocabulary I/O
+│   │   ├── convert/          ← HTML → GitLab Markdown converter (flow B)
+│   │   ├── pipeline.py       ← stage orchestrator
+│   │   └── cli.py            ← typer CLI (index | search | convert | export | scan | scan-taxonomy | lint | check)
+│   └── tools/                ← dev tooling — NOT shipped (excluded from packaging + ruff/mypy gates)
+│       ├── scripts/          ← eval_retrieval.py, fetch_e2e_corpus.py, dump helpers, convert-docs.ps1
+│       └── eval/             ← retrieval-eval harness: corpus/ + frozen golden queries + RETRIEVAL_LOG
+├── tests/                    ← pytest suite (unit · slow · integration · e2e; convert/ subdir for flow B)
+├── config/                   ← committed pipeline inputs: field_directions.yaml, taxonomy.json, entity-vocab.json
 ├── docs/
-│   └── sample/
-│       ├── auth-service.md   ← sample SDD (Auth Service)
-│       └── api-gateway.md    ← sample SDD (API Gateway)
-├── .vscode/                  ← settings, extensions, launch, tasks
-├── .github/
-│   └── copilot-instructions.md   ← Copilot custom instructions
-├── .devcontainer/
-│   └── devcontainer.json     ← VS Code Dev Containers
+│   ├── sample/               ← sample SDDs (auth-service.md, api-gateway.md)
+│   ├── guides/               ← how-to / navigation pages (formerly wiki/)
+│   ├── learn/                ← C#→Python learning curriculum (bridge, tours, walkthroughs, exercises)
+│   ├── adr/ · notes/ · inbox/ · template/ · archive/
+│   └── confluence-conversion-rules.md  ← the converter spec
+├── build/                    ← generated output, gitignored (index/, dump/, md/, *-report.json)
+├── .vscode/ · .github/ · .devcontainer/   ← IDE / Copilot / dev-container config (tracked)
 ├── devfile.yaml              ← OpenShift Dev Spaces / Eclipse Che
 ├── environment.yml           ← conda / micromamba environment
 ├── pyproject.toml            ← project metadata, pytest, ruff, mypy

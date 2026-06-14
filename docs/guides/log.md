@@ -1,8 +1,8 @@
 # Wiki Log
 
-## 2026-06-06 | ingest | docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md → wiki/confluence-storage-format-gitlab-markdown.md
-## 2026-06-06 | ingest | docs/inbox/Convert.Linux.Readme.md → wiki/convert-html-gitlab-markdown-linux.md
-## 2026-06-06 | ingest | docs/inbox/Convert.Windows.Readme.md → wiki/convert-html-gitlab-markdown-windows.md
+## 2026-06-06 | ingest | docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md → docs/guides/confluence-storage-format-gitlab-markdown.md
+## 2026-06-06 | ingest | docs/inbox/Convert.Linux.Readme.md → docs/guides/convert-html-gitlab-markdown-linux.md
+## 2026-06-06 | ingest | docs/inbox/Convert.Windows.Readme.md → docs/guides/convert-html-gitlab-markdown-windows.md
 ## 2026-06-10 | ingest | src/sdd_pipeline (architecture survey) → learn/walkthroughs/02-architecture-map.md
 ## 2026-06-10 | ingest | pyproject.toml → learn/bridge/01-project-anatomy-and-tooling.md
 ## 2026-06-10 | ingest | src/sdd_pipeline/models.py → learn/bridge/02-dataclasses-vs-csharp-records.md
@@ -21,18 +21,18 @@
 ## 2026-06-10 | ingest | src/sdd_pipeline/embeddings.py + vector_store.py → learn/tours/08-embeddings-and-vector-store.md
 ## 2026-06-10 | ingest | src/sdd_pipeline/retrieval.py + pipeline.py → learn/tours/09-retrieval-and-hybrid-search.md
 ## 2026-06-10 | ingest | src/sdd_pipeline/pipeline.py + cli.py → learn/tours/10-pipeline-orchestrator-and-cli.md
-## 2026-06-10 | ingest | eval/corpus/sad-retailnexus-oms.md + dump.py artifacts → learn/walkthroughs/01-life-of-a-document.md
-## 2026-06-10 | ingest | tests/ + scripts/eval_retrieval.py → learn/walkthroughs/03-test-suite-tour.md
-## 2026-06-10 | ingest | dump.py artifacts (out/retailnexus, out/impala) → learn/exercises/01-trace-a-document.md
+## 2026-06-10 | ingest | src/tools/eval/corpus/sad-retailnexus-oms.md + dump.py artifacts → learn/walkthroughs/01-life-of-a-document.md
+## 2026-06-10 | ingest | tests/ + src/tools/scripts/eval_retrieval.py → learn/walkthroughs/03-test-suite-tour.md
+## 2026-06-10 | ingest | dump.py artifacts (build/dump/retailnexus, build/dump/impala) → learn/exercises/01-trace-a-document.md
 ## 2026-06-10 | ingest | src/sdd_pipeline/enrichment.py → learn/exercises/02-add-a-section-keyword.md
 ## 2026-06-10 | ingest | src/sdd_pipeline/header_norm.py → learn/exercises/03-parametrize-header-norm.md
 ## 2026-06-10 | ingest | src/sdd_pipeline/config.py → learn/exercises/04-add-a-config-field.md
 ## 2026-06-10 | ingest | src/sdd_pipeline/enrichment.py → learn/exercises/05-extend-an-entity-pattern.md
 ## 2026-06-10 | ingest | src/sdd_pipeline/cli.py → learn/exercises/06-add-a-cli-flag.md
-## 2026-06-10 | ingest | scripts/eval_retrieval.py + eval/queries.yaml → learn/exercises/07-tune-hybrid-search-and-measure.md
+## 2026-06-10 | ingest | src/tools/scripts/eval_retrieval.py + src/tools/eval/queries.yaml → learn/exercises/07-tune-hybrid-search-and-measure.md
 ## 2026-06-10 | ingest | src/sdd_pipeline/pipeline.py + models.py → learn/exercises/08-use-the-library-from-scratch.md
 ## 2026-06-10 | ingest | learn/ (all pages) → learn/README.md
 ## 2026-06-11 | feature | src/sdd_pipeline/quality.py + cli.py lint command → learn/tours/11-quality-linter.md (also: tour 10 + index "seven"→"eight" typer commands)
-## 2026-06-12 | ingest | Confluence-conversion research artifacts (rules-draft + 25 critique fixes + catalog/exporthtml/tooling JSONs) → docs/confluence-conversion-rules.md (also: superseded banner on wiki/confluence-storage-format-gitlab-markdown.md)
+## 2026-06-12 | ingest | Confluence-conversion research artifacts (rules-draft + 25 critique fixes + catalog/exporthtml/tooling JSONs) → docs/confluence-conversion-rules.md (also: superseded banner on docs/guides/confluence-storage-format-gitlab-markdown.md)
 ## 2026-06-12 | feature | docs/confluence-conversion-rules.md (rendered-HTML scope) implemented in src/sdd_pipeline/html_to_gitlab_md.py v3.0 + new confluence_pf_filter.py (4-stage pipeline, PFI contract, --toc flip)
 ## 2026-06-14 | refactor | converter moved into src/sdd_pipeline/convert/ subpackage (new base.py shared layer; html_to_gitlab_md + confluence_pf_filter relocated); convert tests → tests/convert/; CLI/docs repointed; byte-identical output verified (docx path prepared, deferred)

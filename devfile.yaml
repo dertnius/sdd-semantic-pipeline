@@ -31,7 +31,7 @@ components:
         - name: PYTHONPATH
           value: ${PROJECT_SOURCE}/src
         - name: PIPELINE_CHROMA_PERSIST_DIR
-          value: ${PROJECT_SOURCE}/data/chroma
+          value: ${PROJECT_SOURCE}/build/index
         - name: PIPELINE_EMBEDDING_MODEL
           value: all-MiniLM-L6-v2   # fast dev model; change in .env for production
         - name: ANONYMIZED_TELEMETRY
@@ -112,7 +112,7 @@ commands:
         sdd-pipeline index docs/sample/
         --model all-MiniLM-L6-v2
         --backend memory
-        --output data/chroma
+        --output build/index
         --verbose
       workingDir: ${PROJECT_SOURCE}
 
@@ -124,7 +124,7 @@ commands:
       commandLine: >
         sdd-pipeline search "how does token refresh work?"
         --top-k 5
-        --index data/chroma
+        --index build/index
       workingDir: ${PROJECT_SOURCE}
 
   # ── 7. Format + lint ──────────────────────────────────────────────────────

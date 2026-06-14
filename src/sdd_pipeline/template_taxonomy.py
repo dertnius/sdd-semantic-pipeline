@@ -10,7 +10,7 @@ fill in — encoded as tables. Two orientations occur (see docs/notes/SPIKE_FIND
   and values in column 1 (the Solution Component tables). Column 1 holds
   ``[Describe …]`` placeholders and is **not** read.
 
-Output (``data/taxonomy.json``): ``normalised_section → {fields, orientation}``.
+Output (``config/taxonomy.json``): ``normalised_section → {fields, orientation}``.
 The pipe-table parser and :func:`fields_and_orientation` are reused by
 ``extract_structural`` to read live-document tables.
 
@@ -161,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
         print("usage: python -m sdd_pipeline.template_taxonomy <template.md> [out.json]")
         return 2
     template = Path(argv[0])
-    out = Path(argv[1]) if len(argv) > 1 else Path("data/taxonomy.json")
+    out = Path(argv[1]) if len(argv) > 1 else Path("config/taxonomy.json")
     taxonomy = extract_taxonomy(template)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(to_canonical_json(taxonomy) + "\n", encoding="utf-8")

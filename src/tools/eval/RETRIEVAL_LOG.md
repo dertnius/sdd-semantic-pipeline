@@ -1,8 +1,8 @@
 # Retrieval evaluation log
 
 Append-only record of retrieval quality on the frozen golden set
-(`eval/queries.yaml`) over the corpus (`eval/corpus/`). Produced by
-`scripts/eval_retrieval.py`. This is the number the enrichment overhaul must move:
+(`src/tools/eval/queries.yaml`) over the corpus (`src/tools/eval/corpus/`). Produced by
+`src/tools/scripts/eval_retrieval.py`. This is the number the enrichment overhaul must move:
 **"After M5" must beat "Baseline"** or the overhaul has not delivered.
 
 ## How to read this
@@ -40,9 +40,9 @@ Not yet recorded: per your "no model" choice the harness prescribes no embedding
 model, so the real baseline runs with **your** configured embedder over **your**
 full corpus. To record it:
 
-1. Drop your additional SDD docs into `eval/corpus/` (markdown; convert HTML via
+1. Drop your additional SDD docs into `src/tools/eval/corpus/` (markdown; convert HTML via
    `sdd-pipeline convert` first). Add golden queries for them in
-   `eval/queries.yaml`, then **freeze the file**.
+   `src/tools/eval/queries.yaml`, then **freeze the file**.
 2. Configure the embedder (whichever you'll use in production), e.g. Azure:
    ```powershell
    $env:PIPELINE_EMBEDDING_PROVIDER = "azure"
@@ -52,7 +52,7 @@ full corpus. To record it:
 3. Run (UTF-8 mode avoids the Windows cp1252 pandoc crash):
    ```powershell
    $env:PYTHONUTF8 = "1"
-   python scripts/eval_retrieval.py --heading "Baseline (pre-overhaul)"
+   python src/tools/scripts/eval_retrieval.py --heading "Baseline (pre-overhaul)"
    ```
    This appends the Baseline block here with the embedder identity recorded.
 

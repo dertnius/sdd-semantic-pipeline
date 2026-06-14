@@ -34,7 +34,7 @@ pandoc-only, model-free.
      rows entirely? (See `test_extract_taxonomy_never_leaks_body_sample_values`.)
    - `template_taxonomy.py::extract_taxonomy` — walks the template, emits
      `{normalised_section_key: {fields, orientation}}` →
-     [data/taxonomy.json](../../../data/taxonomy.json).
+     [config/taxonomy.json](../../../config/taxonomy.json).
 3. **[corpus_taxonomy.py](../../../src/sdd_pipeline/corpus_taxonomy.py)** — same
    idea, but derived from the *real corpus* instead of the ideal template,
    because live docs diverge and carry richer fields. Read
@@ -57,14 +57,14 @@ pandoc-only, model-free.
 ## The payoff, in real numbers
 
 Run `SemanticPipeline().process_file(...)` on the two eval docs (or inspect
-[out/retailnexus/chunks.json](../../../out/retailnexus/chunks.json)):
+[build/dump/retailnexus/chunks.json](../../../build/dump/retailnexus/chunks.json)):
 
-- [eval/corpus/sad-retailnexus-oms.md](../../../eval/corpus/sad-retailnexus-oms.md)
+- [src/tools/eval/corpus/sad-retailnexus-oms.md](../../../src/tools/eval/corpus/sad-retailnexus-oms.md)
   — a template-conforming SAD: **47 chunks**, 46 of them carrying inventory
   `metadata` fields, with `exposes` populated on the *Microservices Inventory*
   chunk (`REST (read-only)`, `GraphQL`, `Events (consume only)` …) and
   `depends_on` on *External Integration Contracts*.
-- [eval/corpus/impala-vscode.md](../../../eval/corpus/impala-vscode.md) — not a
+- [src/tools/eval/corpus/impala-vscode.md](../../../src/tools/eval/corpus/impala-vscode.md) — not a
   SAD: **13 chunks**, **zero** `depends_on`/`exposes` (only audit-bucket
   `raw_entities` metadata).
 
@@ -75,8 +75,8 @@ into the embed header by `models.py::SemanticChunk.to_embed_text`
 ## CLI
 
 `cli.py::scan_taxonomy` — `sdd-pipeline scan-taxonomy <dir> --min-docs N`
-writes `data/taxonomy.json` plus the frequency-ranked
-`data/field_vocabulary.json` for review. (The *template* extractor runs as
+writes `config/taxonomy.json` plus the frequency-ranked
+`build/field_vocabulary.json` for review. (The *template* extractor runs as
 `python -m sdd_pipeline.template_taxonomy <template.md>` — see
 `template_taxonomy.py::main`.)
 

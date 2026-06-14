@@ -62,7 +62,7 @@
         "index",
         "docs/sample/",
         "--model", "all-MiniLM-L6-v2",
-        "--output", "data/chroma",
+        "--output", "build/index",
         "--verbose"
       ],
       "env": {

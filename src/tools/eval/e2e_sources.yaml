@@ -1,6 +1,6 @@
 # Real public architecture documents for the e2e test.
 #
-# Fetched on demand by scripts/fetch_e2e_corpus.py into eval/e2e_corpus/ (gitignored).
+# Fetched on demand by src/tools/scripts/fetch_e2e_corpus.py into src/tools/eval/e2e_corpus/ (gitignored).
 # Nothing here is redistributed — only pinned URLs + license/attribution notes.
 # Every URL is pinned to a fixed commit/tag so fetched content cannot drift and
 # break the test. All sources are Markdown (pandoc-ingestible directly).

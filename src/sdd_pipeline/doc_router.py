@@ -33,7 +33,7 @@ SAD_FINGERPRINT = frozenset(
     }
 )
 
-DEFAULT_TAXONOMY_PATH = Path("data/taxonomy.json")
+DEFAULT_TAXONOMY_PATH = Path("config/taxonomy.json")
 
 
 def _heading_keys(doc: DocumentModel) -> set[str]:

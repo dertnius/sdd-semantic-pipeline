@@ -13,7 +13,7 @@ from sdd_pipeline.corpus_taxonomy import (
     vocabulary_to_json,
 )
 
-CORPUS = Path(__file__).resolve().parent.parent / "eval" / "corpus"
+CORPUS = Path(__file__).resolve().parent.parent / "src" / "tools" / "eval" / "corpus"
 
 
 # ── serialization (pure) ───────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ def test_vocabulary_sorted_by_descending_frequency():
 
 @pytest.mark.slow
 def test_min_docs_gate_empty_on_single_doc_corpus(tmp_path):
-    # eval/corpus has one SAD; with min_docs=2 every field is below the gate.
+    # src/tools/eval/corpus has one SAD; with min_docs=2 every field is below the gate.
     import shutil
 
     shutil.copy(CORPUS / "sad-retailnexus-oms.md", tmp_path / "sad.md")

@@ -36,7 +36,7 @@ def main() -> int:
     if not md.is_file():
         print(f"Not a file: {md}")
         return 2
-    out = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("out")
+    out = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("build/dump")
     out.mkdir(parents=True, exist_ok=True)
 
     pipe = SemanticPipeline()  # embedder is lazy; nothing below touches it

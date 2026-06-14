@@ -89,9 +89,9 @@ All `PIPELINE_`-prefixed env vars via [config.py](../../../src/sdd_pipeline/conf
 - `tests/test_pipeline.py::TestSearch::test_hybrid_fuses_lexical_signal` — dense
   ranks the meta-sentence first; BM25 lifts the chunk literally containing
   "install vscode".
-- Measurement harness: [scripts/eval_retrieval.py](../../../scripts/eval_retrieval.py)
+- Measurement harness: [src/tools/scripts/eval_retrieval.py](../../../src/tools/scripts/eval_retrieval.py)
   scores a frozen golden set (recall@k, MRR) against a fresh index — see
-  [eval/README.md](../../../eval/README.md).
+  [src/tools/eval/README.md](../../../src/tools/eval/README.md).
 
 ## Self-check
 

@@ -70,7 +70,7 @@ Verified in [cli.py](../../../src/sdd_pipeline/cli.py):
 - `cli.py::index` — has **no** `--vocab` flag; it picks the path up purely
   from config (`PIPELINE_ENTITY_VOCAB_PATH` env or `.env`) and prints
   "Corpus scan enabled → ..." when active. Same for `export` (still
-  model-free). [docs/entity-vocab.json](../../../docs/entity-vocab.json) is the
+  model-free). [config/entity-vocab.json](../../../config/entity-vocab.json) is the
   committed seed example; see [CLAUDE.md](../../../CLAUDE.md) Configuration.
 
 ## Executable documentation
