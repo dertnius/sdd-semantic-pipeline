@@ -80,7 +80,7 @@ Pages cite code as `module.py::symbol` (greppable). After changing a module, che
 | tours/09 | retrieval.py, pipeline.py, config.py |
 | tours/10 | pipeline.py, cli.py |
 | tours/11 | quality.py, cli.py |
-| walkthroughs/01 | dump.py + **regenerate `build/dump` excerpts after any stage change** (the command is in the page) |
+| walkthroughs/01 | dump.py + **regenerate `outbox/dump` excerpts after any stage change** (the command is in the page) |
 | walkthroughs/02 | all of src (dependency graph), CLAUDE.md guardrails |
 | walkthroughs/03 | tests/, pyproject.toml, src/tools/scripts/eval_retrieval.py |
 | exercises/* | the module each exercise modifies (see each page's Files section) |

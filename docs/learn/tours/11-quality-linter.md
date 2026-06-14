@@ -79,7 +79,9 @@ parsed AST, by which point the evidence of these source defects is gone.
 ## Try it
 
 ```powershell
-sdd-pipeline lint src/tools/eval/corpus -v      # report -> src/tools/eval/corpus/quality-report.json
+# The eval corpus is a fixture outside the inbox, so bypass the workspace contract.
+$env:PIPELINE_ENFORCE_WORKSPACE = "false"
+sdd-pipeline lint src/tools/eval/corpus -v      # report -> outbox/reports/quality-report.json
 ```
 On the sample corpus this flags two files with leaked `<table>` residue (block)
 and leaves the clean docs untouched — a concrete before/after for the converter.

@@ -13,13 +13,16 @@ Confluence MD → pandoc AST → Structural model → Semantic enrichment
 
 ## Quick start
 
-```bash
-# 0 – Convert Confluence HTML exports → GitLab Markdown + a JSON report
-#     (per-file section/picture/code/list/table/URL counts)
-sdd-pipeline convert docs/ --output build/md --report build/conversion-report.json
+Drop your source files under **`inbox/`** and let every command default to it;
+all outputs land under **`outbox/`** (see [Workspace contract](#workspace-contract)).
 
-# 1 – Install and index sample docs
-sdd-pipeline index docs/sample/ --model all-MiniLM-L6-v2
+```bash
+# 0 – Convert Confluence HTML exports (in inbox/) → GitLab Markdown (outbox/md/)
+#     + a JSON report (per-file section/picture/code/list/table/URL counts)
+sdd-pipeline convert            # reads inbox/, writes outbox/md + outbox/reports/
+
+# 1 – Index the converted corpus (or any .md under inbox/)
+sdd-pipeline index inbox/sample/ --model all-MiniLM-L6-v2   # → outbox/index/
 
 # 2 – Search
 sdd-pipeline search "how does token refresh work?"
@@ -30,9 +33,9 @@ sdd-pipeline check
 
 # Model-free extras (pandoc only, no embedding model loaded):
 # export chunks for reuse by another pipeline …
-sdd-pipeline export docs/sample/ --output build/chunks --merge-prose
+sdd-pipeline export inbox/sample/ --merge-prose             # → outbox/chunks/
 # … or discover the cross-corpus entity vocabulary for review before indexing
-sdd-pipeline scan docs/sample/ --vocab config/entity-vocab.json
+sdd-pipeline scan inbox/sample/                             # → outbox/vocab/
 ```
 
 > `convert` scans the input directory recursively for `*.html`, writes a `.md`
@@ -42,6 +45,42 @@ sdd-pipeline scan docs/sample/ --vocab config/entity-vocab.json
 
 See **[CLI reference](#cli-reference)** below for every command and flag. The
 full, always-current option list is `sdd-pipeline <command> --help`.
+
+---
+
+## Workspace contract
+
+The pipeline operates a two-zone workspace, enforced by default:
+
+- **`inbox/`** — every file going **into** the pipeline lives here (subfolders
+  allowed, e.g. `inbox/sample/`). Raw HTML for `convert`, `.md` for
+  `index`/`export`/`lint`/`scan`.
+- **`outbox/`** — every artifact the pipeline produces lands here, under a fixed
+  sub-layout:
+
+  | Subfolder | Produced by |
+  |---|---|
+  | `outbox/index/` | `index --output`; read by `search`/`tui --index` |
+  | `outbox/md/` | `convert --output` (converted markdown) |
+  | `outbox/chunks/` | `export --output` (exported chunks) |
+  | `outbox/reports/` | `convert`/`lint` JSON reports |
+  | `outbox/vocab/` | `scan --vocab` (entity vocabulary) |
+  | `outbox/taxonomy/` | `scan-taxonomy` (taxonomy + field vocabulary) |
+  | `outbox/dump/` | `python -m sdd_pipeline.dump` |
+
+Every command **defaults** to these zones, so a bare `sdd-pipeline convert` or
+`sdd-pipeline index inbox/sample/` needs no path flags. With enforcement on
+(default), an input outside `inbox/` or an output outside `outbox/` is **rejected**
+with a clear error (exit 2). Set `PIPELINE_ENFORCE_WORKSPACE=false` to bypass the
+contract (used by tests and ad-hoc runs), or point the roots elsewhere with
+`PIPELINE_INBOX_DIR` / `PIPELINE_OUTBOX_DIR`.
+
+> The `scan`/`scan-taxonomy` discovery outputs land in `outbox/vocab/` and
+> `outbox/taxonomy/`. To feed a reviewed vocabulary/taxonomy back as committed
+> config, copy it into `config/` by hand (e.g.
+> `config/entity-vocab.json`) — `config/` is committed configuration, not a
+> pipeline output zone. The committed seed is still read via
+> `PIPELINE_ENTITY_VOCAB_PATH`.
 
 ---
 
@@ -55,12 +94,15 @@ and `lint` is **pure text** (neither pandoc nor a model).
 ### `index` — build the vector index
 
 ```bash
-sdd-pipeline index <input_dir> [options]
+sdd-pipeline index [input_dir] [options]
 ```
+
+`input_dir` defaults to the **inbox** (`inbox/`); pass a subfolder like
+`inbox/sample/` to narrow it.
 
 | Option | Default | Description |
 |---|---|---|
-| `--output` / `-o` | `./build/index` | Vector index persistence path |
+| `--output` / `-o` | `outbox/index` | Vector index persistence path (under the outbox) |
 | `--model` / `-m` | `BAAI/bge-large-en-v1.5` | Local embedding model (ignored when `--provider azure`) |
 | `--provider` | `local` | Embedding backend: `local` \| `azure` |
 | `--backend` | `memory` | Vector store backend: `memory` \| `chroma` (chroma needs `pip install ".[chroma]"`) |
@@ -89,7 +131,7 @@ sdd-pipeline search "<query>" [options]
 
 | Option | Default | Description |
 |---|---|---|
-| `--index` / `-i` | `./build/index` | Vector index path to query |
+| `--index` / `-i` | `outbox/index` | Vector index path to query (under the outbox) |
 | `--model` / `-m` | `BAAI/bge-large-en-v1.5` | Embedding model (**must match the index**) |
 | `--provider` | `local` | Embedding backend: `local` \| `azure` (must match the index) |
 | `--backend` | `memory` | Vector store backend: `memory` \| `chroma` (must match the index) |
@@ -109,14 +151,16 @@ sdd-pipeline search "<query>" [options]
 ### `convert` — HTML → GitLab Markdown (batch)
 
 ```bash
-sdd-pipeline convert <input_dir> [options]
+sdd-pipeline convert [input_dir] [options]
 ```
+
+`input_dir` defaults to the **inbox** (`inbox/`).
 
 | Option | Default | Description |
 |---|---|---|
-| `--output` / `-o` | next to each HTML | Output directory for `.md` (mirrors input tree) |
+| `--output` / `-o` | `outbox/md` | Output directory for `.md` (mirrors input tree) |
 | `--glob` / `-g` | `**/*.html` | HTML glob pattern |
-| `--report` / `-r` | `conversion-report.json` | JSON report path |
+| `--report` / `-r` | `outbox/reports/conversion-report.json` | JSON report path |
 | `--selector` | auto-detect | CSS selector for the main content region |
 | `--space` | — | Confluence space key → frontmatter (provenance) |
 | `--source-url` | — | Canonical source URL → frontmatter (provenance) |
@@ -148,17 +192,19 @@ embedding model is loaded**. Writes a `.chunks.json`/`.jsonl` per file plus an
 `export-report.json`, for reuse by another pipeline.
 
 ```bash
-sdd-pipeline export <input_dir> --output <dir> [options]
+sdd-pipeline export [input_dir] [options]
 ```
+
+`input_dir` defaults to the **inbox** (`inbox/`).
 
 | Option | Default | Description |
 |---|---|---|
-| `--output` / `-o` | *(required)* | Directory for `.chunks.json`/`.jsonl` (mirrors input tree) |
+| `--output` / `-o` | `outbox/chunks` | Directory for `.chunks.json`/`.jsonl` (mirrors input tree) |
 | `--format` / `-f` | `json` | Output format: `json` \| `jsonl` |
 | `--glob` / `-g` | `**/*.md` | Markdown glob pattern |
 | `--merge-prose` | off | Pack each section's prose into one chunk (code/tables separate) |
 | `--merge-definitions` | off | Pack prose **and** code into one chunk; overrides `--merge-prose` |
-| `--report` / `-r` | `<output>/export-report.json` | JSON report path |
+| `--report` / `-r` | `<output>/export-report.json` | JSON report path (co-located with the chunks) |
 | `--verbose` / `-v` | off | Per-file chunk counts |
 
 > Prefer `--merge-prose` (or `--merge-definitions` for reference/spec docs) for
@@ -173,14 +219,19 @@ the persisted vocabulary + `PIPELINE_ENTITY_TERMS`, and writes the sorted result
 to the vocabulary JSON — for review/editing before an `index` run. **No model.**
 
 ```bash
-sdd-pipeline scan <input_dir> [options]
+sdd-pipeline scan [input_dir] [options]
 ```
+
+`input_dir` defaults to the **inbox** (`inbox/`).
 
 | Option | Default | Description |
 |---|---|---|
-| `--vocab` | `PIPELINE_ENTITY_VOCAB_PATH` | Output JSON vocabulary file (overrides the env var) |
+| `--vocab` | `outbox/vocab/entity-vocab.json` | Output JSON vocabulary file (or `PIPELINE_ENTITY_VOCAB_PATH`) |
 | `--glob` / `-g` | `**/*.md` | Markdown glob pattern |
 | `--verbose` / `-v` | off | Print the discovered term list |
+
+> Promote a reviewed vocabulary into committed config by copying it to
+> `config/entity-vocab.json`, then point `PIPELINE_ENTITY_VOCAB_PATH` at it.
 
 ### `scan-taxonomy` — derive a section→field taxonomy (model-free)
 
@@ -190,13 +241,15 @@ frequency-ranked field vocabulary for review (used to fill
 `config/field_directions.yaml`). **Pandoc-only: no model.**
 
 ```bash
-sdd-pipeline scan-taxonomy <input_dir> [options]
+sdd-pipeline scan-taxonomy [input_dir] [options]
 ```
+
+`input_dir` defaults to the **inbox** (`inbox/`).
 
 | Option | Default | Description |
 |---|---|---|
-| `--out` / `-o` | `config/taxonomy.json` | Output taxonomy JSON (section → fields) |
-| `--vocab-out` | `build/field_vocabulary.json` | Frequency-ranked field vocabulary (review artifact) |
+| `--out` / `-o` | `outbox/taxonomy/taxonomy.json` | Output taxonomy JSON (section → fields) |
+| `--vocab-out` | `outbox/taxonomy/field_vocabulary.json` | Frequency-ranked field vocabulary (review artifact) |
 | `--min-docs` / `-n` | `2` | Keep a field only if seen in ≥ this many documents |
 | `--glob` / `-g` | `**/*.md` | Markdown glob pattern |
 
@@ -210,13 +263,15 @@ Point it at your real embedding corpus (not a docs tree that *documents*
 Confluence syntax — those files legitimately contain the flagged tokens).
 
 ```bash
-sdd-pipeline lint <input_dir> [options]
+sdd-pipeline lint [input_dir] [options]
 ```
+
+`input_dir` defaults to the **inbox** (`inbox/`).
 
 | Option | Default | Description |
 |---|---|---|
 | `--glob` / `-g` | `**/*.md` | Markdown glob pattern |
-| `--report` / `-r` | `<input_dir>/quality-report.json` | JSON report path |
+| `--report` / `-r` | `outbox/reports/quality-report.json` | JSON report path (under the outbox, never the input tree) |
 | `--strict` | off | Exit non-zero if any file has a block-severity issue |
 | `--verbose` / `-v` | off | Per-file findings |
 
@@ -246,16 +301,19 @@ The commands chain into one flow. **M** = loads an embedding model, **P** = need
 pandoc. Steps 3–4 are optional; only `index`/`search` load a model. A minimal run
 is `convert → index → search`.
 
+Place the source HTML/MD under `inbox/` first. The defaults below land every
+artifact in `outbox/`, so the explicit `-o`/`-r` flags shown are optional.
+
 | # | Command | Input required | Output expected | M | P |
 |---|---|---|---|:--:|:--:|
 | 0 | `sdd-pipeline check` | — | dependency table (stdout); exit 1 if a required dep is missing | – | – |
-| 1 | `sdd-pipeline convert <html_dir> -o build/md -r build/conversion-report.json [--space K --source-url U --labels a,b]` | dir of `*.html` (default `docs/`); **pandoc on PATH** | one `.md` per HTML (mirrors tree) + `conversion-report.json` (per-file + aggregate metrics, macro counts, warnings) | – | ● |
-| 2 | `sdd-pipeline lint build/md -r build/quality-report.json [--strict]` | dir of `*.md` (the converted corpus) | `quality-report.json` + stdout summary; `--strict` → exit 1 on any block issue | – | – |
-| 3a | `sdd-pipeline scan build/md --vocab build/entity-vocab.json` *(optional)* | `*.md` dir; **pandoc** | entity-vocabulary JSON (sorted terms) to review before indexing | – | ● |
-| 3b | `sdd-pipeline scan-taxonomy build/md -o config/taxonomy.json --vocab-out build/field_vocabulary.json [-n 2]` *(optional)* | `*.md` dir; **pandoc** | `taxonomy.json` (section → field) + `field_vocabulary.json` | – | ● |
-| 4 | `sdd-pipeline export build/md -o build/chunks --merge-prose [-f jsonl]` *(optional)* | `*.md` dir; honours `PIPELINE_ENTITY_VOCAB_PATH` (two-pass) | `.chunks.json`/`.jsonl` per file + `export-report.json` | – | ● |
-| 5 | `sdd-pipeline index build/md -o build/index --model all-MiniLM-L6-v2 [--backend chroma\|memory --merge-prose]` | `*.md` dir; **embedding model** (downloads on first run); chromadb if `--backend chroma`; optional `PIPELINE_ENTITY_VOCAB_PATH` | vector index at `-o` (memory: `<dir>/<collection>.json` + `.provenance.json`; chroma: persist dir) | ● | – |
-| 6 | `sdd-pipeline search "<query>" -i build/index --model all-MiniLM-L6-v2 [-k 5 -s architecture --space ARCH --hybrid]` | **prior index** (provider/model/backend must match) + embedding model | results table (score, breadcrumb, type, preview) on stdout | ● | – |
+| 1 | `sdd-pipeline convert [inbox/] [--space K --source-url U --labels a,b]` | dir of `*.html` (default `inbox/`); **pandoc on PATH** | one `.md` per HTML in `outbox/md/` (mirrors tree) + `outbox/reports/conversion-report.json` (per-file + aggregate metrics, macro counts, warnings) | – | ● |
+| 2 | `sdd-pipeline lint [inbox/] [--strict]` | dir of `*.md` (e.g. the converted corpus under `inbox/`) | `outbox/reports/quality-report.json` + stdout summary; `--strict` → exit 1 on any block issue | – | – |
+| 3a | `sdd-pipeline scan [inbox/]` *(optional)* | `*.md` dir; **pandoc** | entity-vocabulary JSON in `outbox/vocab/` (sorted terms) to review before indexing | – | ● |
+| 3b | `sdd-pipeline scan-taxonomy [inbox/] [-n 2]` *(optional)* | `*.md` dir; **pandoc** | `outbox/taxonomy/taxonomy.json` (section → field) + `outbox/taxonomy/field_vocabulary.json` | – | ● |
+| 4 | `sdd-pipeline export [inbox/] --merge-prose [-f jsonl]` *(optional)* | `*.md` dir; honours `PIPELINE_ENTITY_VOCAB_PATH` (two-pass) | `.chunks.json`/`.jsonl` per file in `outbox/chunks/` + `export-report.json` | – | ● |
+| 5 | `sdd-pipeline index inbox/ --model all-MiniLM-L6-v2 [--backend chroma\|memory --merge-prose]` | `*.md` dir; **embedding model** (downloads on first run); chromadb if `--backend chroma`; optional `PIPELINE_ENTITY_VOCAB_PATH` | vector index at `outbox/index/` (memory: `<dir>/<collection>.json` + `.provenance.json`; chroma: persist dir) | ● | – |
+| 6 | `sdd-pipeline search "<query>" --model all-MiniLM-L6-v2 [-k 5 -s architecture --space ARCH --hybrid]` | **prior index** at `outbox/index/` (provider/model/backend must match) + embedding model | results table (score, breadcrumb, type, preview) on stdout | ● | – |
 
 **Dependencies:** `search` requires a prior `index` (same provider/model/backend);
 `index`/`export` consume the vocabulary from `scan` when `PIPELINE_ENTITY_VOCAB_PATH`
@@ -282,7 +340,7 @@ backends keep **independent** indexes even in the same persist dir, so
 re-index after switching.
 
 ```bash
-sdd-pipeline index docs/sample/ --backend chroma
+sdd-pipeline index inbox/sample/ --backend chroma
 sdd-pipeline search "token refresh" --backend chroma
 ```
 
@@ -311,7 +369,7 @@ The embedder is pluggable via `--provider` (`local` default \| `azure`) on
   index (see `search` above).
 
 ```bash
-sdd-pipeline index docs/sample/ --provider azure
+sdd-pipeline index inbox/sample/ --provider azure
 sdd-pipeline search "token refresh" --provider azure
 ```
 
@@ -368,7 +426,7 @@ the repository URL in Dev Spaces.
 4. Open a terminal and run:
    ```bash
    sdd-pipeline check
-   sdd-pipeline index docs/sample/ --model all-MiniLM-L6-v2
+   sdd-pipeline index inbox/sample/ --model all-MiniLM-L6-v2
    ```
 
 #### Available devfile commands (Command Palette → *Run Task*)
@@ -379,7 +437,7 @@ the repository URL in Dev Spaces.
 | `check` | Verify all dependencies |
 | `test` | Unit tests (no pandoc / ML required) |
 | `test-all` | All tests including slow integration |
-| `index-samples` | Index `docs/sample/` |
+| `index-samples` | Index `inbox/sample/` |
 | `search-demo` | Run a demo search query |
 | `lint` | ruff format + check |
 
@@ -443,13 +501,14 @@ from sdd_pipeline import SemanticPipeline, PipelineConfig, SectionType
 
 config = PipelineConfig(
     embedding_model="all-MiniLM-L6-v2",
-    chroma_persist_dir="./build/index",
+    chroma_persist_dir="./outbox/index",
 )
 pipeline = SemanticPipeline(config=config)
 
-# Index a directory
-counts = pipeline.index_directory(Path("docs/"))
-print(counts)   # {'docs/auth-service.md': 34, 'docs/api-gateway.md': 28}
+# Index a directory. The Python API takes explicit paths and does NOT enforce
+# the inbox/outbox contract — that guard is a CLI-layer convenience.
+counts = pipeline.index_directory(Path("inbox/sample/"))
+print(counts)   # {'inbox/sample/auth-service.md': 34, 'inbox/sample/api-gateway.md': 28}
 
 # Search
 results = pipeline.search(
@@ -488,8 +547,11 @@ Copy `.env.example` to `.env` and customise. Full list in
 | `PIPELINE_ENTITY_TERMS` | `[]` | JSON array of domain vocabulary folded into entity extraction |
 | `PIPELINE_ENTITY_VOCAB_PATH` | `""` | JSON vocab file; when set, enables the two-pass cross-corpus scan in `index`/`export` |
 | `PIPELINE_VECTOR_STORE_BACKEND` | `memory` | Vector store backend: `memory` \| `chroma` |
-| `PIPELINE_CHROMA_PERSIST_DIR` | `./build/index` | Vector index persistence path (both backends) |
+| `PIPELINE_CHROMA_PERSIST_DIR` | `./outbox/index` | Vector index persistence path (both backends; must stay under the outbox) |
 | `PIPELINE_COLLECTION_NAME` | `sdd_docs` | Vector store collection |
+| `PIPELINE_INBOX_DIR` | `./inbox` | Root for all pipeline inputs (workspace contract) |
+| `PIPELINE_OUTBOX_DIR` | `./outbox` | Root for all pipeline outputs (workspace contract) |
+| `PIPELINE_ENFORCE_WORKSPACE` | `true` | Reject inputs outside `inbox/` and outputs outside `outbox/`; set `false` to bypass |
 | `PIPELINE_HYBRID_SEARCH` | `false` | Fuse dense + lexical (BM25) rankings via RRF (same as `search --hybrid`) |
 | `PIPELINE_HYBRID_CANDIDATE_POOL` | `50` | Per-scorer candidate depth fused before top-k |
 | `PIPELINE_RRF_K` | `60` | Reciprocal Rank Fusion constant (higher = flatter weighting) |
@@ -549,14 +611,16 @@ sdd-semantic-pipeline/
 │       ├── scripts/          ← eval_retrieval.py, fetch_e2e_corpus.py, dump helpers, convert-docs.ps1
 │       └── eval/             ← retrieval-eval harness: corpus/ + frozen golden queries + RETRIEVAL_LOG
 ├── tests/                    ← pytest suite (unit · slow · integration · e2e; convert/ subdir for flow B)
-├── config/                   ← committed pipeline inputs: field_directions.yaml, taxonomy.json, entity-vocab.json
+├── inbox/                    ← pipeline INPUT zone (workspace contract); skeleton tracked, contents gitignored
+│   └── sample/               ← drop a sample corpus here (HTML for convert, .md for index)
+├── outbox/                   ← pipeline OUTPUT zone (index/ md/ chunks/ reports/ vocab/ taxonomy/ dump/); gitignored
+├── config/                   ← committed configuration: field_directions.yaml, taxonomy.json, entity-vocab.json (seeds)
 ├── docs/
-│   ├── sample/               ← sample SDDs (auth-service.md, api-gateway.md)
 │   ├── guides/               ← how-to / navigation pages (formerly wiki/)
 │   ├── learn/                ← C#→Python learning curriculum (bridge, tours, walkthroughs, exercises)
 │   ├── adr/ · notes/ · inbox/ · template/ · archive/
 │   └── confluence-conversion-rules.md  ← the converter spec
-├── build/                    ← generated output, gitignored (index/, dump/, md/, *-report.json)
+├── build/                    ← setuptools build output, gitignored (build/lib, build/bdist)
 ├── .vscode/ · .github/ · .devcontainer/   ← IDE / Copilot / dev-container config (tracked)
 ├── devfile.yaml              ← OpenShift Dev Spaces / Eclipse Che
 ├── environment.yml           ← conda / micromamba environment

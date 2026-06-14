@@ -22,6 +22,25 @@ from sdd_pipeline.models import (
     SemanticChunk,
 )
 
+# ── Workspace contract (inbox/outbox) ─────────────────────────────────────────
+
+
+@pytest.fixture(autouse=True)
+def _workspace_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Neutralise the inbox/outbox contract for the bulk of the suite.
+
+    Most tests pass explicit ``tmp_path`` input/output paths that live *outside*
+    the real ``inbox/``/``outbox/`` roots, so the enforcement guard would reject
+    them. This autouse fixture turns enforcement off and redirects the inbox/
+    outbox roots to per-test temp dirs, so default artifacts never land in the
+    repo. Tests that exercise the guard re-enable it explicitly by setting
+    ``PIPELINE_ENFORCE_WORKSPACE=true`` (and their own inbox/outbox roots).
+    """
+    monkeypatch.setenv("PIPELINE_ENFORCE_WORKSPACE", "false")
+    monkeypatch.setenv("PIPELINE_INBOX_DIR", str(tmp_path / "_ws_inbox"))
+    monkeypatch.setenv("PIPELINE_OUTBOX_DIR", str(tmp_path / "_ws_outbox"))
+
+
 # ── Sample markdown ───────────────────────────────────────────────────────────
 
 SAMPLE_MARKDOWN = """\

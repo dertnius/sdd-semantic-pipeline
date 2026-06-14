@@ -20,28 +20,32 @@ flowchart LR
 ## Setup: dump the intermediate artifacts
 
 `src/sdd_pipeline/dump.py` runs the model-free stages only (pandoc → structural →
-enrich → chunk) and writes one JSON file per stage:
+enrich → chunk) and writes one JSON file per stage. Its input must live under the
+**inbox** and its output under the **outbox** (the workspace contract). The
+learning corpus lives under `src/tools/eval/corpus/` (a committed fixture, *not*
+the inbox), so these exercises set `PIPELINE_ENFORCE_WORKSPACE=false` to run the
+dump against the fixture and write to a scratch dir:
 
 ```powershell
-.\.venv\Scripts\python.exe src\sdd_pipeline\dump.py src\tools\eval\corpus\sad-retailnexus-oms.md build\dump\retailnexus
+$env:PIPELINE_ENFORCE_WORKSPACE = "false"
+.\.venv\Scripts\python.exe -m sdd_pipeline.dump src\tools\eval\corpus\sad-retailnexus-oms.md outbox\dump\retailnexus
 ```
 
 Real output:
 
 ```text
-src\sdd_pipeline\dump.py:9: SyntaxWarning: invalid escape sequence '\.'
-  .\.venv\Scripts\python.exe dump.py path\to\your-file.md [out-dir]
-Wrote build\dump\retailnexus\ast.json, build\dump\retailnexus\enriched.json, build\dump\retailnexus\chunks.json (47 chunks).
+Wrote outbox\dump\retailnexus\ast.json, outbox\dump\retailnexus\enriched.json, outbox\dump\retailnexus\chunks.json (47 chunks).
 ```
 
-> **Gotcha aside — that SyntaxWarning is real.** The module docstring of
-> `dump.py::main`'s file contains the Windows path `.\.venv\Scripts\python.exe`, and in a
-> normal Python string literal `\.` is an unrecognized escape sequence — Python warns today
-> and will make it an error in a future release. The fix is a raw string (`r"""..."""`),
-> Python's equivalent of C#'s verbatim `@"..\path"`. Same disease, different cure: C# makes
-> `"\."` a hard compile error (CS1009); Python lets it slide with a warning.
+> **Gotcha aside — a SyntaxWarning that used to fire here.** `dump.py`'s module
+> docstring contains Windows paths like `.\.venv\Scripts\python.exe`, and in a
+> *normal* Python string literal `\.` is an unrecognized escape sequence — Python
+> warns today and will make it an error in a future release. The fix (already
+> applied) is a raw string (`r"""..."""`), Python's equivalent of C#'s verbatim
+> `@"..\path"`. Same disease, different cure: C# makes `"\."` a hard compile error
+> (CS1009); Python lets it slide with a warning.
 
-Read `src/sdd_pipeline/dump.py` (67 lines) before going on — every claim below about
+Read `src/sdd_pipeline/dump.py` before going on — every claim below about
 *which* call produced *which* file comes from it.
 
 ## Stage 2 — markdown → pandoc AST (`ast_parser.py::generate_ast`)
@@ -62,7 +66,7 @@ Our tracer bullet is the **External Integration Contracts** section. The source
 ...
 ```
 
-In `build/dump/retailnexus/ast.json` pandoc has shredded that heading into typed nodes — note
+In `outbox/dump/retailnexus/ast.json` pandoc has shredded that heading into typed nodes — note
 the auto-generated slug `external-integration-contracts`, which you will meet again in
 every later artifact:
 
@@ -92,7 +96,7 @@ are siblings. So who decides the table *belongs to* the section? That's stage 3.
 
 ## Stages 3–4 — AST → section tree (`structural.py::build_structural_model`)
 
-In `build/dump/retailnexus/enriched.json`, find `"section_id": "external-integration-contracts"`.
+In `outbox/dump/retailnexus/enriched.json`, find `"section_id": "external-integration-contracts"`.
 The flat blocks are now a tree — the section is nested under `Integration Architecture`
 (that's where `breadcrumb` comes from) and *owns* its blocks:
 
@@ -135,7 +139,7 @@ The excerpt above already shows stage 5's work: `"section_type": "api"` (rule-ba
   "metadata": {}
 ```
 
-Empty. Now find the *same* section's chunk in `build/dump/retailnexus/chunks.json`:
+Empty. Now find the *same* section's chunk in `outbox/dump/retailnexus/chunks.json`:
 
 ```json
 {
@@ -221,17 +225,20 @@ flowchart TD
 ## Stage 7 — index and search
 
 ```powershell
-sdd-pipeline index .\src\tools\eval\corpus -o .\build\learn-index --model all-MiniLM-L6-v2
+# Same session as Setup, so PIPELINE_ENFORCE_WORKSPACE is still "false" — the
+# eval corpus is a fixture outside the inbox and the scratch index sits outside
+# the standard outbox/index/ layout.
+sdd-pipeline index .\src\tools\eval\corpus -o .\outbox\learn-index --model all-MiniLM-L6-v2
 # Done. 162 chunks indexed from 5 files (0 errors).
 ```
 
-(Memory backend by default — peek at `build\learn-index\sdd_docs.json`: it's just the
+(Memory backend by default — peek at `outbox\learn-index\sdd_docs.json`: it's just the
 chunks + vectors as JSON, plus `sdd_docs.provenance.json` recording provider/model/dimension.)
 
 Dense search vs hybrid (`-H`), same query:
 
 ```powershell
-sdd-pipeline search "what does the order management system depend on" -i .\build\learn-index --model all-MiniLM-L6-v2 -k 3
+sdd-pipeline search "what does the order management system depend on" -i .\outbox\learn-index --model all-MiniLM-L6-v2 -k 3
 ```
 
 | Rank | Dense (cosine)                                              | Hybrid `-H` (RRF)                              |
@@ -261,7 +268,7 @@ Two things to explain honestly:
 
 ## The contrast case, and your turn
 
-Run the same dump on `src/tools/eval/corpus/impala-vscode.md` (→ `build/dump/impala/`): **13 chunks, zero
+Run the same dump on `src/tools/eval/corpus/impala-vscode.md` (→ `outbox/dump/impala/`): **13 chunks, zero
 `depends_on`, zero `exposes`**. Two verifiable reasons: the doc contains no pipe tables
 at all (nothing for `extract_structural.py::build_structural_inventory` to harvest;
 prose records carry no column name and route to `metadata.raw_entities`), and

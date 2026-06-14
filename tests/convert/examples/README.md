@@ -19,11 +19,14 @@ is the rule authority; **this README documents the converter's _actual_ output**
 ## Reproduce
 
 ```powershell
-# from the inner project root, with pandoc on PATH
+# from the project root, with pandoc on PATH. These example HTML files are a test
+# fixture *outside* the inbox/outbox zones, so bypass the workspace contract:
+$env:PIPELINE_ENFORCE_WORKSPACE = "false"
 sdd-pipeline convert tests/convert/examples --output tests/convert/examples/out `
   --space ARCH --source-url "https://confluence.example.com/display/ARCH/OMS-SAD" `
   --report tests/convert/examples/out/conversion-report.json --verbose
-sdd-pipeline lint tests/convert/examples/out        # expect no html_leakage / confluence_artifacts
+sdd-pipeline lint tests/convert/examples/out -r tests/convert/examples/out/quality-report.json
+# expect no html_leakage / confluence_artifacts
 ```
 
 The committed regression test is `tests/convert/test_html_to_gitlab_md_v3.py::TestConvertExamplesCorpus`

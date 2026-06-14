@@ -125,13 +125,32 @@ try:
             "persisted as JSON) or 'chroma' (requires pip install '.[chroma]').",
         )
         chroma_persist_dir: str = Field(
-            default="./build/index",
+            default="./outbox/index",
             description="Directory where the vector index persists (Chroma files, or "
-            "<collection>.json for the memory backend).",
+            "<collection>.json for the memory backend). Lives under the outbox.",
         )
         collection_name: str = Field(
             default="sdd_docs",
             description="Vector store collection name.",
+        )
+
+        # ── Workspace contract (inbox / outbox) ───────────────────────────────
+        inbox_dir: str = Field(
+            default="./inbox",
+            description="Root for all pipeline INPUT files (subfolders allowed). With "
+            "enforce_workspace on, every input path must resolve under here.",
+        )
+        outbox_dir: str = Field(
+            default="./outbox",
+            description="Root for all pipeline OUTPUTS — index, md, chunks, reports, "
+            "vocab, taxonomy, dump (subfolders allowed). With enforce_workspace on, "
+            "every output path must resolve under here.",
+        )
+        enforce_workspace: bool = Field(
+            default=True,
+            description="Enforce the inbox/outbox contract: reject input paths not under "
+            "inbox_dir and output paths not under outbox_dir. Set false (e.g. in tests or "
+            "ad-hoc runs) to skip all containment checks.",
         )
 
         # ── Hybrid retrieval ──────────────────────────────────────────────────
@@ -180,8 +199,11 @@ except ImportError:
         entity_vocab_path: str = ""
         inventory_enrichment: bool = True
         vector_store_backend: str = "memory"
-        chroma_persist_dir: str = "./build/index"
+        chroma_persist_dir: str = "./outbox/index"
         collection_name: str = "sdd_docs"
+        inbox_dir: str = "./inbox"
+        outbox_dir: str = "./outbox"
+        enforce_workspace: bool = True
         hybrid_search: bool = False
         hybrid_candidate_pool: int = 50
         rrf_k: int = 60

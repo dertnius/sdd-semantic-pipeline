@@ -45,11 +45,11 @@ def _convert_confidence_reasons(notes: dict, max_unrecognized: int) -> list[str]
 
 @app.command()
 def index(
-    input_dir: Path = typer.Argument(
-        ..., exists=True, file_okay=False, help="Directory containing .md files."
+    input_dir: Path | None = typer.Argument(
+        None, help="Directory containing .md files. Default: the inbox."
     ),
-    output_dir: str = typer.Option(
-        "./build/index", "--output", "-o", help="Vector index persistence path."
+    output_dir: str | None = typer.Option(
+        None, "--output", "-o", help="Vector index persistence path. Default: outbox/index."
     ),
     model: str = typer.Option(
         "BAAI/bge-large-en-v1.5",
@@ -89,9 +89,14 @@ def index(
     """Index Confluence markdown files into the vector store."""
     from .config import PipelineConfig
     from .pipeline import SemanticPipeline
+    from .workspace import (
+        WorkspaceError,
+        ensure_inbox_exists,
+        resolve_index_path,
+        resolve_input,
+    )
 
     overrides: dict = {
-        "chroma_persist_dir": output_dir,
         "embedding_model": model,
         "embedding_provider": provider,
         "chunk_merge_prose": merge_prose,
@@ -103,6 +108,24 @@ def index(
         overrides["vector_store_backend"] = backend
     if chunk_gate is not None:
         overrides["chunk_gate"] = chunk_gate
+
+    # Enforce the workspace contract: input under the inbox, index under the
+    # outbox. A throwaway config reads the inbox/outbox/enforce settings before
+    # the real config is built with the resolved index path.
+    ws = PipelineConfig(**overrides)
+    try:
+        ensure_inbox_exists(ws.inbox_dir, ws.enforce_workspace)
+        in_dir = resolve_input(input_dir, inbox_dir=ws.inbox_dir, enforce=ws.enforce_workspace)
+        index_path = resolve_index_path(
+            output_dir or ws.chroma_persist_dir,
+            outbox_dir=ws.outbox_dir,
+            enforce=ws.enforce_workspace,
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    overrides["chroma_persist_dir"] = str(index_path)
     config = PipelineConfig(**overrides)
     pipeline = SemanticPipeline(config=config)
 
@@ -115,19 +138,19 @@ def index(
             console.print(f"[red]{exc}[/red]")
             raise typer.Exit(1) from exc
 
-    md_files = list(input_dir.glob(glob))
+    md_files = list(in_dir.glob(glob))
     if not md_files:
         console.print("[yellow]No markdown files found.[/yellow]")
         raise typer.Exit(0)
 
-    console.print(f"[cyan]Found {len(md_files)} markdown files in {input_dir}[/cyan]")
+    console.print(f"[cyan]Found {len(md_files)} markdown files in {in_dir}[/cyan]")
 
     # Cross-corpus scan (config/env only) needs all docs before enrichment, so it
     # delegates to the pipeline's two-pass index_directory rather than the per-file
     # loop. Honoured only for real index runs (a dry run never indexes).
     if config.entity_vocab_path and not dry_run:
         console.print(f"[cyan]Corpus scan enabled → {config.entity_vocab_path}[/cyan]")
-        results = pipeline.index_directory(input_dir, glob)
+        results = pipeline.index_directory(in_dir, glob)
         total = sum(c for c in results.values() if c > 0)
         errors = sum(1 for c in results.values() if c < 0)
         if verbose:
@@ -169,24 +192,22 @@ _METRIC_FIELDS = ("sections", "pictures", "code_snippets", "lists", "tables", "u
 
 @app.command()
 def convert(
-    input_dir: Path = typer.Argument(
-        Path("docs"),
-        exists=True,
-        file_okay=False,
-        help="Directory to scan recursively for HTML files.",
+    input_dir: Path | None = typer.Argument(
+        None,
+        help="Directory to scan recursively for HTML files. Default: the inbox.",
     ),
     output_dir: Path | None = typer.Option(
         None,
         "--output",
         "-o",
-        help="Where to write .md files (mirrors input tree). Default: alongside each HTML file.",
+        help="Where to write .md files (mirrors input tree). Default: outbox/md.",
     ),
     glob: str = typer.Option("**/*.html", "--glob", "-g", help="HTML file glob pattern."),
-    report: Path = typer.Option(
-        Path("conversion-report.json"),
+    report: Path | None = typer.Option(
+        None,
         "--report",
         "-r",
-        help="Path for the JSON conversion report.",
+        help="JSON conversion report path. Default: outbox/reports/conversion-report.json.",
     ),
     selector: str | None = typer.Option(None, "--selector", help="CSS selector for main content."),
     space: str = typer.Option(
@@ -229,12 +250,41 @@ def convert(
 
     from .config import PipelineConfig
     from .convert import ConversionError, convert_file, resolve_pandoc
+    from .workspace import (
+        OUTBOX_MD,
+        WorkspaceError,
+        ensure_inbox_exists,
+        resolve_input,
+        resolve_output_dir,
+        resolve_output_file,
+    )
 
     _cfg = PipelineConfig()
     quarantine = _cfg.convert_quarantine if quarantine is None else quarantine
     max_unrecognized = (
         _cfg.convert_max_unrecognized if max_unrecognized is None else max_unrecognized
     )
+
+    # Enforce the workspace contract: HTML read from the inbox, .md + report
+    # written under the outbox (the _quarantine/ subdir inherits the outbox).
+    try:
+        ensure_inbox_exists(_cfg.inbox_dir, _cfg.enforce_workspace)
+        in_dir = resolve_input(input_dir, inbox_dir=_cfg.inbox_dir, enforce=_cfg.enforce_workspace)
+        out_dir = resolve_output_dir(
+            output_dir,
+            outbox_dir=_cfg.outbox_dir,
+            enforce=_cfg.enforce_workspace,
+            default_subpath=OUTBOX_MD,
+        )
+        report_path = resolve_output_file(
+            report,
+            outbox_dir=_cfg.outbox_dir,
+            enforce=_cfg.enforce_workspace,
+            default_subpath="reports/conversion-report.json",
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
 
     # Fail fast if pandoc is missing — same error for every file otherwise.
     try:
@@ -245,12 +295,12 @@ def convert(
 
     label_list = [s.strip() for s in labels.split(",") if s.strip()]
 
-    html_files = sorted(input_dir.glob(glob))
+    html_files = sorted(in_dir.glob(glob))
     if not html_files:
-        console.print(f"[yellow]No HTML files matching {glob!r} under {input_dir}[/yellow]")
+        console.print(f"[yellow]No HTML files matching {glob!r} under {in_dir}[/yellow]")
         raise typer.Exit(0)
 
-    console.print(f"[cyan]Found {len(html_files)} HTML files in {input_dir}[/cyan]")
+    console.print(f"[cyan]Found {len(html_files)} HTML files in {in_dir}[/cyan]")
 
     file_entries: list[dict] = []
     totals = dict.fromkeys(_METRIC_FIELDS, 0)
@@ -260,12 +310,9 @@ def convert(
     quarantined = 0
 
     for src in track(html_files, description="Converting..."):
-        # Mirror the source tree under output_dir when one is given.
-        if output_dir is not None:
-            rel = src.relative_to(input_dir).with_suffix(".md")
-            out_target: Path | None = output_dir / rel
-        else:
-            out_target = None
+        # Mirror the source tree under the outbox md directory.
+        rel = src.relative_to(in_dir).with_suffix(".md")
+        out_target = out_dir / rel
 
         try:
             # Convert in-memory (write=False) so the confidence gate can route a
@@ -340,7 +387,8 @@ def convert(
     failed = len(html_files) - succeeded - quarantined
     report_doc = {
         "generated_at": datetime.now(UTC).isoformat(),
-        "input_dir": str(input_dir),
+        "input_dir": str(in_dir),
+        "output_dir": str(out_dir),
         "glob": glob,
         "total_files": len(html_files),
         "succeeded": succeeded,
@@ -352,8 +400,7 @@ def convert(
         "files": file_entries,
     }
 
-    report.parent.mkdir(parents=True, exist_ok=True)
-    report.write_text(json.dumps(report_doc, indent=2, ensure_ascii=False), encoding="utf-8")
+    report_path.write_text(json.dumps(report_doc, indent=2, ensure_ascii=False), encoding="utf-8")
 
     table = Table(title="Conversion totals", show_lines=False)
     table.add_column("Metric", style="cyan")
@@ -365,7 +412,7 @@ def convert(
     console.print(
         f"\n[green]Done.[/green] {succeeded}/{len(html_files)} files converted "
         f"({quarantined} quarantined, {failed} failed, {warnings_total} warning(s)). "
-        f"Report -> {report}"
+        f"Report -> {report_path}"
     )
     raise typer.Exit(1 if (failed or quarantined) else 0)
 
@@ -375,14 +422,15 @@ def convert(
 
 @app.command()
 def export(
-    input_dir: Path = typer.Argument(
-        ..., exists=True, file_okay=False, help="Directory containing .md files."
+    input_dir: Path | None = typer.Argument(
+        None, help="Directory containing .md files. Default: the inbox."
     ),
-    output_dir: Path = typer.Option(
-        ...,
+    output_dir: Path | None = typer.Option(
+        None,
         "--output",
         "-o",
-        help="Directory for .chunks.json/.jsonl artifacts (mirrors input tree).",
+        help="Directory for .chunks.json/.jsonl artifacts (mirrors input tree). "
+        "Default: outbox/chunks.",
     ),
     fmt: str = typer.Option("json", "--format", "-f", help="Output format: json | jsonl."),
     glob: str = typer.Option("**/*.md", "--glob", "-g", help="Markdown file glob pattern."),
@@ -417,25 +465,55 @@ def export(
 
     from .config import PipelineConfig
     from .pipeline import SemanticPipeline
+    from .workspace import (
+        OUTBOX_CHUNKS,
+        WorkspaceError,
+        ensure_inbox_exists,
+        resolve_input,
+        resolve_output_dir,
+        resolve_output_file,
+    )
 
     fmt = fmt.lower()
     if fmt not in {"json", "jsonl"}:
         console.print(f"[red]Invalid --format {fmt!r}; expected 'json' or 'jsonl'.[/red]")
         raise typer.Exit(2)
 
-    report_path = report if report is not None else output_dir / "export-report.json"
-
     config = PipelineConfig(
         chunk_merge_prose=merge_prose, chunk_merge_definitions=merge_definitions
     )
+
+    # Enforce the workspace contract: .md read from the inbox, chunks + report
+    # written under the outbox. The report co-locates with the chunks directory.
+    try:
+        ensure_inbox_exists(config.inbox_dir, config.enforce_workspace)
+        in_dir = resolve_input(
+            input_dir, inbox_dir=config.inbox_dir, enforce=config.enforce_workspace
+        )
+        out_dir = resolve_output_dir(
+            output_dir,
+            outbox_dir=config.outbox_dir,
+            enforce=config.enforce_workspace,
+            default_subpath=OUTBOX_CHUNKS,
+        )
+        report_path = resolve_output_file(
+            report or out_dir / "export-report.json",
+            outbox_dir=config.outbox_dir,
+            enforce=config.enforce_workspace,
+            default_subpath="chunks/export-report.json",
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
     pipeline = SemanticPipeline(config=config)
 
-    md_files = sorted(input_dir.glob(glob))
+    md_files = sorted(in_dir.glob(glob))
     if not md_files:
-        console.print(f"[yellow]No markdown files matching {glob!r} under {input_dir}[/yellow]")
+        console.print(f"[yellow]No markdown files matching {glob!r} under {in_dir}[/yellow]")
         raise typer.Exit(0)
 
-    console.print(f"[cyan]Found {len(md_files)} markdown files in {input_dir}[/cyan]")
+    console.print(f"[cyan]Found {len(md_files)} markdown files in {in_dir}[/cyan]")
 
     suffix = ".chunks.jsonl" if fmt == "jsonl" else ".chunks.json"
     file_entries: list[dict] = []
@@ -447,8 +525,8 @@ def export(
         nonlocal total_chunks, succeeded
         # Mirror the input tree; append the multi-dot suffix manually so dotted
         # or extensionless stems are handled correctly.
-        rel = src.relative_to(input_dir).with_suffix("")
-        out = output_dir / rel.with_name(rel.name + suffix)
+        rel = src.relative_to(in_dir).with_suffix("")
+        out = out_dir / rel.with_name(rel.name + suffix)
         out.parent.mkdir(parents=True, exist_ok=True)
         if fmt == "json":
             payload = json.dumps([c.to_dict() for c in chunks], indent=2, ensure_ascii=False)
@@ -498,8 +576,8 @@ def export(
     failed = len(md_files) - succeeded
     report_doc = {
         "generated_at": datetime.now(UTC).isoformat(),
-        "input_dir": str(input_dir),
-        "output_dir": str(output_dir),
+        "input_dir": str(in_dir),
+        "output_dir": str(out_dir),
         "glob": glob,
         "format": fmt,
         "total_files": len(md_files),
@@ -525,15 +603,15 @@ def export(
 
 @app.command()
 def lint(
-    input_dir: Path = typer.Argument(
-        ..., exists=True, file_okay=False, help="Directory of .md files (your embedding corpus)."
+    input_dir: Path | None = typer.Argument(
+        None, help="Directory of .md files (your embedding corpus). Default: the inbox."
     ),
     glob: str = typer.Option("**/*.md", "--glob", "-g", help="Markdown file glob pattern."),
     report: Path | None = typer.Option(
         None,
         "--report",
         "-r",
-        help="JSON report path. Default: <input_dir>/quality-report.json",
+        help="JSON report path. Default: outbox/reports/quality-report.json",
     ),
     strict: bool = typer.Option(
         False, "--strict", help="Exit non-zero if any file has a block-severity issue."
@@ -551,16 +629,40 @@ def lint(
     import json
     from datetime import UTC, datetime
 
+    from .config import PipelineConfig
     from .quality import check_markdown
+    from .workspace import (
+        WorkspaceError,
+        ensure_inbox_exists,
+        resolve_input,
+        resolve_output_file,
+    )
 
-    report_path = report if report is not None else input_dir / "quality-report.json"
+    config = PipelineConfig()
 
-    md_files = sorted(input_dir.glob(glob))
+    # Enforce the workspace contract: lint reads the inbox corpus and writes its
+    # report under the outbox (never back into the input/inbox tree).
+    try:
+        ensure_inbox_exists(config.inbox_dir, config.enforce_workspace)
+        in_dir = resolve_input(
+            input_dir, inbox_dir=config.inbox_dir, enforce=config.enforce_workspace
+        )
+        report_path = resolve_output_file(
+            report,
+            outbox_dir=config.outbox_dir,
+            enforce=config.enforce_workspace,
+            default_subpath="reports/quality-report.json",
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    md_files = sorted(in_dir.glob(glob))
     if not md_files:
-        console.print(f"[yellow]No markdown files matching {glob!r} under {input_dir}[/yellow]")
+        console.print(f"[yellow]No markdown files matching {glob!r} under {in_dir}[/yellow]")
         raise typer.Exit(0)
 
-    console.print(f"[cyan]Linting {len(md_files)} markdown files in {input_dir}[/cyan]")
+    console.print(f"[cyan]Linting {len(md_files)} markdown files in {in_dir}[/cyan]")
 
     file_entries: list[dict] = []
     rule_counts: dict[str, int] = {}
@@ -617,7 +719,7 @@ def lint(
     clean_files = len(md_files) - files_with_issues - failed
     report_doc = {
         "generated_at": datetime.now(UTC).isoformat(),
-        "input_dir": str(input_dir),
+        "input_dir": str(in_dir),
         "glob": glob,
         "total_files": len(md_files),
         "clean_files": clean_files,
@@ -655,13 +757,14 @@ def lint(
 
 @app.command()
 def scan(
-    input_dir: Path = typer.Argument(
-        ..., exists=True, file_okay=False, help="Directory containing .md files."
+    input_dir: Path | None = typer.Argument(
+        None, help="Directory containing .md files. Default: the inbox."
     ),
     vocab: Path | None = typer.Option(
         None,
         "--vocab",
-        help="Output JSON vocabulary file. Overrides PIPELINE_ENTITY_VOCAB_PATH.",
+        help="Output JSON vocabulary file. Overrides PIPELINE_ENTITY_VOCAB_PATH. "
+        "Default: outbox/vocab/entity-vocab.json.",
     ),
     glob: str = typer.Option("**/*.md", "--glob", "-g", help="Markdown file glob pattern."),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
@@ -671,25 +774,43 @@ def scan(
     Parses every markdown file (pandoc), scans for entity candidates across the
     whole set, merges the previously persisted vocabulary + PIPELINE_ENTITY_TERMS,
     and writes the sorted result to the vocabulary JSON — for review/editing before
-    an index run. Pandoc-only; no model is loaded.
+    an index run. Pandoc-only; no model is loaded. The vocabulary lands under the
+    outbox; promote a reviewed copy into config/ by hand for committing.
     """
     from .config import PipelineConfig
     from .pipeline import SemanticPipeline
+    from .workspace import (
+        WorkspaceError,
+        ensure_inbox_exists,
+        resolve_input,
+        resolve_output_file,
+    )
 
-    config = PipelineConfig(entity_vocab_path=str(vocab)) if vocab is not None else PipelineConfig()
-    if not config.entity_vocab_path:
-        console.print(
-            "[red]No vocabulary path. Pass --vocab PATH or set PIPELINE_ENTITY_VOCAB_PATH.[/red]"
+    base = PipelineConfig()
+
+    # Enforce the workspace contract: corpus from the inbox, vocabulary written
+    # under the outbox. Precedence: --vocab > PIPELINE_ENTITY_VOCAB_PATH > default.
+    try:
+        ensure_inbox_exists(base.inbox_dir, base.enforce_workspace)
+        in_dir = resolve_input(input_dir, inbox_dir=base.inbox_dir, enforce=base.enforce_workspace)
+        vocab_path = resolve_output_file(
+            vocab if vocab is not None else (base.entity_vocab_path or None),
+            outbox_dir=base.outbox_dir,
+            enforce=base.enforce_workspace,
+            default_subpath="vocab/entity-vocab.json",
         )
-        raise typer.Exit(2)
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
 
+    config = PipelineConfig(entity_vocab_path=str(vocab_path))
     pipeline = SemanticPipeline(config=config)
-    md_files = sorted(input_dir.glob(glob))
+    md_files = sorted(in_dir.glob(glob))
     if not md_files:
-        console.print(f"[yellow]No markdown files matching {glob!r} under {input_dir}[/yellow]")
+        console.print(f"[yellow]No markdown files matching {glob!r} under {in_dir}[/yellow]")
         raise typer.Exit(0)
 
-    console.print(f"[cyan]Scanning {len(md_files)} markdown files in {input_dir}[/cyan]")
+    console.print(f"[cyan]Scanning {len(md_files)} markdown files in {in_dir}[/cyan]")
     vocabulary, parsed, failed = pipeline.scan_and_persist(md_files)
 
     console.print(
@@ -707,16 +828,17 @@ def scan(
 
 @app.command()
 def scan_taxonomy(
-    input_dir: Path = typer.Argument(
-        ..., exists=True, file_okay=False, help="Directory containing .md files."
+    input_dir: Path | None = typer.Argument(
+        None, help="Directory containing .md files. Default: the inbox."
     ),
-    out: Path = typer.Option(
-        Path("config/taxonomy.json"), "--out", "-o", help="Output taxonomy JSON."
+    out: Path | None = typer.Option(
+        None, "--out", "-o", help="Output taxonomy JSON. Default: outbox/taxonomy/taxonomy.json."
     ),
-    vocab_out: Path = typer.Option(
-        Path("build/field_vocabulary.json"),
+    vocab_out: Path | None = typer.Option(
+        None,
         "--vocab-out",
-        help="Output field-frequency vocabulary JSON (review artifact).",
+        help="Output field-frequency vocabulary JSON (review artifact). "
+        "Default: outbox/taxonomy/field_vocabulary.json.",
     ),
     min_docs: int = typer.Option(
         2, "--min-docs", "-n", help="Keep a field only if seen in >= this many documents."
@@ -728,26 +850,54 @@ def scan_taxonomy(
     Aggregates table field names across all documents by document-frequency,
     keeps fields seen in >= --min-docs documents, and writes a canonical
     taxonomy.json plus a frequency-ranked field vocabulary for review (used to
-    fill config/field_directions.yaml). Pandoc-only; no model is loaded.
+    fill config/field_directions.yaml). Both land under the outbox; promote a
+    reviewed taxonomy.json into config/ by hand. Pandoc-only; no model is loaded.
     """
+    from .config import PipelineConfig
     from .corpus_taxonomy import build_corpus_taxonomy, taxonomy_to_json, vocabulary_to_json
+    from .workspace import (
+        WorkspaceError,
+        ensure_inbox_exists,
+        resolve_input,
+        resolve_output_file,
+    )
 
-    md_files = sorted(input_dir.glob(glob))
+    config = PipelineConfig()
+    try:
+        ensure_inbox_exists(config.inbox_dir, config.enforce_workspace)
+        in_dir = resolve_input(
+            input_dir, inbox_dir=config.inbox_dir, enforce=config.enforce_workspace
+        )
+        out_path = resolve_output_file(
+            out,
+            outbox_dir=config.outbox_dir,
+            enforce=config.enforce_workspace,
+            default_subpath="taxonomy/taxonomy.json",
+        )
+        vocab_out_path = resolve_output_file(
+            vocab_out,
+            outbox_dir=config.outbox_dir,
+            enforce=config.enforce_workspace,
+            default_subpath="taxonomy/field_vocabulary.json",
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    md_files = sorted(in_dir.glob(glob))
     if not md_files:
-        console.print(f"[yellow]No markdown files matching {glob!r} under {input_dir}[/yellow]")
+        console.print(f"[yellow]No markdown files matching {glob!r} under {in_dir}[/yellow]")
         raise typer.Exit(0)
 
-    console.print(f"[cyan]Scanning {len(md_files)} markdown files in {input_dir}[/cyan]")
-    taxonomy, vocab = build_corpus_taxonomy(input_dir, min_docs=min_docs, glob=glob)
+    console.print(f"[cyan]Scanning {len(md_files)} markdown files in {in_dir}[/cyan]")
+    taxonomy, vocab = build_corpus_taxonomy(in_dir, min_docs=min_docs, glob=glob)
 
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(taxonomy_to_json(taxonomy) + "\n", encoding="utf-8")
-    vocab_out.parent.mkdir(parents=True, exist_ok=True)
-    vocab_out.write_text(vocabulary_to_json(vocab) + "\n", encoding="utf-8")
+    out_path.write_text(taxonomy_to_json(taxonomy) + "\n", encoding="utf-8")
+    vocab_out_path.write_text(vocabulary_to_json(vocab) + "\n", encoding="utf-8")
 
     console.print(
         f"\n[green]Done.[/green] {len(taxonomy)} sections (min_docs={min_docs}), "
-        f"{len(vocab)} distinct fields -> {out}, {vocab_out}"
+        f"{len(vocab)} distinct fields -> {out_path}, {vocab_out_path}"
     )
 
 
@@ -757,7 +907,9 @@ def scan_taxonomy(
 @app.command()
 def search(
     query: str = typer.Argument(..., help="Natural-language search query."),
-    index_dir: str = typer.Option("./build/index", "--index", "-i", help="Vector index path."),
+    index_dir: str | None = typer.Option(
+        None, "--index", "-i", help="Vector index path. Default: outbox/index."
+    ),
     model: str = typer.Option("BAAI/bge-large-en-v1.5", "--model", "-m"),
     provider: str = typer.Option(
         "local", "--provider", help="Embedding backend: local | azure (must match the index)."
@@ -788,9 +940,9 @@ def search(
     from .config import PipelineConfig
     from .models import SectionType
     from .pipeline import SemanticPipeline
+    from .workspace import WorkspaceError, resolve_index_path
 
     overrides: dict = {
-        "chroma_persist_dir": index_dir,
         "embedding_model": model,
         "embedding_provider": provider,
     }
@@ -798,6 +950,19 @@ def search(
     # keeps working when --backend is omitted.
     if backend is not None:
         overrides["vector_store_backend"] = backend
+
+    ws = PipelineConfig(**overrides)
+    try:
+        index_path = resolve_index_path(
+            index_dir or ws.chroma_persist_dir,
+            outbox_dir=ws.outbox_dir,
+            enforce=ws.enforce_workspace,
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    overrides["chroma_persist_dir"] = str(index_path)
     config = PipelineConfig(**overrides)
     pipeline = SemanticPipeline(config=config)
 
@@ -807,7 +972,7 @@ def search(
         # the index was built with a different --backend or persist dir.
         if pipeline.store.count == 0:
             console.print(
-                f"[yellow]Index at {index_dir!r} is empty for backend "
+                f"[yellow]Index at {str(index_path)!r} is empty for backend "
                 f"{config.vector_store_backend!r} — was it built with a different "
                 f"--backend or persist dir?[/yellow]"
             )
@@ -844,7 +1009,9 @@ def search(
 
 @app.command()
 def tui(
-    index_dir: str = typer.Option("./build/index", "--index", "-i", help="Vector index path."),
+    index_dir: str | None = typer.Option(
+        None, "--index", "-i", help="Vector index path. Default: outbox/index."
+    ),
     model: str = typer.Option("BAAI/bge-large-en-v1.5", "--model", "-m"),
     provider: str = typer.Option(
         "local", "--provider", help="Embedding backend: local | azure (must match the index)."
@@ -866,14 +1033,27 @@ def tui(
     Needs a real terminal (not a redirected pipe).
     """
     from .config import PipelineConfig
+    from .workspace import WorkspaceError, resolve_index_path
 
     overrides: dict = {
-        "chroma_persist_dir": index_dir,
         "embedding_model": model,
         "embedding_provider": provider,
     }
     if backend is not None:
         overrides["vector_store_backend"] = backend
+
+    ws = PipelineConfig(**overrides)
+    try:
+        index_path = resolve_index_path(
+            index_dir or ws.chroma_persist_dir,
+            outbox_dir=ws.outbox_dir,
+            enforce=ws.enforce_workspace,
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    overrides["chroma_persist_dir"] = str(index_path)
     config = PipelineConfig(**overrides)
 
     try:

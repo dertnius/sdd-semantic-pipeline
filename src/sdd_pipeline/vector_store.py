@@ -110,7 +110,7 @@ class ChromaVectorStore:
 
     def __init__(
         self,
-        persist_dir: str = "./build/index",
+        persist_dir: str = "./outbox/index",
         collection_name: str = "sdd_docs",
     ) -> None:
         try:
@@ -323,7 +323,7 @@ class MemoryVectorStore:
 
     def __init__(
         self,
-        persist_dir: str = "./build/index",
+        persist_dir: str = "./outbox/index",
         collection_name: str = "sdd_docs",
     ) -> None:
         try:

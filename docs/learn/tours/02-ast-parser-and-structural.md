@@ -19,7 +19,7 @@ external binary keeps every later stage deterministic and unit-testable, and a
 real parser-grade AST beats regexing markdown yourself.
 
 What pandoc hands back — a real excerpt from
-[build/dump/retailnexus/ast.json](../../../build/dump/retailnexus/ast.json) (whitespace
+[outbox/dump/retailnexus/ast.json](../../../outbox/dump/retailnexus/ast.json) (whitespace
 reformatted):
 
 ```json

@@ -44,12 +44,15 @@ class TestExportValidation:
 
 
 class TestScanValidation:
-    def test_requires_a_vocab_path(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        # Neither --vocab nor PIPELINE_ENTITY_VOCAB_PATH → error before any parsing.
+    def test_runs_without_explicit_vocab_path(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        # scan now defaults its vocab output to outbox/vocab/, so a missing
+        # --vocab is no longer an error (an empty input dir exits cleanly).
         monkeypatch.delenv("PIPELINE_ENTITY_VOCAB_PATH", raising=False)
         result = runner.invoke(app, ["scan", str(tmp_path)])
-        assert result.exit_code == 2
-        assert "vocabulary path" in result.output.lower()
+        assert result.exit_code == 0
+        assert "No markdown files" in result.output
 
 
 @pytest.mark.slow
@@ -158,11 +161,14 @@ class TestLint:
         (tmp_path / "clean.md").write_text("# Clean\n\n" + _PROSE, encoding="utf-8")
         (tmp_path / "bad.md").write_bytes(b"\xff\xfe# undecodable\n")
 
-        result = runner.invoke(app, ["lint", str(tmp_path)])
+        # The report now defaults under the outbox; pass an explicit path so the
+        # assertion finds it (enforcement is off for the suite, see conftest).
+        report_path = tmp_path / "quality-report.json"
+        result = runner.invoke(app, ["lint", str(tmp_path), "-r", str(report_path)])
         # One unreadable file → non-zero exit even without --strict.
         assert result.exit_code == 1, result.output
 
-        report = json.loads((tmp_path / "quality-report.json").read_text(encoding="utf-8"))
+        report = json.loads(report_path.read_text(encoding="utf-8"))
         assert report["total_files"] == 3
         assert report["clean_files"] == 1
         assert report["files_with_issues"] == 1
@@ -178,9 +184,10 @@ class TestLint:
 
     def test_clean_corpus_exits_zero(self, tmp_path: Path):
         (tmp_path / "ok.md").write_text("# Ok\n\n" + _PROSE, encoding="utf-8")
-        result = runner.invoke(app, ["lint", str(tmp_path)])
+        report_path = tmp_path / "quality-report.json"
+        result = runner.invoke(app, ["lint", str(tmp_path), "-r", str(report_path)])
         assert result.exit_code == 0, result.output
-        report = json.loads((tmp_path / "quality-report.json").read_text(encoding="utf-8"))
+        report = json.loads(report_path.read_text(encoding="utf-8"))
         assert report["files_with_issues"] == 0
         assert report["files"] == []
 

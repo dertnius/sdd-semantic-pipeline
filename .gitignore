@@ -30,19 +30,30 @@ htmlcov/
 .env.*
 !.env.example
 
-# ── Generated pipeline artifacts ─────────────────────────────────────────────
-# All generated output lives under build/: convert/export/lint reports, the
-# converted .md (build/md/), the vector index (build/index/ — the default
-# PIPELINE_CHROMA_PERSIST_DIR), dump.py output (build/dump/), and the
-# scan-taxonomy review artifact (build/field_vocabulary.json).
+# ── Workspace contract: inbox / outbox ───────────────────────────────────────
+# All pipeline OUTPUT lives under outbox/ (index/, md/, chunks/, reports/,
+# vocab/, taxonomy/, dump/ — see outbox/.gitkeep). Ignore it wholesale but keep
+# the folder skeleton so a fresh clone has the default output root.
+/outbox/*
+!/outbox/.gitkeep
+# Pipeline INPUT lives under inbox/ (raw HTML/MD the user drops in). Keep the
+# folder skeleton, but never commit the (often confidential) source files.
+/inbox/**
+!/inbox/**/
+!/inbox/**/.gitkeep
+
+# ── Generated pipeline artifacts (belt-and-braces) ───────────────────────────
+# build/ is still produced by setuptools (build/lib, build/bdist); keep ignored.
 build/
-# per-file export artifacts + reports, wherever they land
+# per-file export artifacts + reports, wherever they land outside outbox/
 *.chunks.json
 *.chunks.jsonl
 export-report.json
 conversion-report.json
+quality-report.json
 # scratch / temp
 .tmp_dc/
+.tmp_pytest/
 # transient test-run output dirs (e.g. tests/convert/examples/out/) — never committed
 out/
 # e2e corpus: fetched on demand from src/tools/eval/e2e_sources.yaml, never committed

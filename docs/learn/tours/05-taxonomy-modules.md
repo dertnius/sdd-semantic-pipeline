@@ -57,7 +57,7 @@ pandoc-only, model-free.
 ## The payoff, in real numbers
 
 Run `SemanticPipeline().process_file(...)` on the two eval docs (or inspect
-[build/dump/retailnexus/chunks.json](../../../build/dump/retailnexus/chunks.json)):
+[outbox/dump/retailnexus/chunks.json](../../../outbox/dump/retailnexus/chunks.json)):
 
 - [src/tools/eval/corpus/sad-retailnexus-oms.md](../../../src/tools/eval/corpus/sad-retailnexus-oms.md)
   — a template-conforming SAD: **47 chunks**, 46 of them carrying inventory
@@ -74,9 +74,10 @@ into the embed header by `models.py::SemanticChunk.to_embed_text`
 
 ## CLI
 
-`cli.py::scan_taxonomy` — `sdd-pipeline scan-taxonomy <dir> --min-docs N`
-writes `config/taxonomy.json` plus the frequency-ranked
-`build/field_vocabulary.json` for review. (The *template* extractor runs as
+`cli.py::scan_taxonomy` — `sdd-pipeline scan-taxonomy [inbox/] --min-docs N`
+writes `outbox/taxonomy/taxonomy.json` plus the frequency-ranked
+`outbox/taxonomy/field_vocabulary.json` for review (promote a reviewed
+`taxonomy.json` into committed `config/` by hand). (The *template* extractor runs as
 `python -m sdd_pipeline.template_taxonomy <template.md>` — see
 `template_taxonomy.py::main`.)
 

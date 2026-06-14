@@ -33,8 +33,13 @@ still works locally; it just won't run in CI without the files.
 
 ## Adding documents (recommended — grows the metric from directional to robust)
 
-1. Convert HTML → markdown into `corpus/` (`sdd-pipeline convert`), or drop
-   markdown in directly.
+> The eval `corpus/` is a committed fixture that lives **outside** the inbox/outbox
+> zones, and the harness drives `SemanticPipeline` directly (bypassing the CLI
+> workspace guard). When you use the `sdd-pipeline` CLI against it, set
+> `PIPELINE_ENFORCE_WORKSPACE=false` so the contract doesn't reject these paths.
+
+1. Convert HTML → markdown into `corpus/` (`sdd-pipeline convert`, with the bypass
+   above), or drop markdown in directly.
 2. Add queries to `queries.yaml`. Each `expected` entry is `{doc, section}` where
    `doc` is the path relative to `corpus/` and `section` is a case-insensitive
    substring of the chunk breadcrumb (omit `section` for a doc-level match).
