@@ -29,7 +29,7 @@ This page explains how to run the HTML-to-GitLab Markdown converter on Linux. It
 No contradictions.
 
 ## Detail
-The Linux guide assumes a Unix-like environment with pandoc installed, a working Python 3.10+ interpreter, and the project dependencies installed in the local virtual environment. The recommended execution pattern is to activate or directly invoke the `.venv` interpreter from the inner project root and then run `src/sdd_pipeline/html_to_gitlab_md.py` or the installed CLI entry point.
+The Linux guide assumes a Unix-like environment with pandoc installed, a working Python 3.10+ interpreter, and the project dependencies installed in the local virtual environment. The recommended execution pattern is to activate or directly invoke the `.venv` interpreter from the inner project root and then run `src/sdd_pipeline/convert/html_to_gitlab_md.py` or the installed CLI entry point.
 
 The guide distinguishes single-file conversion from batch conversion. Single-file runs write a Markdown file next to the input by default or to a specified output path, while batch runs recurse through HTML files, mirror the tree into an output directory, and produce a JSON summary with totals and per-file status. The report records successes and failures separately so one conversion failure does not stop the full batch run.
 

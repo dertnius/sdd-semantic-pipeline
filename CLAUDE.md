@@ -122,9 +122,16 @@ hard cap) → **warn** — truncation is model-dependent and not certifiable fro
 count, so it never blocks (keeping `embed_text` within budget is chunking's job).
 `pipeline.gate_chunks` exposes the same reports non-raising for `export`/inspection.
 
-**B. HTML→GitLab-Markdown converter** (`html_to_gitlab_md.py`) — independent of
-the pipeline. 4-stage flow (spec: `docs/confluence-conversion-rules.md`,
-rendered-HTML scope): BeautifulSoup pre-clean (rewrites Confluence constructs
+**B. HTML→GitLab-Markdown converter** (the `sdd_pipeline/convert/` subpackage) —
+independent of flow A. Layout: `convert/base.py` holds the engine-agnostic shared
+layer (`ConversionError`/`ConversionNotes`, `resolve_pandoc`/`_run_pandoc`, the
+`postprocess`/frontmatter/`stats` text layer); `convert/html_to_gitlab_md.py` is
+the HTML path (BeautifulSoup pre-clean + handlers + `convert_file`);
+`convert/confluence_pf_filter.py` is the Stage-C panflute filter. Importing the
+package (`from sdd_pipeline.convert import convert_file`) never pulls in flow A.
+(A docx→MD path is planned to live here too, reusing `base.py` — not yet built.)
+4-stage flow (spec: `docs/confluence-conversion-rules.md`, rendered-HTML scope):
+BeautifulSoup pre-clean (rewrites Confluence constructs
 into PFI-HTML — `div`/`span` carriers with `data-*` attrs; the blanket
 unwrap/scrub is PFI-aware) → pandoc html→json → in-process panflute filter
 (`confluence_pf_filter.py`: admonitions → plain blockquote labels, expand →
@@ -237,7 +244,8 @@ request seems to require breaking one, flag the conflict and confirm first.
   very large corpora (use chroma there).
 - **Windows console encoding (cp1252)** crashes on emoji/non-ASCII when stdout is
   redirected. The `convert` command's output is deliberately ASCII-only; the
-  legacy single-file script (`html_to_gitlab_md.py` `main`) and `index`/`check`
+  legacy single-file script (`convert/html_to_gitlab_md.py` `main`, run as
+  `python src/sdd_pipeline/convert/html_to_gitlab_md.py …`) and `index`/`check`
   still print emoji — set `$env:PYTHONUTF8 = "1"` for those. (Pandoc *subprocess*
   decoding is already pinned to UTF-8 in `ast_parser.py` and the converter's
   `_run_pandoc`, so non-ASCII page content no longer crashes the AST step on

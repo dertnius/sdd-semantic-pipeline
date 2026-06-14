@@ -16,8 +16,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from sdd_pipeline import html_to_gitlab_md as h2m
 from sdd_pipeline.cli import app
+from sdd_pipeline.convert import html_to_gitlab_md as h2m
 
 # ── Skip guard ────────────────────────────────────────────────────────────────
 
@@ -95,7 +95,8 @@ class TestResolvePandoc:
         assert h2m.resolve_pandoc("/custom/pandoc") == "/custom/pandoc"
 
     def test_raises_when_missing(self, monkeypatch):
-        monkeypatch.setattr(h2m.shutil, "which", lambda _: None)
+        # resolve_pandoc lives in convert.base and looks up the global shutil.which.
+        monkeypatch.setattr("shutil.which", lambda _: None)
         with pytest.raises(h2m.ConversionError):
             h2m.resolve_pandoc(None)
 
@@ -147,7 +148,9 @@ class _FakeMetrics:
 
 
 def _install_fake_converter(monkeypatch, *, fail_on: str | None = None):
-    monkeypatch.setattr(h2m, "resolve_pandoc", lambda _p=None: "pandoc")
+    # The `convert` CLI imports these from the `sdd_pipeline.convert` package, so
+    # patch them there (patching the html submodule would not intercept the CLI).
+    monkeypatch.setattr("sdd_pipeline.convert.resolve_pandoc", lambda _p=None: "pandoc")
 
     def fake_convert_file(src, output=None, **_kw):
         src = Path(src)
@@ -158,7 +161,7 @@ def _install_fake_converter(monkeypatch, *, fail_on: str | None = None):
         notes = {"warnings": [], "errors": [], "macro_counts": {}, "languages": [], "metadata": {}}
         return out, "# md\n", metrics, notes
 
-    monkeypatch.setattr(h2m, "convert_file", fake_convert_file)
+    monkeypatch.setattr("sdd_pipeline.convert.convert_file", fake_convert_file)
 
 
 class TestConvertCli:

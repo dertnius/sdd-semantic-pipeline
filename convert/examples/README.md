@@ -1,7 +1,8 @@
 # Confluence → GitLab-Markdown conversion examples
 
 Hand-authored mock Confluence pages that exercise the HTML→Markdown converter
-(`html_to_gitlab_md.py` + `confluence_pf_filter.py`) end-to-end, so a human can
+(the `sdd_pipeline/convert/` subpackage — `base` + `html_to_gitlab_md` +
+`confluence_pf_filter`) end-to-end, so a human can
 confirm the output is **clean and loses no information**. The spec
 [`docs/confluence-conversion-rules.md`](../../docs/confluence-conversion-rules.md)
 is the rule authority; **this README documents the converter's _actual_ output**
@@ -25,8 +26,8 @@ sdd-pipeline convert convert/examples --output convert/examples/out `
 sdd-pipeline lint convert/examples/out        # expect no html_leakage / confluence_artifacts
 ```
 
-The committed regression test is `tests/test_html_to_gitlab_md_v3.py::TestConvertExamplesCorpus`
-(slow / needs pandoc); AST-level table tests are in `tests/test_confluence_pf_filter.py`.
+The committed regression test is `tests/convert/test_html_to_gitlab_md_v3.py::TestConvertExamplesCorpus`
+(slow / needs pandoc); AST-level table tests are in `tests/convert/test_confluence_pf_filter.py`.
 
 ## The bar: "no information loss" in three tiers
 

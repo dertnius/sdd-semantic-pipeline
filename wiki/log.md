@@ -35,3 +35,4 @@
 ## 2026-06-11 | feature | src/sdd_pipeline/quality.py + cli.py lint command → learn/tours/11-quality-linter.md (also: tour 10 + index "seven"→"eight" typer commands)
 ## 2026-06-12 | ingest | Confluence-conversion research artifacts (rules-draft + 25 critique fixes + catalog/exporthtml/tooling JSONs) → docs/confluence-conversion-rules.md (also: superseded banner on wiki/confluence-storage-format-gitlab-markdown.md)
 ## 2026-06-12 | feature | docs/confluence-conversion-rules.md (rendered-HTML scope) implemented in src/sdd_pipeline/html_to_gitlab_md.py v3.0 + new confluence_pf_filter.py (4-stage pipeline, PFI contract, --toc flip)
+## 2026-06-14 | refactor | converter moved into src/sdd_pipeline/convert/ subpackage (new base.py shared layer; html_to_gitlab_md + confluence_pf_filter relocated); convert tests → tests/convert/; CLI/docs repointed; byte-identical output verified (docx path prepared, deferred)

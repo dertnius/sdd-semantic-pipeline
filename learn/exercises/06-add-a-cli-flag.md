@@ -53,7 +53,7 @@ git checkout learn-exercises
      function*, so patching the source attribute works:
      `monkeypatch.setattr("sdd_pipeline.pipeline.SemanticPipeline", FakePipeline)`.
      In-repo precedent for fake-out-the-heavy-call-then-invoke:
-     `tests/test_html_to_gitlab_md.py::_install_fake_converter` does
+     `tests/convert/test_html_to_gitlab_md.py::_install_fake_converter` does
      `monkeypatch.setattr(h2m, "convert_file", fake_convert_file)` before the
      `TestConvertCli` tests call `runner.invoke(app, ["convert", …])`.
    - Your fake needs exactly what the command touches: a `store` attribute with

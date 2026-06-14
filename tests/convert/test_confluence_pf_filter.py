@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import panflute as pf
 
-from sdd_pipeline.confluence_pf_filter import (
+from sdd_pipeline.convert import ConversionNotes
+from sdd_pipeline.convert.confluence_pf_filter import (
     LANG_ALIASES,
     pfi_attr,
     run_confluence_filter,
 )
-from sdd_pipeline.html_to_gitlab_md import ConversionNotes
 
 
 def _run(*blocks: pf.Element) -> tuple[pf.Doc, ConversionNotes]:
