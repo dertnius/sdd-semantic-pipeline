@@ -2,11 +2,27 @@
 
 from __future__ import annotations
 
+from sdd_pipeline.chunking import chunk_document
 from sdd_pipeline.models import ContentType
 from sdd_pipeline.structural import (
     _short_hash,
     build_structural_model,
 )
+
+
+def _ast_titled(blocks: list[dict], title: str | None = "My Page") -> dict:
+    meta: dict = {}
+    if title is not None:
+        meta["title"] = {"t": "MetaInlines", "c": [{"t": "Str", "c": title}]}
+    return {"pandoc-api-version": [1, 23, 1], "meta": meta, "blocks": blocks}
+
+
+def _para(text: str) -> dict:
+    return {"t": "Para", "c": [{"t": "Str", "c": text}]}
+
+
+def _header1(title: str) -> dict:
+    return {"t": "Header", "c": [1, [title.lower(), [], []], [{"t": "Str", "c": title}]]}
 
 
 class TestShortHash:
@@ -122,6 +138,41 @@ class TestBuildStructuralModel:
         list_blocks = [b for b in all_blocks if b.content_type == ContentType.LIST]
         assert len(list_blocks) == 1
         assert "Item one" in list_blocks[0].text
+
+
+class TestPreambleSynthesis:
+    """P0.2 — content before the first heading (or in a heading-less doc) must
+    not be silently dropped; it is attached to a synthesized title-derived root
+    section so the page still produces chunks."""
+
+    def test_preamble_before_first_heading_is_kept(self):
+        ast = _ast_titled(
+            [_para("Intro paragraph before any heading."), _header1("Section"), _para("Body.")],
+            title="My Page",
+        )
+        doc = build_structural_model(ast, doc_id="t")
+        # First root section is synthesized from the page title and holds the intro.
+        assert doc.root_sections[0].title == "My Page"
+        assert any("Intro paragraph" in b.text for b in doc.root_sections[0].blocks)
+        # The real heading still becomes its own section.
+        assert "Section" in [s.title for s in doc.root_sections]
+
+    def test_heading_less_doc_yields_one_section_and_chunks(self):
+        ast = _ast_titled(
+            [_para("Only paragraphs here, no headings at all."), _para("A second paragraph.")],
+            title="Flat Doc",
+        )
+        doc = build_structural_model(ast, doc_id="t")
+        assert len(doc.root_sections) == 1
+        assert doc.root_sections[0].title == "Flat Doc"
+        assert len(doc.root_sections[0].blocks) == 2
+        # The point of the fix: a heading-less page is no longer 0 chunks.
+        assert chunk_document(doc), "heading-less doc produced no chunks"
+
+    def test_preamble_without_title_falls_back_to_document(self):
+        ast = _ast_titled([_para("Body with no title and no heading.")], title=None)
+        doc = build_structural_model(ast, doc_id="t")
+        assert doc.root_sections[0].title == "Document"
 
 
 # ── Structure-preserving serialization ───────────────────────────────────────

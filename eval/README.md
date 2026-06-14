@@ -69,3 +69,18 @@ measures enrichment's *lexical* contribution: it asserts no regression + a
 recall@10 gain and prints both score tables. Semantic gain (e.g. directional
 `depends_on`/`exposes`) needs a real model — point `PipelineConfig` at one and
 reuse `scripts/eval_retrieval.py` to measure it.
+
+## E2E chunk-hygiene proof (model-free, non-skippable)
+
+`tests/test_html_to_gitlab_md_v3.py::TestEndToEndChunkHygiene` runs the **whole
+model-free chain** — HTML → `convert` → chunk → Arm-1 hygiene gate — over the
+*committed* rendered fixtures in `convert/examples/` (storage-format fixtures are
+refused at the door). It asserts every produced chunk is clean (no markup/macro
+residue) and that the fixtures still produce chunks. It needs pandoc but **no model
+download** and **no fetched corpus**, so unlike the retrieval e2e above it is a
+permanent regression net, not a skip-if-absent check.
+
+> The chunk hygiene gate is on by default during `index`, so a *poisoned* chunk now
+> **blocks its file** from the index (raises `ChunkQualityError`). When eval-indexing
+> a messy corpus, set `PIPELINE_CHUNK_GATE=false` to measure retrieval over everything,
+> or leave it on to measure only what passes the gate.

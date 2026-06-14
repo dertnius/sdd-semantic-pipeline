@@ -127,7 +127,7 @@ class TestConvertFile:
         assert metrics["lists"] >= 2
         assert metrics["urls"] >= 1
         assert "Title" in md
-        assert set(notes) == {"warnings", "errors", "macro_counts", "languages"}
+        assert set(notes) == {"warnings", "errors", "macro_counts", "languages", "metadata"}
 
 
 # ── convert CLI (monkeypatched converter) ────────────────────────────────────
@@ -155,7 +155,7 @@ def _install_fake_converter(monkeypatch, *, fail_on: str | None = None):
             raise h2m.ConversionError("boom")
         out = Path(output) if output is not None else src.with_suffix(".md")
         metrics = dict(_FakeMetrics.SLIM)
-        notes = {"warnings": [], "errors": [], "macro_counts": {}, "languages": []}
+        notes = {"warnings": [], "errors": [], "macro_counts": {}, "languages": [], "metadata": {}}
         return out, "# md\n", metrics, notes
 
     monkeypatch.setattr(h2m, "convert_file", fake_convert_file)
@@ -196,7 +196,13 @@ class TestConvertCli:
             assert entry["status"] == "ok"
             assert set(entry["metrics"]) == set(_FakeMetrics.SLIM)
             # Notes ride alongside metrics (spec §16), not inside them.
-            assert set(entry["notes"]) == {"warnings", "errors", "macro_counts", "languages"}
+            assert set(entry["notes"]) == {
+                "warnings",
+                "errors",
+                "macro_counts",
+                "languages",
+                "metadata",
+            }
         # Totals == sum of per-file metrics.
         assert doc["totals"]["urls"] == 2 * _FakeMetrics.SLIM["urls"]
         assert doc["totals"]["sections"] == 2 * _FakeMetrics.SLIM["sections"]
@@ -259,9 +265,17 @@ class TestContentRoot:
         )
         assert h2m._find_content_root(soup, None).get("id") == "content-view"
 
-    def test_main_fallback(self):
+    def test_content_is_a_root(self):
+        # HX-ROOT: div#content joined the chain (catalog-backed wrapper; space
+        # index pages root there) — it now wins over the inner #main quirk.
         soup = __import__("bs4").BeautifulSoup(
             "<body><div id='content'><div id='main'><p>x</p></div></div></body>", "lxml"
+        )
+        assert h2m._find_content_root(soup, None).get("id") == "content"
+
+    def test_main_fallback(self):
+        soup = __import__("bs4").BeautifulSoup(
+            "<body><div id='wrapper'><div id='main'><p>x</p></div></div></body>", "lxml"
         )
         assert h2m._find_content_root(soup, None).get("id") == "main"
 
@@ -273,15 +287,20 @@ class TestContentRoot:
 
 
 class TestSpecConformance:
-    def test_lozenge_current_blue_inside_code_no_uppercase(self):
+    def test_lozenge_current_to_pfi_span(self):
+        # HX-STATUS: PFI span.lozenge[data-colour] — no emoji, no inline code
+        # (backticked status text gets mistaken for code entities).
         clean, _ = _pre("<span class='status-macro aui-lozenge aui-lozenge-current'>Active</span>")
-        assert "<code>🔵 Active</code>" in clean
+        assert 'class="lozenge"' in clean and 'data-colour="current"' in clean
+        assert "Active" in clean
+        assert "🔵" not in clean and "<code>" not in clean
 
-    def test_lozenge_success_inside_code(self):
+    def test_lozenge_success_to_pfi_span(self):
         clean, notes = _pre(
             "<span class='status-macro aui-lozenge aui-lozenge-success'>Approved</span>"
         )
-        assert "<code>✅ Approved</code>" in clean
+        assert 'data-colour="success"' in clean and "Approved" in clean
+        assert "✅" not in clean
         assert notes.macro_counts.get("status") == 1
 
     def test_brush_map_extended_langs(self):
@@ -298,19 +317,25 @@ class TestSpecConformance:
             assert f'class="language-{lang}"' in clean
 
     def test_emoticon_name_keys_and_ac_emoticon(self):
+        # HX-EMOTICON: plain searchable WORDS, never emoji.
         clean, _ = _pre(
             "<p><img class='emoticon' alt='(tick)'> and <ac:emoticon ac:name='smile'/></p>"
         )
-        assert "✅" in clean and "😊" in clean
+        assert "yes" in clean and "smile" in clean
+        assert "✅" not in clean and "😊" not in clean
 
-    def test_info_macro_removes_aui_icon_and_counts(self):
+    def test_info_macro_to_pfi_adm(self):
+        # HX-ADMONITION: PFI div.adm[data-macro] with the body as real block
+        # children (no flattening, no emoji) — PF-ADMONITION renders the quote.
         clean, notes = _pre(
             "<div class='confluence-information-macro confluence-information-macro-information'>"
             "<span class='aui-icon'>icon-text</span>"
             "<div class='confluence-information-macro-body'>Body here</div></div>"
         )
         assert "icon-text" not in clean
-        assert "INFO" in clean and "Body here" in clean
+        assert 'class="adm"' in clean and 'data-macro="info"' in clean
+        assert "Body here" in clean
+        assert "ℹ️" not in clean
         assert notes.macro_counts.get("info") == 1
 
     def test_children_macro_removed(self):
@@ -322,7 +347,9 @@ class TestSpecConformance:
             "<div class='panel'><div class='panelHeader'>My Title</div>"
             "<div class='panelContent'>The body</div></div>"
         )
-        assert "📋 **My Title**: The body" in clean
+        assert 'data-macro="panel"' in clean and 'data-title="My Title"' in clean
+        assert "The body" in clean
+        assert "📋" not in clean
         assert notes.macro_counts.get("panel") == 1
 
     def test_code_panel_not_treated_as_panel(self):
@@ -333,9 +360,11 @@ class TestSpecConformance:
         assert 'class="language-java"' in clean
         assert "panel" not in notes.macro_counts
 
-    def test_anchor_span_to_a_id(self):
+    def test_anchor_span_deleted(self):
+        # Anchor policy: empty anchor targets are dropped; ids never survive
+        # the scrub (the corpus carries no intra-page hrefs worth the HTML).
         clean, _ = _pre("<span id='sec-1'></span><p>text</p>")
-        assert '<a id="sec-1">' in clean
+        assert "sec-1" not in clean and "text" in clean
 
     def test_standalone_syntaxhighlighter_brush(self):
         clean, _ = _pre(
@@ -348,15 +377,38 @@ class TestSpecConformance:
         clean, _ = _pre("<div class='pageSection'><h2>Heading</h2></div>")
         assert "pageSection" not in clean and "Heading" in clean
 
-    def test_columnlayout_flattened_with_warning(self):
+    def test_attachments_pagesection_dropped(self):
+        # HX-CHROME-ATTACH-SECTION: dropped wholesale BEFORE the generic unwrap
+        # would leak the raw link dump (the canonical link_density failure).
+        clean, notes = _pre(
+            "<div class='pageSection group'><h2 id='attachments' class='pageSectionTitle'>"
+            "Attachments:</h2><div class='greybox'>"
+            "<a href='attachments/123/456.png'>img.png</a></div></div><p>keep</p>"
+        )
+        assert "img.png" not in clean and "keep" in clean
+        assert notes.macro_counts.get("attachments_section") == 1
+
+    def test_comments_pagesection_dropped(self):
+        clean, notes = _pre(
+            "<div class='pageSection'><h2 id='comments' class='pageSectionTitle'>Comments</h2>"
+            "<div class='comment-body'>hot take</div></div><p>keep</p>"
+        )
+        assert "hot take" not in clean and "keep" in clean
+        assert notes.macro_counts.get("comments_section") == 1
+
+    def test_columnlayout_to_pfi_no_hr(self):
+        # HX-LAYOUT: PFI layout/layout-col divs, plain concatenation in
+        # document order — NO <hr> separators, no review warning.
         clean, notes = _pre(
             "<div class='columnLayout'>"
             "<div class='cell'><p>Left</p></div>"
             "<div class='cell'><p>Right</p></div></div>"
         )
-        assert "Left" in clean and "Right" in clean and "<hr" in clean
-        assert any("Layout columns flattened" in w for w in notes.warnings)
-        assert notes.macro_counts.get("layout") == 1
+        assert "Left" in clean and "Right" in clean
+        assert "<hr" not in clean
+        assert 'class="layout"' in clean and 'class="layout-col"' in clean
+        assert not any("flattened" in w for w in notes.warnings)
+        assert notes.macro_counts.get("layout") == 2  # one per cell
 
     def test_merged_cell_table_warns(self):
         _, notes = _pre(

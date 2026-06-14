@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>ARCH : DTK Scripting Reference (edge cases) - Confluence</title>
+  <meta name="ajs-version-number" content="8.5.4"/>
+</head>
+<body>
+<div id="page">
+
+  <div id="main-header">
+    <h1 id="title-heading" class="pagetitle">
+      <span id="title-text">ARCH : DTK Scripting Reference (edge cases)</span>
+    </h1>
+  </div>
+  <div class="page-metadata">Created by <span class="author">Data Toolkit Team</span>, last modified on May 30, 2024</div>
+
+  <div id="main-content" class="wiki-content">
+
+    <p>This page deliberately reproduces, in <strong>sanitized</strong> form, the
+    failure modes seen on real Confluence exports. Identifiers are fictional. Each
+    section is annotated with the tier it is expected to land in
+    (1 = silent drop, 2 = structural degradation, 3 = added noise).</p>
+
+    <h2>1. Layout-via-table with spacer columns (expect Tier-2: structure lost)</h2>
+    <p>Three file schemas placed side-by-side using empty <code>&lt;br/&gt;</code>
+    spacer columns and multi-paragraph cells — the real DTK "REPLACE" worked example.
+    Flattening to one wide pipe table loses the "three separate files" grouping.</p>
+    <table class="confluenceTable"><tbody>
+      <tr>
+        <td class="confluenceTd" colspan="4"><p>&lt;replace_file&gt;</p><p>CustomSettingsMigration.csv</p><p>(extraction from Config)</p></td>
+        <td class="confluenceTd"><br/></td>
+        <td class="confluenceTd" colspan="2"><p>&lt;source_compare_file&gt;</p><p>ProfileSource.csv</p></td>
+        <td class="confluenceTd"><br/></td>
+        <td class="confluenceTd" colspan="2"><p>&lt;target_compare_file&gt;</p><p>ProfileTarget.csv</p></td>
+      </tr>
+      <tr>
+        <td class="confluenceTd">CustomSettingName</td><td class="confluenceTd">ProfileId</td><td class="confluenceTd">IsActive</td><td class="confluenceTd">IsEditable</td>
+        <td class="confluenceTd"><br/></td>
+        <td class="confluenceTd">ProfileName</td><td class="confluenceTd">ProfileId</td>
+        <td class="confluenceTd"><br/></td>
+        <td class="confluenceTd">ProfileName</td><td class="confluenceTd">ProfileId</td>
+      </tr>
+      <tr>
+        <td class="confluenceTd">Selection__c</td><td class="confluenceTd"><strong>a1N000UxlS</strong></td><td class="confluenceTd">Yes</td><td class="confluenceTd">No</td>
+        <td class="confluenceTd"><br/></td>
+        <td class="confluenceTd"><strong>REP_PROFILE</strong></td><td class="confluenceTd"><strong>a1N000UxlS</strong></td>
+        <td class="confluenceTd"><br/></td>
+        <td class="confluenceTd"><strong>REP_PROFILE</strong></td><td class="confluenceTd"><strong>0051r07n44x</strong></td>
+      </tr>
+    </tbody></table>
+
+    <h2>2. Colour-coded cell carries meaning (expect Tier-2: title attr lost)</h2>
+    <p>In the source, green shading marked "this is the output file". The colour lives
+    only in a <code>title</code> / style — embedding can never recover it.</p>
+    <table class="confluenceTable"><tbody>
+      <tr><td class="confluenceTd" title="Background colour: Green">Name</td><td class="confluenceTd" title="Background colour: Green">Result &lt;output&gt;</td></tr>
+      <tr><td class="confluenceTd" title="Background colour: Green">POLUTIL</td><td class="confluenceTd" style="background-color: #d4edbc;">POLUTIL_P23</td></tr>
+      <tr><td class="confluenceTd" title="Background colour: Green">XENON</td><td class="confluenceTd" style="background-color: #d4edbc;">XENON_X17</td></tr>
+    </tbody></table>
+
+    <h2>3. Merged header schema (expect Tier-2: spans reset, header tiers flattened)</h2>
+    <table class="confluenceTable"><tbody>
+      <tr><th class="confluenceTh" rowspan="2">Environment</th><th class="confluenceTh" colspan="2">Endpoints</th></tr>
+      <tr><th class="confluenceTh">Read</th><th class="confluenceTh">Write</th></tr>
+      <tr><td class="confluenceTd">Prod</td><td class="confluenceTd">r.example.com</td><td class="confluenceTd">w.example.com</td></tr>
+      <tr><td class="confluenceTd">Stage</td><td class="confluenceTd">r.stage.example.com</td><td class="confluenceTd">w.stage.example.com</td></tr>
+    </tbody></table>
+
+    <h2>4. Custom DSL mislabeled vs. heuristic recovery</h2>
+    <p>Authors set <code>brush: java</code> for DTK's pipe-delimited DSL. It is not Java.
+    The converter keeps the author's brush (Tier-2, faithful-to-source):</p>
+    <div class="code panel pdl">
+      <div class="codeContent panelContent">
+        <pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false">FILE|REPLACE|&lt;replace_file&gt;|&lt;source_compare_file&gt;|&lt;target_compare_file&gt;|&lt;replace_column&gt;|&lt;match_column&gt;</pre>
+      </div>
+    </div>
+    <p>Contrast: a <code>brush: java</code> block whose content is unambiguously SQL —
+    the java-distrust heuristic should re-label it <code>sql</code>:</p>
+    <div class="code panel pdl">
+      <div class="codeContent panelContent">
+        <pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false">SELECT Id, Name FROM OCE__Rating__c WHERE Name != null</pre>
+      </div>
+    </div>
+
+    <h2>5. Unsupported macro (expect: body survives, shell dropped — NOT Tier-1)</h2>
+    <div class="conf-macro output-block" data-macro-name="roadmap-planner">
+      <p>Roadmap: Q3 delivers multi-region writes; Q4 delivers self-healing projections.</p>
+    </div>
+
+    <h2>6. Diagrams: caption survives, content is lost</h2>
+    <p>A draw.io diagram with a caption keeps the caption (Tier-2, flagged):</p>
+    <figure class="drawio-diagram">
+      <svg width="320" height="120" viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="320" height="120" fill="none" stroke="black"/>
+        <text x="20" y="60">Placed</text><text x="140" y="60">Reserved</text><text x="250" y="60">Shipped</text>
+      </svg>
+      <figcaption>Order saga state machine</figcaption>
+    </figure>
+    <p>The same diagram WITHOUT a caption is dropped entirely — its boxes and arrows are
+    unrecoverable (Tier-2, flagged via the <code>diagram</code> count):</p>
+    <div class="drawio-diagram">
+      <svg width="320" height="120" viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="320" height="120" fill="none" stroke="black"/>
+        <text x="20" y="60">A</text><text x="160" y="60">B</text><text x="260" y="60">C</text>
+      </svg>
+    </div>
+
+    <h2>7. Whole-cell line breaks + pipe-in-code together</h2>
+    <table class="confluenceTable"><tbody>
+      <tr><th class="confluenceTh">Instruction</th><th class="confluenceTh">Notes</th></tr>
+      <tr><td class="confluenceTd"><code>SOURCE | TARGET</code></td><td class="confluenceTd">runs on source<br/>then target</td></tr>
+    </tbody></table>
+
+  </div><!-- /#main-content -->
+</div><!-- /#page -->
+</body>
+</html>

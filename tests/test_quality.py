@@ -46,6 +46,28 @@ def test_br_is_not_html_leakage():
     assert _rule(md, "html_leakage") is None
 
 
+def test_inline_text_tags_are_html_leakage():
+    # u/sup/sub/s/del/code/pre/img pass through pandoc's gfm writer as raw HTML;
+    # the lint must see them (blind spot fixed per the conversion-rules doc §9).
+    md = (
+        "# T\n\n" + PROSE + "\n\n"
+        "Area is m<sup>2</sup> and CO<sub>2</sub>; <u>key</u> term, "
+        "<s>old</s> <del>gone</del>, <img src='x.png'>\n"
+    )
+    issue = _rule(md, "html_leakage")
+    assert issue is not None
+    assert issue.severity == "block"  # > 3 fragments
+
+
+def test_inline_text_tags_in_fences_are_not_flagged():
+    # Code examples documenting these tags must not false-positive (de-fenced scan).
+    md = (
+        "# T\n\n" + PROSE + "\n\n"
+        "```html\n<sup>2</sup> <u>key</u> <pre>raw</pre> <img src='x'>\n```\n"
+    )
+    assert _rule(md, "html_leakage") is None
+
+
 def test_clean_prose_has_no_issues():
     md = "# Title\n\n" + PROSE + "\n"
     report = check_markdown("t", md)

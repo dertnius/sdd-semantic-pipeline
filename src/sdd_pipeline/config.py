@@ -68,6 +68,35 @@ try:
             "Conservative for a 512-token model so vectors are not silently truncated.",
         )
 
+        # ── Chunk hygiene gate (Arm 1) ────────────────────────────────────────
+        chunk_gate: bool = Field(
+            default=True,
+            description="Run the chunk-level hygiene invariant during indexing. A "
+            "*poisoned* chunk (markup/macro residue, over-hard-cap embed text, or empty) "
+            "blocks the whole file from the index. Disable to index without the gate.",
+        )
+        embed_char_hard_cap: int = Field(
+            default=2048,
+            description="Hard ceiling (chars) for the rendered embed_text. Above this the "
+            "model would silently truncate the vector, so the chunk gate treats it as "
+            "poison (vs embed_char_budget, the soft target whose breach is only a warning).",
+        )
+
+        # ── Converter confidence gate (Arm 2) ─────────────────────────────────
+        convert_quarantine: bool = Field(
+            default=True,
+            description="When the converter's own signals say it likely mangled a page "
+            "(no recognised content container, or many leftover storage tags), mark the "
+            "file quarantined in the convert report and exit non-zero, instead of letting "
+            "a low-confidence conversion enter the corpus silently.",
+        )
+        convert_max_unrecognized: int = Field(
+            default=8,
+            description="Quarantine threshold: a converted file is quarantined when its "
+            "dropped/unrecognised-construct count exceeds this (a root-container fallback "
+            "always quarantines). Calibrate from a run over your known-good corpus.",
+        )
+
         # ── Enrichment ────────────────────────────────────────────────────────
         entity_terms: list[str] = Field(
             default_factory=list,
@@ -143,6 +172,10 @@ except ImportError:
         chunk_merge_prose: bool = False
         chunk_merge_definitions: bool = False
         embed_char_budget: int = 1800
+        chunk_gate: bool = True
+        embed_char_hard_cap: int = 2048
+        convert_quarantine: bool = True
+        convert_max_unrecognized: int = 8
         entity_terms: list[str] = []
         entity_vocab_path: str = ""
         inventory_enrichment: bool = True

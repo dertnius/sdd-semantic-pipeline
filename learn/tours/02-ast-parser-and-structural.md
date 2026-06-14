@@ -101,10 +101,15 @@ That is why the retrieval eval
 1. What happens to a paragraph that appears *before the first heading* of a
    document?
    <details><summary>Answer</summary>
-   It is dropped. The loop in <code>build_structural_model</code> only stores
-   blocks under <code>elif stack:</code> — with no heading seen yet the stack
-   is empty, so the block is skipped. Frontmatter still survives (it travels
-   in <code>doc.metadata</code>, not in the block list).
+   It is **kept**. With no heading open yet (the <code>else</code> branch in
+   <code>build_structural_model</code>), such blocks are buffered into
+   <code>preamble_blocks</code>; if any exist, they are attached to a
+   *synthesized* root section titled from <code>doc.metadata.title</code> (or
+   "Document"), so a preamble — or a doc with no headings at all — still produces
+   chunks instead of silently yielding zero. A warning is logged. (Historically
+   these blocks were dropped under an <code>elif stack:</code> guard — that was a
+   real exposure, since a Confluence title is harvested into metadata and is not
+   guaranteed to be emitted as a body H1.)
    </details>
 2. A document jumps from H1 straight to H3. Where does the H3 section land,
    and what is its breadcrumb?

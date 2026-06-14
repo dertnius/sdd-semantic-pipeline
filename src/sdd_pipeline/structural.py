@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import logging
 from urllib.parse import urlsplit
 
 import panflute as pf
@@ -21,6 +22,8 @@ from .models import (
     DocumentModel,
     Section,
 )
+
+logger = logging.getLogger(__name__)
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
@@ -328,6 +331,15 @@ def build_structural_model(
     stack: list[Section] = []  # active ancestor path
     block_counter = 0
 
+    # Content that appears *before* the first heading (or in a doc with no
+    # headings at all) would otherwise be dropped — a real exposure, since a
+    # Confluence page's title is harvested into metadata and is not guaranteed to
+    # be emitted as a body H1. Buffer such blocks and, if any exist, attach them
+    # to a synthesized title-derived root section so the page still produces
+    # chunks instead of silently yielding none.
+    preamble_id = _short_hash(doc_id, "__preamble__")
+    preamble_blocks: list[ContentBlock] = []
+
     for elem in doc.content:
         if isinstance(elem, pf.Header):
             title = pf.stringify(elem).strip()
@@ -352,11 +364,31 @@ def build_structural_model(
 
             stack.append(section)
 
-        elif stack:
-            cb = _elem_to_content_block(elem, doc_id, stack[-1].section_id, block_counter)
+        else:
+            owner_id = stack[-1].section_id if stack else preamble_id
+            cb = _elem_to_content_block(elem, doc_id, owner_id, block_counter)
             if cb is not None:
-                stack[-1].blocks.append(cb)
+                (stack[-1].blocks if stack else preamble_blocks).append(cb)
                 block_counter += 1
+
+    if preamble_blocks:
+        preamble_title = (metadata.title or "Document").strip() or "Document"
+        root_sections.insert(
+            0,
+            Section(
+                level=1,
+                title=preamble_title,
+                section_id=preamble_id,
+                breadcrumb=[preamble_title],
+                blocks=preamble_blocks,
+            ),
+        )
+        logger.warning(
+            "Synthesized a root section %r for %d block(s) before the first heading in %s",
+            preamble_title,
+            len(preamble_blocks),
+            doc_id,
+        )
 
     return DocumentModel(
         doc_id=doc_id,
