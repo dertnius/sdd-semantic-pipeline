@@ -2,7 +2,7 @@
 Derive a section→field taxonomy from an SAD template.
 
 The template defines, per section, the *fields* a conforming document should
-fill in — encoded as tables. Two orientations occur (see SPIKE_FINDINGS.md):
+fill in — encoded as tables. Two orientations occur (see docs/notes/SPIKE_FINDINGS.md):
 
 * **wide** — a real header row whose cells are the field names (one entity per
   body row). Body rows are template samples and are **not** read.

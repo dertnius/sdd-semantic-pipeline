@@ -132,7 +132,7 @@ class TestLegacyScriptEntry:
     def test_script_mode_invocation_runs(self, tmp_path: Path):
         # Exercises the script-mode import fallback (`from sdd_pipeline.convert…`).
         script = _ROOT / "src" / "sdd_pipeline" / "convert" / "html_to_gitlab_md.py"
-        src_html = _ROOT / "convert" / "examples" / "order-management-sad.html"
+        src_html = Path(__file__).resolve().parent / "examples" / "order-management-sad.html"
         out_md = tmp_path / "out.md"
         # The legacy script's main() prints emoji status lines; PYTHONUTF8 keeps the
         # child's stdout UTF-8 so it doesn't crash on a Windows cp1252 console.

@@ -2,7 +2,7 @@
 Structural entity extraction from document tables (PATH A).
 
 Tables reach the model as GFM pipe-strings (structural.py flattens them and
-leaves ``raw`` unset — see SPIKE_FINDINGS.md), so this re-parses the string and
+leaves ``raw`` unset — see docs/notes/SPIKE_FINDINGS.md), so this re-parses the string and
 emits one :class:`EntityRecord` per meaningful cell, tagged with its **field
 name** (never its position). Orientation is detected per table:
 

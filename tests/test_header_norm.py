@@ -45,7 +45,7 @@ def test_keep_s_endings_not_stripped():
 
 
 def test_real_template_component_labels_are_stable():
-    # The Solution Component key-value table's col-0 labels (from SPIKE_FINDINGS).
+    # The Solution Component key-value table's col-0 labels (from docs/notes/SPIKE_FINDINGS.md).
     labels = [
         "Description",
         "Technology Stack",
