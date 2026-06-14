@@ -39,6 +39,7 @@ def generate_ast(
         ],
         capture_output=True,
         text=True,
+        encoding="utf-8",  # pandoc always emits UTF-8; never the Windows cp1252 locale
         check=True,
     )
     data: dict = json.loads(result.stdout)
@@ -80,6 +81,7 @@ def pandoc_version() -> str:
         ["pandoc", "--version"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=True,
     )
     return result.stdout.split("\n")[0]

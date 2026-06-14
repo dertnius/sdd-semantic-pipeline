@@ -23,6 +23,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .models import SemanticChunk
 
 # ── Thresholds (first-pass guesses — calibrate against a real corpus run) ──────
 _HTML_LEAK_BLOCK = 3  # > this many HTML fragments → block (1.._ → warn)
@@ -221,6 +225,171 @@ def _check_content_density(text: str) -> QualityIssue | None:
         "block",
         f"only {len(meaningful)} chars of substantive text (near-empty stub)",
     )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Chunk-level hygiene gate (the binding gate — runs on produced chunks)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# ``check_markdown`` above audits *raw source markdown*; it is a useful pre-filter
+# but it cannot see the chunk transforms that happen downstream of it (merge,
+# table-summary, embed-budget split). The chunk gate runs on the rendered
+# ``SemanticChunk.to_embed_text()`` / content — the thing that actually becomes a
+# vector — and is the binding "poisoned → block, weak → warn" check.
+#
+# It is an *invariant / structural-absence* check, not a residue blocklist: clean
+# rendered prose simply cannot contain markup *shape*. So the test is "does this
+# look like markup?" rather than "is this on my list of known-bad strings", which
+# makes it robust to constructs the converter has never seen. Code chunks are
+# exempt from the markup-shape check (code legitimately contains ``<``/``{``/``:``);
+# ``<br>`` is exempt everywhere because the converter emits ``<br />`` in table
+# cells on purpose (mirrors ``_HTML_LEAKAGE``).
+
+# Tag residue is flagged only when it carries a *real markup signal*, not on any
+# bare ``<word>`` — because technical docs legitimately use angle-bracket
+# placeholder notation (``<output>``, ``<filename>``, ``<replace_file>``) that is
+# structurally identical to an HTML element. The signals:
+#   1. a known structural HTML tag (the raw-source linter's set; excludes ``br``,
+#      intended in table cells, and form-ish names like ``output``/``input`` that
+#      double as placeholders);
+_CHUNK_KNOWN_TAG = re.compile(
+    r"</?(?:span|div|p|a|strong|em|table|td|tr|th|thead|tbody|ul|ol|li|h[1-6]|"
+    r"blockquote|u|sup|sub|s|del|code|pre|img|hr)\b",
+    re.IGNORECASE,
+)
+#   2. a namespaced Confluence storage tag (``<ac:image …>`` etc.);
+_CHUNK_NS_TAG = re.compile(r"</?(?:ac|ri|at|fab):[A-Za-z]")
+#   3. an (unknown) opening tag that carries attributes, or any closing tag —
+#      real markup, unlike a lone ``<placeholder>``.
+_CHUNK_MARKUP = re.compile(
+    r"<[A-Za-z][A-Za-z0-9:.-]*\s+[^<>]*=[^<>]*?/?>|</[A-Za-z][A-Za-z0-9:.-]*\s*>"
+)
+# A bare Confluence storage-namespace token surviving into prose (``ac:image`` …).
+# Requires a letter immediately after the colon, so prose like "At: see below"
+# (space after colon) does not match.
+_CHUNK_NS = re.compile(r"(?:^|[^\w])(?:ac|ri|at|fab):[A-Za-z][\w-]*")
+# HTML entity that should have been rendered to a Unicode char by the gfm writer.
+_CHUNK_ENTITY = re.compile(r"&(?:[A-Za-z][A-Za-z0-9]*|#\d+|#x[0-9A-Fa-f]+);")
+# A long base64 run — a leftover data-URI payload.
+_CHUNK_BASE64 = re.compile(r"[A-Za-z0-9+/]{200,}={0,2}")
+_REPLACEMENT_CHAR = "�"
+
+
+@dataclass
+class ChunkQualityReport:
+    """Hygiene findings for one produced :class:`SemanticChunk`."""
+
+    chunk_id: str
+    issues: list[QualityIssue] = field(default_factory=list)
+
+    @property
+    def is_clean(self) -> bool:
+        """True when no ``block``-severity (poisoned) issue was found."""
+        return not any(i.severity == "block" for i in self.issues)
+
+    @property
+    def poison(self) -> list[QualityIssue]:
+        return [i for i in self.issues if i.severity == "block"]
+
+
+def check_chunk(
+    chunk: SemanticChunk,
+    *,
+    embed_char_budget: int = 1800,
+    embed_char_hard_cap: int = 2048,
+) -> ChunkQualityReport:
+    """Audit one chunk's rendered embed text for poison (vector-corrupting) issues.
+
+    *Poisoned* (``block``) — the vector would be **certainly** wrong: markup/macro
+    residue in the prose or metadata, or no content. These are model-free,
+    unambiguous, and block the file.
+
+    *Weak* (``warn``) — the vector is merely degraded, not wrong: over the embed
+    budget (and, past the hard cap, likely truncated by the model). Truncation is
+    model- and tokenizer-dependent and cannot be *certified* from a char count, so
+    it is surfaced as a warning rather than blocking — keeping embed text within
+    budget is chunking's job (see ``chunking._header_reserve``). Code chunks are
+    exempt from the markup-shape residue check; the budget and empty checks apply.
+    """
+    issues: list[QualityIssue] = []
+    is_code = getattr(chunk.content_type, "value", chunk.content_type) == "code"
+
+    # ── Positive: the chunk must carry signal ────────────────────────────────
+    if not re.search(r"[A-Za-z0-9]", (chunk.content or "").replace("`", "")):
+        issues.append(QualityIssue("chunk_empty", "block", "chunk has no alphanumeric content"))
+
+    # ── Markup-shape residue in the content (prose/table only) ────────────────
+    if not is_code:
+        body = _strip_code_preserving_lines(chunk.content or "")
+        issues += _scan_residue(body, "content")
+
+    # ── Residue in the metadata that feeds the embed header ───────────────────
+    header_values = "\n".join([*chunk.breadcrumb, chunk.title or "", *chunk.entities, *chunk.tags])
+    issues += _scan_residue(header_values, "metadata")
+
+    # ── Budget: over the hard cap = likely truncated; over target = fat ───────
+    # Both are *warnings* — truncation is model-dependent and not certifiable from
+    # a char count, so it never blocks the file (chunking owns budget adherence).
+    embed_len = len(chunk.to_embed_text())
+    if embed_len > embed_char_hard_cap:
+        issues.append(
+            QualityIssue(
+                "chunk_truncation_risk",
+                "warn",
+                f"embed_text is {embed_len} chars (> hard cap {embed_char_hard_cap}); "
+                "the model will likely truncate the vector — split this section smaller",
+            )
+        )
+    elif embed_len > embed_char_budget:
+        issues.append(
+            QualityIssue(
+                "chunk_over_budget",
+                "warn",
+                f"embed_text is {embed_len} chars (> target {embed_char_budget})",
+            )
+        )
+
+    return ChunkQualityReport(chunk_id=chunk.chunk_id, issues=issues)
+
+
+def _scan_residue(text: str, where: str) -> list[QualityIssue]:
+    """Return ``block`` issues for any markup/macro shape found in *text*.
+
+    Legitimate ``lang:python`` style metadata tags match none of these shapes
+    (the namespace scan only fires on ``ac:``/``ri:``/``at:``/``fab:`` prefixes),
+    so they pass cleanly; everything that matches a tag / storage-namespace /
+    entity / macro / base64 shape is treated as poison.
+    """
+    out: list[QualityIssue] = []
+    if _CHUNK_KNOWN_TAG.search(text) or _CHUNK_NS_TAG.search(text) or _CHUNK_MARKUP.search(text):
+        out.append(QualityIssue(f"chunk_html_residue_{where}", "block", f"HTML/XML tag in {where}"))
+    if _CHUNK_NS.search(text):
+        out.append(
+            QualityIssue(
+                f"chunk_macro_residue_{where}", "block", f"Confluence ac:/ri: token in {where}"
+            )
+        )
+    if _CONFLUENCE.search(text):
+        out.append(
+            QualityIssue(
+                f"chunk_macro_residue_{where}", "block", f"Confluence macro braces in {where}"
+            )
+        )
+    if _CHUNK_ENTITY.search(text):
+        out.append(
+            QualityIssue(
+                f"chunk_entity_residue_{where}", "block", f"unrendered HTML entity in {where}"
+            )
+        )
+    if _CHUNK_BASE64.search(text):
+        out.append(QualityIssue(f"chunk_base64_{where}", "block", f"long base64 blob in {where}"))
+    if _REPLACEMENT_CHAR in text:
+        out.append(
+            QualityIssue(
+                f"chunk_replacement_char_{where}", "block", f"U+FFFD replacement char in {where}"
+            )
+        )
+    return out
 
 
 def _check_orphaned_headings(de_fenced: str, raw: str) -> QualityIssue | None:

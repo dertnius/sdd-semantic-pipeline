@@ -222,13 +222,18 @@ def preprocess(
     notes = notes or ConversionNotes()
     soup: BeautifulSoup = BeautifulSoup(html, "lxml")
 
+    # Record the detected Confluence flavour — a confidence signal for the gate
+    # ("unknown" alone is only informational; combined with other signals it is
+    # part of a quarantine verdict).
+    notes.metadata.setdefault("confluence_version", detect_confluence_version(soup))
+
     # ── 0. Harvest page chrome on the FULL soup (HX-CHROME-TITLE/-METADATA) ──
     #      The harvest sources (#main-header, page-metadata) live OUTSIDE the
     #      typical content root — read them BEFORE root selection discards them.
     _harvest_page_chrome(soup, notes)
 
     # ── 1a. Find content root ────────────────────────────────────────────────
-    content: Tag = _find_content_root(soup, selector)
+    content: Tag = _find_content_root(soup, selector, notes)
 
     # ── 1a.1 Drop attachments/comments pageSections (HX-CHROME-ATTACH/-COMMENTS)
     #        BEFORE the generic unwrap below would leak their link dumps.
@@ -455,8 +460,16 @@ def _normalise_inline_text(content: Tag) -> None:
         t.replace_with(iso or t.get_text(" ", strip=True))
 
 
-def _find_content_root(soup: BeautifulSoup, selector: str | None) -> Tag:
-    """Try selector → common Confluence selectors → semantic HTML → body."""
+def _find_content_root(
+    soup: BeautifulSoup, selector: str | None, notes: ConversionNotes | None = None
+) -> Tag:
+    """Try selector → common Confluence selectors → semantic HTML → body.
+
+    When none of the recognised content containers match and the whole ``<body>``
+    is used as the root, record a low-confidence signal (``root_fallback``) and a
+    warning: the export does not match a supported shape, so page chrome may leak
+    into the corpus. The converter's confidence gate reads this signal.
+    """
     candidates: list[str] = []
     if selector:
         candidates = [selector]
@@ -491,6 +504,12 @@ def _find_content_root(soup: BeautifulSoup, selector: str | None) -> Tag:
         if el:
             return el
 
+    if notes is not None:
+        notes.metadata["root_fallback"] = "true"
+        notes.warn(
+            "No recognised content container found — using the whole <body> as the "
+            "content root; page chrome may leak (export does not match a supported shape)."
+        )
     return cast(Tag, soup.body or soup)  # fallback: entire body
 
 
@@ -1712,6 +1731,24 @@ def stats(md: str) -> dict[str, int]:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
+# Storage-format front door (spec §1.2): a literal ``<ac:`` / ``<ri:`` / ``<at:``
+# tag opener only occurs in Confluence *storage format* — the rendered export
+# escapes code samples to ``&lt;ac:``, so this byte sequence cannot appear in
+# supported rendered input. Detect it and refuse loudly rather than silently
+# mangling it (lxml drops the CDATA macro bodies, etc.).
+_STORAGE_FORMAT_SNIFF = re.compile(r"<(?:ac|ri|at):[A-Za-z]")
+
+
+def _reject_if_storage_format(html: str, src: Path) -> None:
+    """Raise :class:`ConversionError` if *html* is Confluence storage format."""
+    if _STORAGE_FORMAT_SNIFF.search(html):
+        raise ConversionError(
+            f"{src} looks like Confluence *storage format* (ac:/ri:/at: tags), which is "
+            "not supported. This converter handles *rendered HTML* exports only (Space "
+            "export / 'Export to HTML'). Re-export the page as HTML and retry."
+        )
+
+
 def resolve_pandoc(pandoc_path: str | None = None) -> str:
     """Return a usable pandoc executable path or raise ConversionError."""
     pandoc = pandoc_path or shutil.which("pandoc")
@@ -1770,6 +1807,7 @@ def convert_file(
 
     notes = ConversionNotes()
     html = src.read_text(encoding="utf-8")
+    _reject_if_storage_format(html, src)  # P0.1 front door — rendered HTML only
     clean_html = preprocess(html, selector, keep_diagrams, notes)
     raw_md = convert(clean_html, pandoc, notes)
 

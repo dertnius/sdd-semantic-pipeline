@@ -61,8 +61,13 @@ parsed AST, by which point the evidence of these source defects is gone.
 
 ## Why these choices (the interview/grilling trail)
 
-- **Whole-file verdicts**, not per-chunk — `lint` answers "which *documents* need
-  cleaning," which is a per-file question.
+- **Whole-file verdicts on raw markdown**, not per-chunk — `lint`/`check_markdown`
+  answers "which *documents* need cleaning," a per-file question, **before** pandoc.
+  Its sibling in the same module, `check_chunk`, is the complementary *per-chunk*,
+  *post-pipeline* gate: it runs on the produced `SemanticChunk.to_embed_text()` inside
+  `index` and **blocks** a file when a chunk is poisoned (markup/macro residue, or
+  empty). So `quality.py` now hosts both the advisory raw-source linter and the
+  binding chunk gate — see [tour 10](10-pipeline-orchestrator-and-cli.md) for the wiring.
 - **No new dependency** — every check is plain `re`; an early plan to add
   `markdown-it-py` was dropped once fence-stripping made a real parser redundant.
 - **Thresholds are guesses to calibrate** — run `lint` on your corpus, eyeball

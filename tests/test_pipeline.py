@@ -16,13 +16,15 @@ import pytest
 
 from sdd_pipeline.config import PipelineConfig
 from sdd_pipeline.models import (
+    ContentBlock,
     ContentType,
     DocumentMetadata,
     DocumentModel,
+    Section,
     SectionType,
     SemanticChunk,
 )
-from sdd_pipeline.pipeline import SemanticPipeline, _stable_doc_id
+from sdd_pipeline.pipeline import ChunkQualityError, SemanticPipeline, _stable_doc_id
 from sdd_pipeline.vocabulary import load_vocabulary, save_vocabulary
 
 # ── Helper factories ──────────────────────────────────────────────────────────
@@ -481,3 +483,39 @@ class TestProcessFileIntegration:
         types = {c.section_type for c in chunks}
         # The sample document has overview, architecture, api, decision, deployment
         assert SectionType.OVERVIEW in types or SectionType.ARCHITECTURE in types
+
+
+# ── Chunk hygiene gate (Arm 1) ────────────────────────────────────────────────
+
+
+def _doc_with(text: str) -> DocumentModel:
+    """A one-section, one-paragraph DocumentModel carrying *text* as its body."""
+    section = Section(
+        level=1,
+        title="Root",
+        section_id="s1",
+        breadcrumb=["Root"],
+        blocks=[ContentBlock(block_id="b1", content_type=ContentType.PARAGRAPH, text=text)],
+    )
+    return DocumentModel(doc_id="d", metadata=DocumentMetadata(title="T"), root_sections=[section])
+
+
+class TestChunkGate:
+    def test_poisoned_chunk_blocks_indexing(self, tmp_path: Path):
+        pipeline = _make_pipeline(tmp_path)
+        doc = _doc_with("This paragraph leaks <span>raw html</span> into the chunk.")
+        with pytest.raises(ChunkQualityError):
+            pipeline.index_doc(doc, [])
+        pipeline.store.add_chunks.assert_not_called()
+
+    def test_clean_doc_indexes(self, tmp_path: Path):
+        pipeline = _make_pipeline(tmp_path)
+        doc = _doc_with("This is perfectly clean prose with no markup whatsoever here.")
+        assert pipeline.index_doc(doc, []) >= 1
+        pipeline.store.add_chunks.assert_called_once()
+
+    def test_gate_disabled_indexes_poison(self, tmp_path: Path):
+        pipeline = _make_pipeline(tmp_path, chunk_gate=False)
+        doc = _doc_with("Leaks <span>raw html</span> but the gate is disabled.")
+        assert pipeline.index_doc(doc, []) >= 1
+        pipeline.store.add_chunks.assert_called_once()

@@ -67,8 +67,15 @@ sdd-pipeline index <input_dir> [options]
 | `--glob` / `-g` | `**/*.md` | File glob pattern |
 | `--merge-prose` | off | Pack each section's prose into one chunk (code/tables stay separate) |
 | `--merge-definitions` | off | Pack prose **and** code into one chunk (tables separate); overrides `--merge-prose` |
+| `--chunk-gate` / `--no-chunk-gate` | on (`PIPELINE_CHUNK_GATE`) | Hygiene gate: a **poisoned** chunk (markup/macro residue, or empty) blocks the whole file from the index |
 | `--dry-run` | off | Parse + chunk without indexing (no model loaded) |
 | `--verbose` / `-v` | off | Per-file chunk counts |
+
+> **Chunk hygiene gate (on by default):** before embedding, every chunk's rendered
+> `embed_text` is checked for markup/macro residue and emptiness; a poisoned chunk
+> *blocks the whole file* (raising rather than silently indexing a broken vector).
+> Over-budget chunks only *warn*. Pass `--no-chunk-gate` (or `PIPELINE_CHUNK_GATE=false`)
+> to override.
 
 > When `PIPELINE_ENTITY_VOCAB_PATH` is set, `index` runs a two-pass cross-corpus
 > scan first (discover + persist the entity vocabulary, then enrich every doc
@@ -117,8 +124,22 @@ sdd-pipeline convert <input_dir> [options]
 | `--no-frontmatter` | off | Skip the YAML frontmatter block |
 | `--toc` | off | Inject `[[_TOC_]]` (opt-in; default OFF for the embedding corpus) |
 | `--keep-diagrams` | off | Keep SVG diagram HTML instead of a placeholder |
+| `--quarantine` / `--no-quarantine` | on (`PIPELINE_CONVERT_QUARANTINE`) | Route low-confidence conversions to `_quarantine/` and exit non-zero (see below) |
+| `--max-unrecognized` | `8` (`PIPELINE_CONVERT_MAX_UNRECOGNIZED`) | Quarantine when dropped/unrecognised-construct count exceeds this |
 | `--pandoc-path` | auto (`PATH`) | Path to a specific pandoc binary |
 | `--verbose` / `-v` | off | Per-file metric summary line |
+
+> **Scope — rendered HTML only.** `convert` handles *rendered* Confluence exports
+> (Space export / "Export to HTML"). Storage-format input (`ac:`/`ri:`/`at:` XML
+> from the REST `body.storage` or page templates) is **refused at the door** with a
+> clear error rather than silently mangled (lxml drops its CDATA macro bodies).
+>
+> **Confidence gate (quarantine).** When the converter's own signals say it likely
+> mangled a page — no recognised content container (it fell back to `<body>`), or
+> more than `--max-unrecognized` leftover storage tags — the file is written to an
+> `_quarantine/` subdir (not the corpus), marked `status: "quarantined"` in the
+> report with reasons, and the command exits non-zero. Calibrate `--max-unrecognized`
+> from a run over your known-good corpus, or disable with `--no-quarantine`.
 
 ### `export` — chunks to JSON/JSONL (model-free)
 
@@ -202,6 +223,10 @@ sdd-pipeline lint <input_dir> [options]
 > Exit code is `0` by default (finding issues isn't a failure), `1` if a file
 > can't be read, and `1` under `--strict` when any block-severity issue exists.
 > Thresholds are tuned in `quality.py` — calibrate them against your corpus.
+>
+> `lint` is a **pre-filter on raw markdown**; the *binding* gate is the chunk-level
+> hygiene check that runs inside `index` (on the produced chunks, after merge/split)
+> and blocks poisoned files — see the `index` command above.
 
 ### `check` — verify the environment
 
@@ -453,7 +478,11 @@ Copy `.env.example` to `.env` and customise. Full list in
 | `PIPELINE_EMBEDDING_PROVIDER` | `local` | Embedding backend: `local` \| `azure` |
 | `PIPELINE_EMBEDDING_BATCH_SIZE` | `32` | Encoding batch size |
 | `PIPELINE_MAX_CHUNK_CHARS` | `2000` | Max characters per chunk before splitting |
-| `PIPELINE_EMBED_CHAR_BUDGET` | `1800` | Target max chars for rendered `embed_text` (avoids silent truncation) |
+| `PIPELINE_EMBED_CHAR_BUDGET` | `1800` | Target max chars for rendered `embed_text` (over-budget chunks warn) |
+| `PIPELINE_EMBED_CHAR_HARD_CAP` | `2048` | Above this the model likely truncates the vector — the chunk gate *warns* (truncation is not certifiable model-free; chunking owns budget) |
+| `PIPELINE_CHUNK_GATE` | `true` | Block a file from the index when a chunk is poisoned (markup/macro residue, or empty) |
+| `PIPELINE_CONVERT_QUARANTINE` | `true` | Quarantine low-confidence conversions in `convert` (see the `convert` command) |
+| `PIPELINE_CONVERT_MAX_UNRECOGNIZED` | `8` | Quarantine threshold for dropped/unrecognised constructs in `convert` |
 | `PIPELINE_CHUNK_MERGE_PROSE` | `false` | Pack a section's prose into one chunk |
 | `PIPELINE_CHUNK_MERGE_DEFINITIONS` | `false` | Pack prose + code into one chunk (overrides merge-prose) |
 | `PIPELINE_ENTITY_TERMS` | `[]` | JSON array of domain vocabulary folded into entity extraction |

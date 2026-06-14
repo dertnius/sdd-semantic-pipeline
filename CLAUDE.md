@@ -53,9 +53,10 @@ Confluence-MD → vector-search flow, one module per stage:
 | Module | Role |
 |---|---|
 | `ast_parser.py` | `.md` → pandoc JSON AST (subprocess wrapper; **only** pandoc caller) |
-| `structural.py` | AST → `DocumentModel` section tree (panflute, deterministic) |
+| `structural.py` | AST → `DocumentModel` section tree (panflute, deterministic); content before the first heading (or in a heading-less doc) is attached to a **synthesized** title-derived root section so the page never silently yields 0 chunks |
 | `enrichment.py` | rule-based `SectionType` / entity / tag tagging + `scan_corpus` (deterministic) |
 | `chunking.py` | `DocumentModel` → `list[SemanticChunk]` (deterministic) |
+| `quality.py` | raw-`.md` lint (`check_markdown`) **and** the binding chunk-level hygiene gate (`check_chunk`) — stdlib `re`, deterministic |
 | `vocabulary.py` | JSON load/save of the cross-corpus entity vocabulary (I/O kept out of `enrichment.py`) |
 | `embeddings.py` | sentence-transformers wrapper (**only** model loader) |
 | `vector_store.py` | pluggable vector-store backends (`memory` default via langchain-core, Chroma via the `[chroma]` extra) — selected by `make_vector_store(config)` |
@@ -95,16 +96,31 @@ The `sdd-pipeline scan <dir> [--vocab PATH]` command runs only the discovery hal
 can be reviewed/edited before an index run. Both `scan` and the scan-enabled
 `export` go through `SemanticPipeline.scan_and_persist` and load **no** model.
 
-The `sdd-pipeline lint <dir>` command (`quality.py`) is a **report-only** linter
-over **raw source `.md`** — run *before* pandoc, it flags embedding-harmful
+The `sdd-pipeline lint <dir>` command (`quality.check_markdown`) is a **report-only**
+linter over **raw source `.md`** — run *before* pandoc, it flags embedding-harmful
 residue (leaked HTML, untranslated Confluence macros, whole-doc code dumps,
 TOC/nav link-dumps, near-empty stubs, empty section headings) and writes a
 `quality-report.json`. Pure stdlib `re` — **no pandoc, no model, no pipeline** —
 and it never drops/rewrites anything. Prose checks run on a *de-fenced* copy
 (fenced/indented/inline code blanked, line numbers preserved) so code *examples*
-don't false-positive; `quality.py` is the only module doing this raw-source
-audit. Point it at the real embedding corpus, not a docs tree that *documents*
-Confluence syntax.
+don't false-positive. Point it at the real embedding corpus, not a docs tree that
+*documents* Confluence syntax.
+
+**Chunk hygiene gate (`quality.check_chunk`, the binding Arm 1).** The raw-markdown
+linter above is only a *pre-filter*: it cannot see the chunk transforms that happen
+after it (merge, table-summary, embed-budget split). The binding gate runs on the
+produced `SemanticChunk.to_embed_text()` and is wired into `pipeline.index_doc` (via
+`_enforce_chunk_gate`, gated by `config.chunk_gate`, default on). It is an
+**invariant / structural-absence** check, not a residue blocklist: after de-fencing,
+prose must contain no markup *shape* — a known HTML tag, a `<ac:`/`<ri:`/`<at:`
+storage tag, an attributed/closing tag, a `{panel}`-style macro, an unrendered
+entity, a base64 blob, or U+FFFD. A bare attribute-less `<word>` is **content**
+(docs use `<placeholder>` notation), and `<br>` is exempt (intended table-cell
+output); code chunks skip the markup check entirely. *Poisoned* (residue or empty)
+→ **block the file** (raises `ChunkQualityError`); *weak* (over the embed budget /
+hard cap) → **warn** — truncation is model-dependent and not certifiable from a char
+count, so it never blocks (keeping `embed_text` within budget is chunking's job).
+`pipeline.gate_chunks` exposes the same reports non-raising for `export`/inspection.
 
 **B. HTML→GitLab-Markdown converter** (`html_to_gitlab_md.py`) — independent of
 the pipeline. 4-stage flow (spec: `docs/confluence-conversion-rules.md`,
@@ -125,8 +141,24 @@ reads). Public API: `resolve_pandoc()`, `convert_file()` (returns
 a JSON report with per-file + aggregate metrics (`sections`, `pictures`,
 `code_snippets`, `lists`, `tables`, `urls`). `[[_TOC_]]` injection is opt-in
 via `--toc` (default OFF — a TOC paragraph is a junk chunk in the embedding
-corpus). Storage-format (`ac:`/`ri:`) input handling beyond the legacy
-best-effort handlers is deferred — see the spec's SF-* rules and §12.
+corpus).
+
+**Front door — rendered HTML only (`_reject_if_storage_format`).** `convert_file`
+sniffs for a literal `<ac:`/`<ri:`/`<at:` tag opener (spec §1.2); storage-format
+input only reaches the converter from REST `body.storage`/templates and lxml drops
+its CDATA macro bodies, so it is **refused with `ConversionError`** rather than
+silently mangled. The legacy `_normalise_ac_*` storage handlers are now unreachable
+from `convert_file` (the door rejects first) and kept only for direct unit tests;
+full storage support stays deferred — see the spec's SF-* rules and §12.
+
+**Confidence gate (Arm 2).** `preprocess` records `notes.metadata["confluence_version"]`
+and sets `root_fallback` when `_find_content_root` falls through to `<body>`. The
+`convert` CLI reads these (`cli._convert_confidence_reasons`): when the converter's
+own signals say it likely mangled a page — no recognised content container, or more
+than `convert_max_unrecognized` leftover `dropped_tag`s — the file is written to an
+`_quarantine/` subdir (not the corpus), marked `status: "quarantined"` with reasons
+in the report, and the command exits non-zero. Tunable via `--quarantine/--no-quarantine`
+and `--max-unrecognized` (config: `convert_quarantine`, `convert_max_unrecognized`).
 
 ### Key design points
 
@@ -140,9 +172,13 @@ best-effort handlers is deferred — see the spec's SF-* rules and §12.
   summarized (header row + `(table, N data rows)`) so high-entropy cells don't
   dominate the vector — the full table stays in `content`/`to_dict()`.
 - **Embed budget** (`embed_char_budget`, default 1800): content is split so the
-  rendered `embed_text` (header + content) stays under the model's ~512-token cap,
-  preventing silent truncation. `chunking._header_reserve` estimates the header so
-  the split width leaves room for it.
+  rendered `embed_text` (header + content) stays under the model's ~512-token cap.
+  `chunking._header_reserve` estimates the header so the split width leaves room for
+  it — but the estimate can be wrong (e.g. inventory enrichment folds many table
+  field-values into the header), so the chunk gate **warns** (never blocks) when a
+  rendered `embed_text` exceeds the budget, and again past `embed_char_hard_cap`
+  (default 2048) where the model likely truncates. Truncation is model-dependent and
+  not certifiable from a char count, so it is a quality signal, not poison.
 - **`SectionType`** (`models.py` + `enrichment._SECTION_RULES`): besides
   overview/architecture/api/decision/deployment/data_model/security, it carries
   ADR/AIP decision-record types — `alternative`, `tradeoff`, `consequence`,
@@ -202,7 +238,10 @@ request seems to require breaking one, flag the conflict and confirm first.
 - **Windows console encoding (cp1252)** crashes on emoji/non-ASCII when stdout is
   redirected. The `convert` command's output is deliberately ASCII-only; the
   legacy single-file script (`html_to_gitlab_md.py` `main`) and `index`/`check`
-  still print emoji — set `$env:PYTHONUTF8 = "1"` for those.
+  still print emoji — set `$env:PYTHONUTF8 = "1"` for those. (Pandoc *subprocess*
+  decoding is already pinned to UTF-8 in `ast_parser.py` and the converter's
+  `_run_pandoc`, so non-ASCII page content no longer crashes the AST step on
+  Windows — this was a real latent bug.)
 
 ## Configuration
 
@@ -217,6 +256,10 @@ two-pass cross-corpus scan in `index`/`export` — `docs/entity-vocab.json` is a
 committed seed example with project terms like `XCom`/`triggerer`/`KPO`),
 `PIPELINE_EMBED_CHAR_BUDGET`, `PIPELINE_CHUNK_MERGE_DEFINITIONS`,
 `PIPELINE_HYBRID_SEARCH` (+ `PIPELINE_HYBRID_CANDIDATE_POOL`, `PIPELINE_RRF_K`).
+Robustness gates: `PIPELINE_CHUNK_GATE` (default on — poison blocks the file),
+`PIPELINE_EMBED_CHAR_HARD_CAP` (default 2048 — over it the chunk gate warns of
+likely truncation), `PIPELINE_CONVERT_QUARANTINE` (default on) +
+`PIPELINE_CONVERT_MAX_UNRECOGNIZED` (default 8) for the converter confidence gate.
 New config fields must be added to **both** `PipelineConfig` branches
 (pydantic-settings v2 and the pydantic-v1 fallback).
 

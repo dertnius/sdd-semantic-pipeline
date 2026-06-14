@@ -391,8 +391,12 @@ class TestConvertExamplesCorpus:
     """
 
     def test_examples_pass_quality_gate(self):
-        html_files = sorted(_EXAMPLES.glob("*.html"))
-        assert len(html_files) >= 3, "expected the committed example corpus"
+        # Rendered-HTML exports only — storage-format fixtures (``*.storage.html``)
+        # are refused at the front door (see test below), not quality-gated here.
+        html_files = sorted(
+            p for p in _EXAMPLES.glob("*.html") if not p.name.endswith(".storage.html")
+        )
+        assert len(html_files) >= 2, "expected the committed rendered example corpus"
         for src in html_files:
             _, md, _, _notes = h2m.convert_file(src, write=False)
             report = check_markdown(src.name, md)
@@ -401,6 +405,12 @@ class TestConvertExamplesCorpus:
             # Tier-3: no raw HTML / macro residue leaks (``<br />`` in cells is allowed).
             for residue in ("<table", "<div", "<span", "<ac:", "<ri:", "<at:", "[[_TOC_]]"):
                 assert residue not in md, f"{src.name} leaked {residue!r}"
+
+    def test_storage_format_example_is_refused_at_the_door(self):
+        """P0.1 front door: storage-format input is rejected, not silently mangled."""
+        src = _EXAMPLES / "order-management-sad.storage.html"
+        with pytest.raises(h2m.ConversionError, match="storage format"):
+            h2m.convert_file(src, write=False)
 
     def test_multiheader_table_does_not_leak_raw_html(self):
         """Regression for the rowspan/tiered-``th`` raw-``<table>`` leak (Tier-1):
@@ -412,3 +422,31 @@ class TestConvertExamplesCorpus:
         for txt in ("Environment", "Endpoints", "Read", "Write", "Prod", "Stage"):
             assert txt in md, f"lost tiered-header content: {txt!r}"
         assert notes["macro_counts"].get("multi_header_collapsed", 0) >= 1
+
+
+@requires_pandoc
+@pytest.mark.slow
+class TestEndToEndChunkHygiene:
+    """P2.1 — the non-skippable proof that the committed rendered fixtures survive
+    the *whole* model-free chain (HTML → convert → chunk → Arm-1 hygiene gate)
+    cleanly. Model-free: ``process_file`` parses/enriches/chunks and ``gate_chunks``
+    runs the invariant — neither touches an embedder, so no model is downloaded."""
+
+    def test_rendered_examples_produce_clean_chunks(self, tmp_path: Path):
+        from sdd_pipeline.config import PipelineConfig
+        from sdd_pipeline.pipeline import SemanticPipeline
+
+        pipe = SemanticPipeline(config=PipelineConfig(embedding_model="all-MiniLM-L6-v2"))
+        examples = sorted(
+            p for p in _EXAMPLES.glob("*.html") if not p.name.endswith(".storage.html")
+        )
+        assert examples, "expected committed rendered example fixtures"
+        for src in examples:
+            md_path = tmp_path / f"{src.stem}.md"
+            h2m.convert_file(src, md_path, write=True)
+            chunks = pipe.process_file(md_path)
+            assert chunks, f"{src.name} produced no chunks"
+            poison = [
+                (r.chunk_id, i.rule, i.detail) for r in pipe.gate_chunks(chunks) for i in r.poison
+            ]
+            assert not poison, f"{src.name} produced poisoned chunks: {poison}"

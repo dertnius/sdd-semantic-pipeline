@@ -17,11 +17,21 @@ from .config import PipelineConfig
 from .embeddings import EmbedderProtocol, embedder_identity, make_embedder
 from .enrichment import enrich_document, extract_entities, scan_corpus
 from .models import ContentType, DocumentModel, SectionType, SemanticChunk
+from .quality import ChunkQualityReport, check_chunk
 from .structural import build_structural_model
 from .vector_store import SearchResult, VectorStoreProtocol, make_vector_store
 from .vocabulary import load_vocabulary, save_vocabulary
 
 logger = logging.getLogger(__name__)
+
+
+class ChunkQualityError(RuntimeError):
+    """Raised when the chunk hygiene gate blocks a document from indexing.
+
+    A *poisoned* chunk (markup/macro residue, over-hard-cap embed text, or empty)
+    means a vector would be wrong, so the whole file is blocked rather than
+    quietly indexed. Disable with ``config.chunk_gate = False`` to override.
+    """
 
 
 def _stable_doc_id(path: Path) -> str:
@@ -125,14 +135,55 @@ class SemanticPipeline:
         """
         return self.enrich_and_chunk(self.parse_file(md_path), self.config.entity_terms)
 
+    def gate_chunks(self, chunks: list[SemanticChunk]) -> list[ChunkQualityReport]:
+        """Run the hygiene invariant (Arm 1) over *chunks*, non-raising.
+
+        Returns one :class:`ChunkQualityReport` per chunk so callers can inspect
+        poison/weak findings (e.g. ``export``) without blocking. ``index_doc``
+        uses this and enforces the *poison → block-the-file* rule.
+        """
+        return [
+            check_chunk(
+                c,
+                embed_char_budget=self.config.embed_char_budget,
+                embed_char_hard_cap=self.config.embed_char_hard_cap,
+            )
+            for c in chunks
+        ]
+
+    def _enforce_chunk_gate(self, chunks: list[SemanticChunk]) -> None:
+        """Block the file when any chunk is poisoned (Arm 1, ``config.chunk_gate``)."""
+        if not self.config.chunk_gate:
+            return
+        reports = self.gate_chunks(chunks)
+        poisoned: list[tuple[str, str]] = []
+        for rpt in reports:
+            for issue in rpt.issues:
+                if issue.severity == "block":
+                    poisoned.append((rpt.chunk_id, issue.detail))
+                else:
+                    logger.warning("weak chunk %s: %s — %s", rpt.chunk_id, issue.rule, issue.detail)
+        if poisoned:
+            sample = "; ".join(f"{cid} ({detail})" for cid, detail in poisoned[:5])
+            raise ChunkQualityError(
+                f"{len(poisoned)} poisoned chunk(s) blocked indexing of doc "
+                f"{chunks[0].doc_id}: {sample}. Fix the source/conversion, or set "
+                "PIPELINE_CHUNK_GATE=false to override."
+            )
+
     def index_doc(self, doc: DocumentModel, entity_terms: list[str]) -> int:
         """Enrich, chunk, embed, and index an already-parsed *doc*.
 
         Returns the number of chunks indexed (0 if the doc produced no content).
+
+        Raises:
+            ChunkQualityError: when ``config.chunk_gate`` is on and a chunk is
+                poisoned (markup/macro residue, truncation risk, or empty).
         """
         chunks = self.enrich_and_chunk(doc, entity_terms)
         if not chunks:
             return 0
+        self._enforce_chunk_gate(chunks)
         embeddings = self.embedder.embed_chunks(chunks)
         self.store.add_chunks(chunks, embeddings)
         if embeddings:

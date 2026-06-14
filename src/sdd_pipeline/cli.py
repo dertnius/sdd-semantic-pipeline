@@ -20,6 +20,23 @@ app = typer.Typer(
 console = Console()
 
 
+def _convert_confidence_reasons(notes: dict, max_unrecognized: int) -> list[str]:
+    """Low-confidence reasons from a convert_file ``notes`` dict (Arm 2).
+
+    Returns an empty list when the conversion looks trustworthy. A non-empty list
+    means the converter's own signals say it likely mangled the page, so the file
+    should be quarantined rather than indexed.
+    """
+    reasons: list[str] = []
+    meta = notes.get("metadata", {}) or {}
+    if meta.get("root_fallback") == "true":
+        reasons.append("no recognised content container (fell back to <body>)")
+    dropped = (notes.get("macro_counts", {}) or {}).get("dropped_tag", 0)
+    if dropped > max_unrecognized:
+        reasons.append(f"{dropped} leftover storage tag(s) dropped (> {max_unrecognized})")
+    return reasons
+
+
 # ── index ─────────────────────────────────────────────────────────────────────
 
 
@@ -56,6 +73,13 @@ def index(
         help="Pack each section's prose AND code into one chunk (tables stay separate). "
         "Overrides --merge-prose.",
     ),
+    chunk_gate: bool | None = typer.Option(
+        None,
+        "--chunk-gate/--no-chunk-gate",
+        help="Block a file from the index when any of its chunks is poisoned "
+        "(markup/macro residue, truncation risk, or empty). Unset uses "
+        "PIPELINE_CHUNK_GATE (default on).",
+    ),
     dry_run: bool = typer.Option(False, "--dry-run", help="Parse without indexing."),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
 ) -> None:
@@ -74,6 +98,8 @@ def index(
     # keeps working when --backend is omitted.
     if backend is not None:
         overrides["vector_store_backend"] = backend
+    if chunk_gate is not None:
+        overrides["chunk_gate"] = chunk_gate
     config = PipelineConfig(**overrides)
     pipeline = SemanticPipeline(config=config)
 
@@ -178,6 +204,19 @@ def convert(
     keep_diagrams: bool = typer.Option(
         False, "--keep-diagrams", help="Keep SVG diagram HTML as-is."
     ),
+    quarantine: bool | None = typer.Option(
+        None,
+        "--quarantine/--no-quarantine",
+        help="Route low-confidence conversions (no recognised content container, or many "
+        "leftover storage tags) to an _quarantine/ subdir and exit non-zero, instead of "
+        "letting them enter the corpus. Unset uses PIPELINE_CONVERT_QUARANTINE.",
+    ),
+    max_unrecognized: int | None = typer.Option(
+        None,
+        "--max-unrecognized",
+        help="Quarantine when the dropped/unrecognised-construct count exceeds this. "
+        "Unset uses PIPELINE_CONVERT_MAX_UNRECOGNIZED (default 8).",
+    ),
     pandoc_path: str | None = typer.Option(None, "--pandoc-path", help="Path to pandoc binary."),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
 ) -> None:
@@ -185,7 +224,14 @@ def convert(
     import json
     from datetime import UTC, datetime
 
+    from .config import PipelineConfig
     from .html_to_gitlab_md import ConversionError, convert_file, resolve_pandoc
+
+    _cfg = PipelineConfig()
+    quarantine = _cfg.convert_quarantine if quarantine is None else quarantine
+    max_unrecognized = (
+        _cfg.convert_max_unrecognized if max_unrecognized is None else max_unrecognized
+    )
 
     # Fail fast if pandoc is missing — same error for every file otherwise.
     try:
@@ -208,6 +254,7 @@ def convert(
     macro_totals: dict[str, int] = {}
     warnings_total = 0
     succeeded = 0
+    quarantined = 0
 
     for src in track(html_files, description="Converting..."):
         # Mirror the source tree under output_dir when one is given.
@@ -218,7 +265,9 @@ def convert(
             out_target = None
 
         try:
-            out_path, _md, metrics, notes = convert_file(
+            # Convert in-memory (write=False) so the confidence gate can route a
+            # low-confidence result to _quarantine/ before it lands in the corpus.
+            out_path, md, metrics, notes = convert_file(
                 src,
                 out_target,
                 selector=selector,
@@ -229,25 +278,44 @@ def convert(
                 space=space,
                 source_url=source_url,
                 labels=label_list,
+                write=False,
             )
+            reasons = _convert_confidence_reasons(notes, max_unrecognized) if quarantine else []
+            if reasons:
+                write_path = out_path.parent / "_quarantine" / out_path.name
+            else:
+                write_path = out_path
+            write_path.parent.mkdir(parents=True, exist_ok=True)
+            write_path.write_text(md, encoding="utf-8")
+
             slim = {k: metrics[k] for k in _METRIC_FIELDS}
             for k in _METRIC_FIELDS:
                 totals[k] += slim[k]
             for key, n in notes.get("macro_counts", {}).items():
                 macro_totals[key] = macro_totals.get(key, 0) + n
             warnings_total += len(notes.get("warnings", []))
-            succeeded += 1
+            status = "quarantined" if reasons else "ok"
+            if reasons:
+                quarantined += 1
+            else:
+                succeeded += 1
             file_entries.append(
                 {
                     "source": str(src),
-                    "output": str(out_path),
-                    "status": "ok",
+                    "output": str(write_path),
+                    "status": status,
                     "metrics": slim,
                     "notes": notes,
+                    "quarantine_reasons": reasons,
                     "error": None,
                 }
             )
-            if verbose:
+            if reasons:
+                console.print(
+                    f"  [yellow]quarantine[/yellow] {src.name}: {'; '.join(reasons)} "
+                    f"-> {write_path}"
+                )
+            elif verbose:
                 summary = ", ".join(f"{slim[k]} {k}" for k in _METRIC_FIELDS)
                 nw = len(notes.get("warnings", []))
                 suffix = f" ({nw} warning(s))" if nw else ""
@@ -260,18 +328,20 @@ def convert(
                     "status": "error",
                     "metrics": None,
                     "notes": None,
+                    "quarantine_reasons": [],
                     "error": str(exc),
                 }
             )
             console.print(f"  [red]fail[/red] {src.name}: {exc}")
 
-    failed = len(html_files) - succeeded
+    failed = len(html_files) - succeeded - quarantined
     report_doc = {
         "generated_at": datetime.now(UTC).isoformat(),
         "input_dir": str(input_dir),
         "glob": glob,
         "total_files": len(html_files),
         "succeeded": succeeded,
+        "quarantined": quarantined,
         "failed": failed,
         "warnings_total": warnings_total,
         "totals": totals,
@@ -291,9 +361,10 @@ def convert(
     # ASCII-safe summary line (cp1252 consoles choke on emoji when redirected).
     console.print(
         f"\n[green]Done.[/green] {succeeded}/{len(html_files)} files converted "
-        f"({failed} failed, {warnings_total} warning(s)). Report -> {report}"
+        f"({quarantined} quarantined, {failed} failed, {warnings_total} warning(s)). "
+        f"Report -> {report}"
     )
-    raise typer.Exit(1 if failed else 0)
+    raise typer.Exit(1 if (failed or quarantined) else 0)
 
 
 # ── export ────────────────────────────────────────────────────────────────────

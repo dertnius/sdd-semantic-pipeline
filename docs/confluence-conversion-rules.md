@@ -150,6 +150,14 @@ else routes to **Stage A2** (rendered export, lxml acceptable). `<at:` is requir
 bodies may contain only `at:*` tags. The sniff cannot misroute rendered input: `export_view` escapes code
 samples to `&lt;ac:`, so a literal `<ac:` byte sequence occurs only in real storage-format input (verified).
 
+> **IMPLEMENTED (rendered-only scope).** `html_to_gitlab_md._reject_if_storage_format`
+> applies this sniff at the top of `convert_file`: a literal `<ac:`/`<ri:`/`<at:` opener
+> ⇒ **refuse with `ConversionError`** ("rendered HTML only"). Stage A1 / the SF-* rules
+> below are **not** wired into `convert_file` (the door rejects storage input first); the
+> `_normalise_ac_*` handlers remain only for direct unit tests. Full storage support
+> stays deferred — supporting it means routing storage input to `html.parser` + Stage A1
+> instead of rejecting it. Rendered input (Stage A2) is the supported path.
+
 ---
 
 ## 2. Stage A1 — pre-clean rules for STORAGE-FORMAT input (SF-*)
