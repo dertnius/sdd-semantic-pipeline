@@ -26,6 +26,7 @@ dependencies:
   - python=3.11
   - pandoc>=3.1          # system binary — critical; must come from conda-forge
   - pip>=24
+  - tiktoken>=0.4          # for token counting in LLMs
 
   # ── pip-installed Python packages ─────────────────────────────────────────
   # We use pip for everything Python so version resolution is predictable and
@@ -39,6 +40,7 @@ dependencies:
     - pydantic-settings>=2.2
     - typer>=0.12
     - rich>=13.7
+    - tiktoken>=0.4
 
     # Optional chroma backend (dev keeps it so the chroma tests run)
     - chromadb>=0.5
@@ -49,6 +51,7 @@ dependencies:
     - pytest-mock>=3.14
     - ruff>=0.4
     - mypy>=1.9
+    - tiktoken>=0.4
 
     # Local package (editable)
     - -e .
