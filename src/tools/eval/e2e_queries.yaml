@@ -1,5 +1,5 @@
 # Frozen golden set for the real-document e2e test (tests/test_e2e_real_docs.py).
-# Authored against the pinned content of the fetched docs (eval/e2e_sources.yaml)
+# Authored against the pinned content of the fetched docs (src/tools/eval/e2e_sources.yaml)
 # plus the in-repo RetailNexus SAD. `doc` is the file basename; `section` is a
 # case-insensitive substring of the chunk breadcrumb (omit for doc-level).
 # Categories: cross-reference (directional, RetailNexus) | prose | lexical.

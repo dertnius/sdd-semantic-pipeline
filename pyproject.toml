@@ -44,6 +44,7 @@ sdd-pipeline = "sdd_pipeline.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+exclude = ["tools*"]   # dev tooling/eval corpus under src/tools/ is not part of the shipped package
 
 [tool.setuptools.package-data]
 "sdd_pipeline" = ["py.typed"]
@@ -77,6 +78,9 @@ fail_under    = 70
 src            = ["src"]
 target-version = "py311"
 line-length    = 100
+# Dev tooling + eval corpus live under src/tools/ but are not the shipped package;
+# keep them out of the lint gate (they were not gated as the old top-level scripts/).
+extend-exclude = ["src/tools"]
 
 [tool.ruff.lint]
 select  = ["E", "F", "I", "N", "UP", "B", "C4", "PTH", "RUF"]
@@ -111,4 +115,4 @@ strict                = false
 warn_return_any       = true
 warn_unused_configs   = true
 ignore_missing_imports = true
-exclude               = ["tests/"]
+exclude               = ["tests/", "src/tools/"]

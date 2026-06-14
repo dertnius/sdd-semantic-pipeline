@@ -125,7 +125,7 @@ try:
             "persisted as JSON) or 'chroma' (requires pip install '.[chroma]').",
         )
         chroma_persist_dir: str = Field(
-            default="./data/chroma",
+            default="./build/index",
             description="Directory where the vector index persists (Chroma files, or "
             "<collection>.json for the memory backend).",
         )
@@ -180,7 +180,7 @@ except ImportError:
         entity_vocab_path: str = ""
         inventory_enrichment: bool = True
         vector_store_backend: str = "memory"
-        chroma_persist_dir: str = "./data/chroma"
+        chroma_persist_dir: str = "./build/index"
         collection_name: str = "sdd_docs"
         hybrid_search: bool = False
         hybrid_candidate_pool: int = 50

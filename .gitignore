@@ -31,14 +31,11 @@ htmlcov/
 !.env.example
 
 # ── Generated pipeline artifacts ─────────────────────────────────────────────
-# dump.py output (ast.json / enriched.json / chunks.json)
-out/
-# convert / export / index output dirs
+# All generated output lives under build/: convert/export/lint reports, the
+# converted .md (build/md/), the vector index (build/index/ — the default
+# PIPELINE_CHROMA_PERSIST_DIR), dump.py output (build/dump/), and the
+# scan-taxonomy review artifact (build/field_vocabulary.json).
 build/
-# ChromaDB persistence (default PIPELINE_CHROMA_PERSIST_DIR)
-data/*
-# …but the template-derived taxonomy is a committed, regenerable artifact.
-!data/taxonomy.json
 # per-file export artifacts + reports, wherever they land
 *.chunks.json
 *.chunks.jsonl
@@ -46,11 +43,14 @@ export-report.json
 conversion-report.json
 # scratch / temp
 .tmp_dc/
-# e2e corpus: fetched on demand from eval/e2e_sources.yaml, never committed
-eval/e2e_corpus/
-# NOTE: docs/entity-vocab.json is a committed seed example — keep it tracked.
+# transient test-run output dirs (e.g. tests/convert/examples/out/) — never committed
+out/
+# e2e corpus: fetched on demand from src/tools/eval/e2e_sources.yaml, never committed
+src/tools/eval/e2e_corpus/
+# NOTE: config/entity-vocab.json + config/taxonomy.json are committed seed
+# examples — keep them tracked (config/ is not ignored).
 # Regenerated each eval run; holds machine-specific absolute-path doc_id hashes.
-eval/corpus_manifest.json
+src/tools/eval/corpus_manifest.json
 
 # ── Editors / OS ─────────────────────────────────────────────────────────────
 .idea/

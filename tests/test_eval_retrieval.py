@@ -1,5 +1,5 @@
 """
-Unit tests for the retrieval-eval scoring core (``scripts/eval_retrieval.py``).
+Unit tests for the retrieval-eval scoring core (``src/tools/scripts/eval_retrieval.py``).
 
 These exercise the recall@k / MRR math and the section-matcher join against
 hand-built rankings — no embedding model, no pandoc, no index. The point is that
@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-# Load scripts/eval_retrieval.py by path (scripts/ is not on the import path).
-_SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "eval_retrieval.py"
+# Load src/tools/scripts/eval_retrieval.py by path (src/tools/scripts/ is not on the import path).
+_SCRIPT = Path(__file__).resolve().parent.parent / "src" / "tools" / "scripts" / "eval_retrieval.py"
 _spec = importlib.util.spec_from_file_location("eval_retrieval", _SCRIPT)
 assert _spec and _spec.loader
 ev = importlib.util.module_from_spec(_spec)

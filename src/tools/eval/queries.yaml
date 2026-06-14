@@ -1,12 +1,12 @@
 # Frozen retrieval golden set — DO NOT edit to chase a score.
 #
-# Authored against the corpus in eval/corpus/ BEFORE any enrichment change, so
+# Authored against the corpus in src/tools/eval/corpus/ BEFORE any enrichment change, so
 # the Baseline is honest. Each query lists expected SECTIONS (not chunk_ids):
-#   doc      — path relative to eval/corpus/ (POSIX)
+#   doc      — path relative to src/tools/eval/corpus/ (POSIX)
 #   section  — case-insensitive substring of the chunk breadcrumb
 #              (omit it for a doc-level matcher: any chunk in that doc counts)
 # A retrieved chunk is a hit when its (doc, breadcrumb) satisfies a matcher.
-# See scripts/eval_retrieval.py and the plan for why section-granularity.
+# See src/tools/scripts/eval_retrieval.py and the plan for why section-granularity.
 #
 # Categories:
 #   cross-reference — service/event/dependency questions; the queries the

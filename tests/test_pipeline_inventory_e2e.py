@@ -10,7 +10,7 @@ from sdd_pipeline.config import PipelineConfig
 from sdd_pipeline.models import ContentBlock, ContentType, DocumentMetadata, DocumentModel, Section
 from sdd_pipeline.pipeline import SemanticPipeline
 
-CORPUS = Path(__file__).resolve().parent.parent / "eval" / "corpus"
+CORPUS = Path(__file__).resolve().parent.parent / "src" / "tools" / "eval" / "corpus"
 
 
 def _doc_with_table(table_md: str) -> DocumentModel:

@@ -8,7 +8,7 @@ retrieval with inventory enrichment on vs off.
 
 The corpus is fetched on demand (the only networked code) — run first:
 
-    python scripts/fetch_e2e_corpus.py
+    python src/tools/scripts/fetch_e2e_corpus.py
 
 Then:  PYTHONUTF8=1 pytest tests/test_e2e_real_docs.py -q -s
 
@@ -32,13 +32,13 @@ from sdd_pipeline.config import PipelineConfig
 from sdd_pipeline.pipeline import SemanticPipeline, _stable_doc_id
 
 REPO = Path(__file__).resolve().parent.parent
-E2E_CORPUS = REPO / "eval" / "e2e_corpus"
-RETAILNEXUS = REPO / "eval" / "corpus" / "sad-retailnexus-oms.md"
-QUERIES = REPO / "eval" / "e2e_queries.yaml"
+E2E_CORPUS = REPO / "src" / "tools" / "eval" / "e2e_corpus"
+RETAILNEXUS = REPO / "src" / "tools" / "eval" / "corpus" / "sad-retailnexus-oms.md"
+QUERIES = REPO / "src" / "tools" / "eval" / "e2e_queries.yaml"
 
 # Reuse the eval harness's pure scorers + mock embedder by loading it by path.
 _SPEC = importlib.util.spec_from_file_location(
-    "eval_retrieval", REPO / "scripts" / "eval_retrieval.py"
+    "eval_retrieval", REPO / "src" / "tools" / "scripts" / "eval_retrieval.py"
 )
 assert _SPEC and _SPEC.loader
 ev = importlib.util.module_from_spec(_SPEC)
@@ -49,7 +49,7 @@ pytestmark = [
     pytest.mark.slow,
     pytest.mark.skipif(
         not list(E2E_CORPUS.glob("*.md")),
-        reason="e2e corpus absent — run `python scripts/fetch_e2e_corpus.py` first",
+        reason="e2e corpus absent — run `python src/tools/scripts/fetch_e2e_corpus.py` first",
     ),
 ]
 

@@ -2,12 +2,12 @@
 """
 Fetch the e2e corpus — the ONLY networked code in this project.
 
-Reads ``eval/e2e_sources.yaml`` and downloads each pinned URL into the gitignored
-``eval/e2e_corpus/``. HTML sources are converted to Markdown via the pipeline's
+Reads ``src/tools/eval/e2e_sources.yaml`` and downloads each pinned URL into the gitignored
+``src/tools/eval/e2e_corpus/``. HTML sources are converted to Markdown via the pipeline's
 converter; Markdown sources are saved as-is. Pipeline code itself never touches the
 network — this script is run manually before the (slow, skip-if-absent) e2e test.
 
-    python scripts/fetch_e2e_corpus.py
+    python src/tools/scripts/fetch_e2e_corpus.py
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ SOURCES = REPO / "eval" / "e2e_sources.yaml"
 
 def _download(url: str) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": "sdd-pipeline-e2e/1.0"})
-    # URLs are pinned https sources from eval/e2e_sources.yaml.
+    # URLs are pinned https sources from src/tools/eval/e2e_sources.yaml.
     with urllib.request.urlopen(req, timeout=60) as resp:
         return resp.read()
 

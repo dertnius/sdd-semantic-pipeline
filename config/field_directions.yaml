@@ -1,7 +1,7 @@
 # Dependency-direction map for enrichment routing.
 #
 # Maps a table FIELD NAME to a dependency direction. Built by reviewing the field
-# vocabulary that `sdd-pipeline scan-taxonomy` emits (data/field_vocabulary.json),
+# vocabulary that `sdd-pipeline scan-taxonomy` emits (build/field_vocabulary.json),
 # so the names here are grounded in what the corpus actually contains.
 #
 # Matching (M3 enrich):
