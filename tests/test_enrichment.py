@@ -526,6 +526,33 @@ class TestScanCorpus:
         vocab = scan_corpus([_doc("d1", "Doc", "plain prose")], seed_terms=["LegacyTerm"])
         assert "LegacyTerm" in vocab
 
+    def test_ignores_allcaps_inside_fenced_code(self):
+        # A fenced DSL block's ALLCAPS tokens must not become vocabulary; real
+        # ALLCAPS entities in surrounding prose still surface.
+        code = ContentBlock(
+            block_id="c1",
+            content_type=ContentType.CODE,
+            text="```java\nFILE|REPLACE|SOURCE|TARGET\n```",
+        )
+        prose = ContentBlock(
+            block_id="b1",
+            content_type=ContentType.PARAGRAPH,
+            text="The XENON tool drives POLUTIL.",
+        )
+        doc = DocumentModel(
+            doc_id="d1",
+            metadata=DocumentMetadata(title="DSL", space="SP"),
+            root_sections=[
+                Section(
+                    level=1, title="DSL", section_id="s1", breadcrumb=["DSL"], blocks=[code, prose]
+                )
+            ],
+        )
+        vocab = scan_corpus([doc])
+        for tok in ("FILE", "REPLACE", "SOURCE", "TARGET"):
+            assert tok not in vocab, f"{tok} leaked from fenced code"
+        assert "XENON" in vocab and "POLUTIL" in vocab
+
     def test_result_is_sorted_and_deduped(self):
         docs = [_doc("d1", "A", "CQRS CQRS BFF"), _doc("d2", "B", "BFF")]
         vocab = scan_corpus(docs)

@@ -31,6 +31,25 @@ def test_detects_sad_by_fingerprint():
     assert detect_doc_type(doc) == "sad"
 
 
+def test_detects_pragmatic_sad_by_topical_headings():
+    # A SAD that uses numbered topical headings instead of the formal template.
+    doc = _doc(
+        [
+            "1. Architecture",
+            "2. Operational notes",
+            "3. Components",
+            "5. Data Model",
+            "6. Decision Record",
+        ]
+    )
+    assert detect_doc_type(doc) == "sad"
+
+
+def test_single_architecture_heading_not_sad():
+    # One topical heading is below threshold → not a false-positive SAD.
+    assert detect_doc_type(_doc(["Architecture", "Overview", "FAQ"])) == "unknown"
+
+
 def test_unknown_when_below_threshold():
     doc = _doc(["Overview", "Installation", "FAQ"])
     assert detect_doc_type(doc) == "unknown"

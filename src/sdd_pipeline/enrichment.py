@@ -234,6 +234,11 @@ _ALLCAPS_PATTERN = re.compile(r"\b([A-Z][A-Z0-9]{2,})\b")
 #   `settlement-engine`, `kube-system`, `x_forwarded_for`
 _BACKTICK_PATTERN = re.compile(r"`([A-Za-z][A-Za-z0-9_./-]{2,})`")
 
+# Fenced code blocks (``` or ~~~). Blanked before the corpus scan mines a section,
+# so ALLCAPS tokens inside code don't surface as entities. Inline ``code`` (single
+# backticks) is intentionally left intact — it is a deliberate discovery signal.
+_FENCED = re.compile(r"```[\s\S]*?```|~~~[\s\S]*?~~~")
+
 # Common ALLCAPS noise excluded from vocabulary — generic English abbreviations,
 # terms already normalised by _TECH_ / _PROTOCOL_ patterns, and SQL keywords that
 # show up as uppercase tokens inside fenced code blocks.
@@ -974,9 +979,12 @@ def _collect_section_terms(section: Section, found: set[str]) -> None:
     """Recursive read-only walk; accumulate raw candidates into *found*.
 
     Touches no Section attribute — safe to call before :func:`enrich_document`.
+    Fenced code is blanked before mining (mirrors :func:`extract_prose._section_text`)
+    so ALLCAPS tokens inside code (a ``brush: java`` DSL's ``FILE``/``REPLACE`` …)
+    don't pollute the corpus vocabulary; inline ``code`` is left intact.
     """
     text = section.title + "\n" + "\n".join(b.text for b in section.blocks)
-    found.update(_collect_raw_terms(text))
+    found.update(_collect_raw_terms(_FENCED.sub(" ", text)))
     for sub in section.subsections:
         _collect_section_terms(sub, found)
 

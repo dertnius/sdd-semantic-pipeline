@@ -134,6 +134,20 @@ def _has_signal(text: str) -> bool:
     return bool(_SIGNAL_RE.search(text.replace("`", "")))
 
 
+# A short, context-free *lead-in* label: a colon-terminated cue ("Release
+# checklist:") or a bare filename ("application.yaml"). Such a block carries no
+# standalone meaning and is coalesced into the block that follows it.
+_LEADIN_MAX_CHARS = 48
+_FILENAME_RE = re.compile(r"^[\w./-]+\.[A-Za-z0-9]{1,6}$")
+
+
+def _is_leadin(text: str) -> bool:
+    t = text.strip()
+    if not t or len(t) > _LEADIN_MAX_CHARS or "\n" in t:
+        return False
+    return t.endswith(":") or bool(_FILENAME_RE.match(t))
+
+
 def _split_code(text: str, max_chars: int, language: str | None) -> list[str]:
     """Split an oversized fenced code block on line boundaries, re-fencing each piece.
 
@@ -394,10 +408,24 @@ def _section_to_chunks(
                 emit(text, block.content_type, block.language, block.block_id)
         flush()
     else:
-        for block in section.blocks:
+        # No merge: emit one chunk per block, but coalesce a short *lead-in* label
+        # (ends with ':' or a bare filename) into the block that follows it, so
+        # context-free fragments like "Release checklist:" or "application.yaml"
+        # don't become hollow standalone chunks.
+        signal_blocks = [b for b in section.blocks if b.text.strip() and _has_signal(b.text)]
+        pending: tuple[str, str] | None = None  # (lead-in text, its block_id)
+        for i, block in enumerate(signal_blocks):
             text = block.text.strip()
-            if text and _has_signal(text):
-                emit(text, block.content_type, block.language, block.block_id)
+            if pending is not None:
+                emit(f"{pending[0]}\n\n{text}", block.content_type, block.language, pending[1])
+                pending = None
+                continue
+            if _is_leadin(text) and i + 1 < len(signal_blocks):
+                pending = (text, block.block_id)
+                continue
+            emit(text, block.content_type, block.language, block.block_id)
+        if pending is not None:  # trailing lead-in with nothing to attach to
+            emit(pending[0], ContentType.PARAGRAPH, None, pending[1])
 
     for sub in section.subsections:
         chunks.extend(

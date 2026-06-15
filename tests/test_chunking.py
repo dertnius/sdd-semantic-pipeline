@@ -48,6 +48,65 @@ def test_faq_genre_pairs_question_with_answer():
     assert "logs stored?" in chunks[1].content and "logs directory" in chunks[1].content
 
 
+def test_leadin_label_coalesces_into_following_block():
+    sec = Section(
+        level=1,
+        title="Ops",
+        section_id="s",
+        breadcrumb=["Ops"],
+        blocks=[
+            ContentBlock(
+                block_id="b1", content_type=ContentType.PARAGRAPH, text="Release checklist:"
+            ),
+            ContentBlock(
+                block_id="b2", content_type=ContentType.LIST, text="- bump version\n- tag release"
+            ),
+        ],
+    )
+    doc = DocumentModel(doc_id="d", metadata=DocumentMetadata(title="T"), root_sections=[sec])
+    chunks = chunk_document(doc)  # default: no merge
+    assert len(chunks) == 1  # lead-in folded into the list chunk, not standalone
+    assert "Release checklist:" in chunks[0].content and "bump version" in chunks[0].content
+    assert chunks[0].content_type == ContentType.LIST
+
+
+def test_bare_filename_leadin_coalesces_into_code():
+    sec = Section(
+        level=1,
+        title="Config",
+        section_id="s",
+        breadcrumb=["Config"],
+        blocks=[
+            ContentBlock(
+                block_id="b1", content_type=ContentType.PARAGRAPH, text="application.yaml"
+            ),
+            ContentBlock(
+                block_id="b2",
+                content_type=ContentType.CODE,
+                language="yaml",
+                text="```yaml\nport: 8080\n```",
+            ),
+        ],
+    )
+    doc = DocumentModel(doc_id="d", metadata=DocumentMetadata(title="T"), root_sections=[sec])
+    chunks = chunk_document(doc)
+    assert len(chunks) == 1
+    assert "application.yaml" in chunks[0].content and "port: 8080" in chunks[0].content
+
+
+def test_trailing_leadin_emitted_alone():
+    sec = Section(
+        level=1,
+        title="Ops",
+        section_id="s",
+        breadcrumb=["Ops"],
+        blocks=[ContentBlock(block_id="b1", content_type=ContentType.PARAGRAPH, text="See below:")],
+    )
+    doc = DocumentModel(doc_id="d", metadata=DocumentMetadata(title="T"), root_sections=[sec])
+    chunks = chunk_document(doc)
+    assert len(chunks) == 1 and "See below:" in chunks[0].content
+
+
 def test_keyphrase_fn_only_enriches_prose_genre_chunks():
     body = "The migration strategy reduces downtime. Our migration strategy matters greatly."
     prose = Section(
@@ -416,11 +475,16 @@ class TestMergeProse:
         assert "To use VSCode" in first.content
         assert "Install VSCode" in first.content
 
-    def test_default_does_not_merge(self):
+    def test_default_coalesces_leadin_only(self):
         doc = self._mixed_doc()
         chunks = chunk_document(doc)  # merge_prose defaults False
-        # One chunk per block: 2 prose + 1 code + 1 prose = 4.
-        assert len(chunks) == 4
+        # Default doesn't pack general prose, but the lead-in label
+        # ("To use VSCode … development:") folds into the list that follows it:
+        # (b1+b2), b3 code, b4 prose = 3 chunks.
+        assert len(chunks) == 3
+        assert any("To use VSCode" in c.content and "Install VSCode" in c.content for c in chunks)
+        assert any(c.content_type == ContentType.CODE for c in chunks)
+        assert any(c.content == "Then set breakpoints." for c in chunks)
 
     def test_code_block_stays_separate_and_keeps_language(self):
         chunks = chunk_document(self._mixed_doc(), merge_prose=True)
