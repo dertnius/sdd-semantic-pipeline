@@ -253,6 +253,39 @@ def _serialize_definition_list(elem: pf.DefinitionList) -> str:
     return "\n".join(lines)
 
 
+def _collect_refs_into(elem: pf.Element, meta: dict[str, list[str]]) -> None:
+    """Accumulate link cross-refs and image captions from *elem* into *meta*.
+
+    Links become ``meta["xref"]`` entries (``text -> target``) and images become
+    ``meta["figure"]`` captions (alt text only — asset URLs stay out). Both are
+    metadata-only facets, excluded from the embed vector, so a link target and a
+    figure caption are preserved for display/filtering without entering the text.
+    """
+
+    def add(key: str, value: str) -> None:
+        if value:
+            bucket = meta.setdefault(key, [])
+            if value not in bucket:
+                bucket.append(value)
+
+    def visit(node: pf.Element) -> None:
+        if isinstance(node, pf.Link):
+            text = _serialize_inline_list(node.content).strip()
+            url = (node.url or "").strip()
+            add("xref", f"{text} -> {url}" if text and url else (url or text))
+        elif isinstance(node, pf.Image):
+            add("figure", _serialize_inline_list(node.content).strip())
+        content = getattr(node, "content", None)
+        if content is not None:
+            try:
+                for child in content:
+                    visit(child)
+            except TypeError:
+                pass
+
+    visit(elem)
+
+
 def _elem_to_content_block(
     elem: pf.Block,
     doc_id: str,
@@ -382,6 +415,7 @@ def build_structural_model(
     # chunks instead of silently yielding none.
     preamble_id = _short_hash(doc_id, "__preamble__")
     preamble_blocks: list[ContentBlock] = []
+    preamble_meta: dict[str, list[str]] = {}
 
     for elem in doc.content:
         if isinstance(elem, pf.Header):
@@ -413,6 +447,11 @@ def build_structural_model(
             if cb is not None:
                 (stack[-1].blocks if stack else preamble_blocks).append(cb)
                 block_counter += 1
+            # Cross-references and figure captions are kept as metadata facets
+            # (display/filter only — excluded from the embed vector), so a link's
+            # target and an image's caption survive without polluting the text.
+            owner_meta = stack[-1].metadata if stack else preamble_meta
+            _collect_refs_into(elem, owner_meta)
 
     if preamble_blocks:
         preamble_title = (metadata.title or "Document").strip() or "Document"
@@ -424,6 +463,7 @@ def build_structural_model(
                 section_id=preamble_id,
                 breadcrumb=[preamble_title],
                 blocks=preamble_blocks,
+                metadata=preamble_meta,
             ),
         )
         logger.warning(

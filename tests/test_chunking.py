@@ -131,6 +131,16 @@ class TestSplitText:
         pieces = _split_text(text, 20, ContentType.TABLE, None, overlap_sentences=2)
         assert sum("Row one cell." in p for p in pieces) == 1
 
+    def test_list_splits_on_item_boundaries(self):
+        # Items with sentence punctuation must split between items, never mid-item.
+        items = [f"- Item {i}. It has detail." for i in range(8)]
+        text = "\n".join(items)
+        pieces = _split_text(text, 60, ContentType.LIST, None)
+        assert len(pieces) > 1
+        for p in pieces:
+            for line in p.split("\n"):
+                assert line in items  # each line is a whole original item
+
 
 class TestSplitCode:
     def _fenced(self, lines: list[str], lang: str = "python") -> str:

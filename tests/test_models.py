@@ -93,6 +93,13 @@ class TestSemanticChunk:
         text = chunk.to_embed_text()
         assert "[overview]" in text
 
+    def test_ner_metadata_excluded_from_vector_but_kept_in_dict(self):
+        # spaCy NER facets are metadata/display only — never the embed vector.
+        chunk = self._make_chunk(metadata={"ner:person": ["Ada Lovelace"], "ner:org": ["Acme"]})
+        assert "Ada Lovelace" not in chunk.to_embed_text()
+        assert "Acme" not in chunk.to_embed_text()
+        assert chunk.to_dict()["metadata"]["ner:person"] == ["Ada Lovelace"]
+
     def test_to_embed_text_contains_breadcrumb(self):
         chunk = self._make_chunk(breadcrumb=["Root", "Child"])
         text = chunk.to_embed_text()

@@ -61,6 +61,40 @@ class TestDefinitionList:
         assert check_chunk(def_chunks[0]).is_clean
 
 
+def _para_with_ref() -> dict:
+    link = {
+        "t": "Link",
+        "c": [
+            ["", [], []],
+            [{"t": "Str", "c": "Auth"}, {"t": "Space"}, {"t": "Str", "c": "Guide"}],
+            ["https://example.com/auth", ""],
+        ],
+    }
+    img = {
+        "t": "Image",
+        "c": [
+            ["", [], []],
+            [{"t": "Str", "c": "Topology"}, {"t": "Space"}, {"t": "Str", "c": "diagram"}],
+            ["https://example.com/img.png", ""],
+        ],
+    }
+    return {"t": "Para", "c": [{"t": "Str", "c": "See"}, {"t": "Space"}, link, {"t": "Space"}, img]}
+
+
+class TestRefsCapture:
+    def test_xref_and_figure_captured_in_metadata(self):
+        doc = build_structural_model(_ast_titled([_header1("Auth"), _para_with_ref()]), doc_id="r1")
+        section = doc.root_sections[0]
+        assert any("https://example.com/auth" in x for x in section.metadata.get("xref", []))
+        assert any("Topology diagram" in f for f in section.metadata.get("figure", []))
+
+    def test_link_target_excluded_from_embed_text(self):
+        doc = build_structural_model(_ast_titled([_header1("Auth"), _para_with_ref()]), doc_id="r2")
+        joined = "\n".join(c.to_embed_text() for c in chunk_document(doc))
+        # The full link target lives only in metadata, never the vector.
+        assert "https://example.com/auth" not in joined
+
+
 class TestShortHash:
     def test_returns_8_chars(self):
         assert len(_short_hash("a", "b", "c")) == 8

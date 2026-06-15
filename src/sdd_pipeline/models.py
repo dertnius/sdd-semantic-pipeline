@@ -22,7 +22,9 @@ from typing import Any, Literal
 #        code-aware splitting, and the recovered DEFINITION block type.
 #   v3 — HTTP endpoints as keywords, Field|Value tables routed key-value (more
 #        metadata keywords), FAQ Q&A pairing, and optional sentence overlap.
-EMBED_FORMAT_VERSION = 3
+#   v4 — admonition:<kind> tags and list-item-aware splitting. (spaCy NER and
+#        xref/figure facets are metadata-only, so they do not change the vector.)
+EMBED_FORMAT_VERSION = 4
 
 # Languages trusted enough to embed as a `lang:` token. A source's
 # syntaxhighlighter brush is often wrong for DSLs, so unknown labels are dropped
@@ -62,6 +64,11 @@ _EMBED_LANGS = frozenset(
         "r",
     }
 )
+
+
+# Metadata keys that are display/filter facets only and must never enter the embed
+# vector (see SemanticChunk.to_embed_text). ner:* keys are excluded by prefix there.
+_NON_EMBED_METADATA = frozenset({"raw_entities", "xref", "figure"})
 
 
 def _summarize_table_for_embed(content: str) -> str:
@@ -263,8 +270,15 @@ class SemanticChunk:
         # that just repeat a breadcrumb token and the audit-only raw_entities bucket.
         # Deduped, order-preserving (entities first).
         crumb_tokens = {b.strip().rstrip(":").lower() for b in self.breadcrumb}
+        # Display/filter-only metadata facets kept OUT of the vector: the audit-only
+        # raw_entities bucket, model-derived ner:* (spaCy — would make embeddings
+        # depend on whether spaCy is installed), and xref/figure (link targets and
+        # image captions are provenance, not semantic content).
         field_values = [
-            v for key, vals in self.metadata.items() if key != "raw_entities" for v in vals
+            v
+            for key, vals in self.metadata.items()
+            if key not in _NON_EMBED_METADATA and not key.startswith("ner:")
+            for v in vals
         ]
         seen_kw: set[str] = set()
         keywords: list[str] = []

@@ -112,7 +112,8 @@ class SemanticPipeline:
         from .extract_structural import build_structural_inventory
 
         merged: dict[str, list] = {}
-        for inv in (build_structural_inventory(doc), build_prose_inventory(doc)):
+        prose_inv = build_prose_inventory(doc, enable_ner=self.config.prose_ner)
+        for inv in (build_structural_inventory(doc), prose_inv):
             for section_id, records in inv.items():
                 merged.setdefault(section_id, []).extend(records)
         return merged

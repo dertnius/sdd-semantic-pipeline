@@ -348,6 +348,20 @@ class TestExtractEntities:
         # No uppercase method + leading slash → no endpoint false-positive.
         assert not any("/" in e for e in extract_entities("Get the orders and put them away."))
 
+
+class TestAdmonitionTags:
+    def test_blockquote_note_becomes_tag(self):
+        tags = extract_tags("Setup", SectionType.DEPLOYMENT, "> **Note**: restart after config.")
+        assert "admonition:note" in tags
+
+    def test_callout_syntax_and_warning(self):
+        tags = extract_tags("Risks", SectionType.SECURITY, "> [!WARNING] rotate keys now")
+        assert "admonition:warning" in tags
+
+    def test_plain_prose_has_no_admonition(self):
+        tags = extract_tags("Overview", SectionType.OVERVIEW, "This note describes the system.")
+        assert not any(t.startswith("admonition:") for t in tags)
+
     def test_empty_string(self):
         assert extract_entities("") == []
 

@@ -793,6 +793,14 @@ def extract_entities(text: str, extra_terms: Iterable[str] | None = None) -> lis
     return sorted(found)
 
 
+# Admonition label at the start of a blockquote line: ``> **Note**``, ``> [!TIP]``,
+# ``> WARNING:`` — optional bold/underscore emphasis or ``[!...]`` callout syntax.
+_ADMONITION_RE = re.compile(
+    r"(?im)^\s*>\s*(?:\[!\s*)?(?:\*\*|__)?\s*"
+    r"(note|warning|tip|important|caution|info|danger|attention)\b"
+)
+
+
 def extract_tags(
     title: str,
     section_type: SectionType,
@@ -806,6 +814,15 @@ def extract_tags(
     # (``> ``), so allow leading whitespace / one-or-more ``>`` before it.
     for lang in re.findall(r"(?m)^[ \t]*(?:>[ \t]*)*```(\w+)", blocks_text):
         tag = f"lang:{lang.lower()}"
+        if tag not in tags:
+            tags.append(tag)
+
+    # Admonition / callout flavour, recovered from a blockquote whose first token is
+    # a known label (``> **Note**``, ``> [!WARNING]``, ``> CAUTION:`` …). Emitted as
+    # an ``admonition:<kind>`` tag so a warning/caution passage is filterable and the
+    # signal reaches the embed header — no new ContentType or model change needed.
+    for kind in {m.lower() for m in _ADMONITION_RE.findall(blocks_text)}:
+        tag = f"admonition:{kind}"
         if tag not in tags:
             tags.append(tag)
 

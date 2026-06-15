@@ -65,6 +65,9 @@ def _split_text(
     if content_type == ContentType.CODE:
         return _split_code(text, max_chars, language)
 
+    if content_type == ContentType.LIST:
+        return _split_list(text, max_chars)
+
     chunks: list[str] = []
     current = ""
 
@@ -121,6 +124,9 @@ _SIGNAL_RE = re.compile(r"[A-Za-z0-9]")
 # A code-fence line (3+ backticks or tildes), as emitted by
 # ``structural._elem_to_content_block`` for code blocks.
 _FENCE_LINE = re.compile(r"^(`{3,}|~{3,})")
+# A list-item line opener ("- ", "* ", "1. "), possibly indented — as emitted by
+# ``structural._serialize_list``. Used to keep splits on item boundaries.
+_LIST_ITEM_LINE = re.compile(r"^\s*(?:[-*+]|\d+\.)\s")
 
 
 def _has_signal(text: str) -> bool:
@@ -180,6 +186,41 @@ def _split_code(text: str, max_chars: int, language: str | None) -> list[str]:
         cur.append(line)
         cur_len += add
     flush()
+    return [p for p in pieces if p.strip()]
+
+
+def _split_list(text: str, max_chars: int) -> list[str]:
+    """Split an oversized list on *item* boundaries, never mid-item.
+
+    A line opening a new item (``- ``/``N. ``, possibly indented) starts a new
+    item; continuation/nested lines attach to the current item. Items are then
+    packed into pieces ≤ *max_chars*; a single item longer than the budget stays
+    whole (over budget — the gate only *warns*), because severing an item is worse
+    for retrieval than a slightly long chunk.
+    """
+    items: list[str] = []
+    cur: list[str] = []
+    for line in text.split("\n"):
+        if _LIST_ITEM_LINE.match(line) and cur:
+            items.append("\n".join(cur))
+            cur = [line]
+        else:
+            cur.append(line)
+    if cur:
+        items.append("\n".join(cur))
+
+    pieces: list[str] = []
+    buf: list[str] = []
+    buf_len = 0
+    for item in items:
+        add = len(item) + (1 if buf else 0)
+        if buf and buf_len + add > max_chars:
+            pieces.append("\n".join(buf))
+            buf, buf_len, add = [], 0, len(item)
+        buf.append(item)
+        buf_len += add
+    if buf:
+        pieces.append("\n".join(buf))
     return [p for p in pieces if p.strip()]
 
 
@@ -269,14 +310,14 @@ def _section_to_chunks(
                     tags=list(section.tags),
                     depends_on=list(section.depends_on),
                     exposes=list(section.exposes),
-                    # Scope the audit-only raw_entities bucket to this chunk's own
-                    # text (mirrors the entity re-scoping above), so the section's
-                    # full mention list is not smeared onto every chunk. Named
-                    # inventory fields stay section-level (a table applies whole).
+                    # Scope per-mention buckets (audit-only raw_entities and the
+                    # ner:* facets) to this chunk's own text, so a section's full
+                    # mention list is not smeared onto every chunk. Named inventory
+                    # fields stay section-level (a table applies to the whole section).
                     metadata={
                         k: (
                             [v for v in vals if v in sub_text]
-                            if k == "raw_entities"
+                            if k == "raw_entities" or k.startswith("ner:")
                             else list(vals)
                         )
                         for k, vals in section.metadata.items()

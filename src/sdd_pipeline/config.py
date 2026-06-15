@@ -96,6 +96,12 @@ try:
             "into the next chunk so a boundary-straddling answer survives in at least one "
             "vector. Code and tables never overlap. 0 (default) keeps chunks disjoint.",
         )
+        prose_ner: bool = Field(
+            default=True,
+            description="Extract named entities (person/org/place/date) from prose via the "
+            "optional, import-guarded spaCy layer into ner:* metadata facets (display/filter "
+            "only — never the embed vector). Inert when spaCy/model is not installed.",
+        )
 
         # ── Chunk hygiene gate (Arm 1) ────────────────────────────────────────
         chunk_gate: bool = Field(
@@ -206,6 +212,7 @@ except ImportError:
         doc_profile_table_ratio: float = 0.4
         prose_keyphrases: bool = True
         chunk_overlap_sentences: int = 0
+        prose_ner: bool = True
         chunk_gate: bool = True
         embed_char_hard_cap: int = 2048
         convert_quarantine: bool = True
