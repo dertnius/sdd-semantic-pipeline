@@ -20,7 +20,9 @@ from typing import Any, Literal
 #   v1 — original format.
 #   v2 — added the prose `genre:` header token + RAKE keyphrases in `keywords:`,
 #        code-aware splitting, and the recovered DEFINITION block type.
-EMBED_FORMAT_VERSION = 2
+#   v3 — HTTP endpoints as keywords, Field|Value tables routed key-value (more
+#        metadata keywords), FAQ Q&A pairing, and optional sentence overlap.
+EMBED_FORMAT_VERSION = 3
 
 # Languages trusted enough to embed as a `lang:` token. A source's
 # syntaxhighlighter brush is often wrong for DSLs, so unknown labels are dropped

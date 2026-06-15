@@ -90,6 +90,12 @@ try:
             "prose-genre chunks (glossary/faq/howto/policy/narrative), enriching the vector "
             "for non-technical content. Technical/code sections are untouched.",
         )
+        chunk_overlap_sentences: int = Field(
+            default=0,
+            description="When > 0, a prose block that splits carries its trailing N sentences "
+            "into the next chunk so a boundary-straddling answer survives in at least one "
+            "vector. Code and tables never overlap. 0 (default) keeps chunks disjoint.",
+        )
 
         # ── Chunk hygiene gate (Arm 1) ────────────────────────────────────────
         chunk_gate: bool = Field(
@@ -199,6 +205,7 @@ except ImportError:
         doc_profile_code_ratio: float = 0.5
         doc_profile_table_ratio: float = 0.4
         prose_keyphrases: bool = True
+        chunk_overlap_sentences: int = 0
         chunk_gate: bool = True
         embed_char_hard_cap: int = 2048
         convert_quarantine: bool = True

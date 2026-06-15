@@ -15,6 +15,39 @@ from sdd_pipeline.models import (
 )
 
 
+def test_faq_genre_pairs_question_with_answer():
+    faq = Section(
+        level=1,
+        title="FAQ",
+        section_id="f",
+        breadcrumb=["FAQ"],
+        genre=Genre.FAQ,
+        blocks=[
+            ContentBlock(
+                block_id="b1",
+                content_type=ContentType.PARAGRAPH,
+                text="How do I reset my password?",
+            ),
+            ContentBlock(
+                block_id="b2",
+                content_type=ContentType.PARAGRAPH,
+                text="Open settings and click reset.",
+            ),
+            ContentBlock(
+                block_id="b3", content_type=ContentType.PARAGRAPH, text="Where are logs stored?"
+            ),
+            ContentBlock(
+                block_id="b4", content_type=ContentType.PARAGRAPH, text="Under the logs directory."
+            ),
+        ],
+    )
+    doc = DocumentModel(doc_id="d", metadata=DocumentMetadata(title="T"), root_sections=[faq])
+    chunks = chunk_document(doc)
+    assert len(chunks) == 2  # two Q&A pairs, each co-embedded
+    assert "reset my password?" in chunks[0].content and "Open settings" in chunks[0].content
+    assert "logs stored?" in chunks[1].content and "logs directory" in chunks[1].content
+
+
 def test_keyphrase_fn_only_enriches_prose_genre_chunks():
     body = "The migration strategy reduces downtime. Our migration strategy matters greatly."
     prose = Section(
@@ -78,6 +111,25 @@ class TestSplitText:
         assert len(result) >= 2
         for chunk in result:
             assert len(chunk) <= 200
+
+    def test_overlap_carries_trailing_sentence(self):
+        # Three sentences, split tight so each becomes its own piece; with overlap=1
+        # each piece after the first should start with the previous piece's last sentence.
+        text = "First sentence here. Second sentence here. Third sentence here."
+        pieces = _split_text(text, 25, ContentType.PARAGRAPH, None, overlap_sentences=1)
+        assert len(pieces) > 1
+        assert "First sentence here." in pieces[1]
+
+    def test_no_overlap_by_default(self):
+        text = "First sentence here. Second sentence here. Third sentence here."
+        pieces = _split_text(text, 25, ContentType.PARAGRAPH, None)
+        # Disjoint: the first sentence appears in exactly one piece.
+        assert sum("First sentence here." in p for p in pieces) == 1
+
+    def test_tables_never_overlap(self):
+        text = "Row one cell. Row two cell. Row three cell."
+        pieces = _split_text(text, 20, ContentType.TABLE, None, overlap_sentences=2)
+        assert sum("Row one cell." in p for p in pieces) == 1
 
 
 class TestSplitCode:

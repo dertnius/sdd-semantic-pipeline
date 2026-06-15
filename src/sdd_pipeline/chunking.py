@@ -38,6 +38,7 @@ def _split_text(
     max_chars: int,
     content_type: ContentType | None = None,
     language: str | None = None,
+    overlap_sentences: int = 0,
 ) -> list[str]:
     """
     Split *text* into pieces that each render ≤ *max_chars*.
@@ -52,6 +53,11 @@ def _split_text(
     (:func:`_split_code`) that breaks on line boundaries — never mid-token or
     mid-fence — and re-fences each piece, so a split never strands an unbalanced
     fence or severs an identifier.
+
+    When *overlap_sentences* > 0 and a *prose* block splits into multiple pieces,
+    the trailing N sentences of each piece are carried into the front of the next
+    so an answer straddling a boundary survives in at least one vector. Code and
+    table content never overlap.
     """
     if len(text) <= max_chars:
         return [text]
@@ -93,7 +99,20 @@ def _split_text(
     if current:
         chunks.append(current)
 
-    return [c for c in chunks if c.strip()]
+    result = [c for c in chunks if c.strip()]
+    if overlap_sentences > 0 and content_type != ContentType.TABLE and len(result) > 1:
+        result = _apply_sentence_overlap(result, overlap_sentences)
+    return result
+
+
+def _apply_sentence_overlap(pieces: list[str], overlap_sentences: int) -> list[str]:
+    """Prepend the trailing *overlap_sentences* sentences of each piece to the next."""
+    out = [pieces[0]]
+    for i in range(1, len(pieces)):
+        prev_sentences = re.split(r"(?<=[.!?])\s+", pieces[i - 1].strip())
+        tail = " ".join(s for s in prev_sentences[-overlap_sentences:] if s).strip()
+        out.append(f"{tail}\n\n{pieces[i]}" if tail else pieces[i])
+    return out
 
 
 import re  # noqa: E402 — imported here to keep the module-level import clean
@@ -201,6 +220,7 @@ def _section_to_chunks(
     merge_definitions: bool = False,
     embed_char_budget: int | None = None,
     keyphrase_fn: Callable[[str], list[str]] | None = None,
+    overlap_sentences: int = 0,
 ) -> list[SemanticChunk]:
     """Recursively convert a section and all its subsections into chunks."""
     chunks: list[SemanticChunk] = []
@@ -215,7 +235,9 @@ def _section_to_chunks(
     def emit(
         text: str, content_type: ContentType, language: str | None, first_block_id: str
     ) -> None:
-        for idx, sub_text in enumerate(_split_text(text, width, content_type, language)):
+        for idx, sub_text in enumerate(
+            _split_text(text, width, content_type, language, overlap_sentences)
+        ):
             if not _has_signal(sub_text):
                 continue  # drop punctuation/whitespace-only artifacts (e.g. "\\")
             # Scope entities to the chunk's own content when an extractor is
@@ -275,7 +297,32 @@ def _section_to_chunks(
     else:
         packable = frozenset()
 
-    if packable:
+    if section.genre == Genre.FAQ:
+        # Pair each question paragraph with the answer block(s) that follow it, so a
+        # Q&A pair co-embeds in one vector instead of fragmenting across chunks. A new
+        # question starts a new unit; leading non-question content forms its own unit.
+        group: list[str] = []
+        group_first_id = ""
+
+        def flush_group() -> None:
+            nonlocal group_first_id
+            if group:
+                emit("\n\n".join(group), ContentType.PARAGRAPH, None, group_first_id)
+                group.clear()
+                group_first_id = ""
+
+        for block in section.blocks:
+            text = block.text.strip()
+            if not text or not _has_signal(text):
+                continue
+            is_question = block.content_type == ContentType.PARAGRAPH and text.endswith("?")
+            if is_question and group:
+                flush_group()
+            if not group:
+                group_first_id = block.block_id
+            group.append(text)
+        flush_group()
+    elif packable:
         buf: list[str] = []
         buf_first_id: str = ""
         buf_len = 0
@@ -326,6 +373,7 @@ def _section_to_chunks(
                 merge_definitions,
                 embed_char_budget,
                 keyphrase_fn,
+                overlap_sentences,
             )
         )
 
@@ -340,6 +388,7 @@ def chunk_document(
     merge_definitions: bool = False,
     embed_char_budget: int | None = None,
     keyphrase_fn: Callable[[str], list[str]] | None = None,
+    overlap_sentences: int = 0,
 ) -> list[SemanticChunk]:
     """
     Convert an enriched :class:`DocumentModel` into a flat list of
@@ -367,6 +416,9 @@ def chunk_document(
                            its phrases are merged into each *prose-genre* chunk's
                            keywords (technical/``GENERAL`` sections are untouched),
                            enriching the vector for non-technical content.
+        overlap_sentences: When > 0, a prose block that splits carries its trailing
+                           N sentences into the next piece (code/tables never
+                           overlap), so a boundary-straddling answer survives.
 
     Returns:
         Ordered list of SemanticChunks (document order preserved).
@@ -392,6 +444,7 @@ def chunk_document(
                 merge_definitions,
                 embed_char_budget,
                 keyphrase_fn,
+                overlap_sentences,
             )
         )
 

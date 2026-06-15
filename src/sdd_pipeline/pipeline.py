@@ -138,6 +138,7 @@ class SemanticPipeline:
             merge_definitions=merge_definitions,
             embed_char_budget=self.config.embed_char_budget,
             keyphrase_fn=keyphrase_fn,
+            overlap_sentences=self.config.chunk_overlap_sentences,
         )
         logger.info("→ %d chunks", len(chunks))
         return chunks

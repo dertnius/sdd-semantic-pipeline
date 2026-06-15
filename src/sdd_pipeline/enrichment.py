@@ -212,6 +212,14 @@ _PROTOCOL_PATTERN = re.compile(
     r"JWT|OAuth2?|OIDC|SAML|mTLS|TLS|SSL|HTTPS?)\b"
 )
 
+# HTTP API endpoints: an uppercase method followed by a leading-slash path
+# (``GET /v1/users``, ``POST /api/orders/{id}``). The method + leading slash make
+# this tight enough not to fire on ordinary prose, so it is safe in the always-on
+# extractor; the endpoint becomes a first-class keyword for API docs.
+_ENDPOINT_PATTERN = re.compile(
+    r"\b(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+(/[A-Za-z0-9_/{}.:\-]*)"
+)
+
 # ── Extra patterns for corpus-wide vocabulary discovery ───────────────────────
 # These broaden recall and are used ONLY by scan_corpus() (vocabulary discovery),
 # never by extract_entities() (precise per-section tagging).
@@ -772,6 +780,8 @@ def extract_entities(text: str, extra_terms: Iterable[str] | None = None) -> lis
         found.add(match.group(1).replace(" ", ""))
     for match in _PROTOCOL_PATTERN.finditer(text):
         found.add(match.group(1))
+    for match in _ENDPOINT_PATTERN.finditer(text):
+        found.add(f"{match.group(1)} {match.group(2)}")
     if extra_terms:
         # Map each lower-cased hit back to the supplied spelling so output is
         # stable regardless of how the term is cased in the text.

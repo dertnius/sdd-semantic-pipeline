@@ -339,6 +339,15 @@ class TestExtractEntities:
         assert "This" not in entities
         assert "describes" not in entities
 
+    def test_extracts_http_endpoints(self):
+        entities = extract_entities("Call POST /v1/orders then GET /v1/orders/{id} to confirm.")
+        assert "POST /v1/orders" in entities
+        assert "GET /v1/orders/{id}" in entities
+
+    def test_endpoint_pattern_ignores_plain_prose(self):
+        # No uppercase method + leading slash → no endpoint false-positive.
+        assert not any("/" in e for e in extract_entities("Get the orders and put them away."))
+
     def test_empty_string(self):
         assert extract_entities("") == []
 
