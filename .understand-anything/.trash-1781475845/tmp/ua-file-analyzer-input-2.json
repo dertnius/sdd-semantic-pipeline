@@ -1,0 +1,45 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "src/sdd_pipeline/ast_parser.py", "language": "python", "sizeLines": 87, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/corpus_taxonomy.py", "language": "python", "sizeLines": 99, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/direction.py", "language": "python", "sizeLines": 51, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/doc_router.py", "language": "python", "sizeLines": 67, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/extract_structural.py", "language": "python", "sizeLines": 69, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/header_norm.py", "language": "python", "sizeLines": 49, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/structural.py", "language": "python", "sizeLines": 398, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/template_taxonomy.py", "language": "python", "sizeLines": 173, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "src/sdd_pipeline/ast_parser.py": [],
+    "src/sdd_pipeline/corpus_taxonomy.py": [
+      "src/sdd_pipeline/ast_parser.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/structural.py",
+      "src/sdd_pipeline/template_taxonomy.py"
+    ],
+    "src/sdd_pipeline/direction.py": [
+      "src/sdd_pipeline/header_norm.py"
+    ],
+    "src/sdd_pipeline/doc_router.py": [
+      "src/sdd_pipeline/header_norm.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/template_taxonomy.py"
+    ],
+    "src/sdd_pipeline/extract_structural.py": [
+      "src/sdd_pipeline/header_norm.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/template_taxonomy.py"
+    ],
+    "src/sdd_pipeline/header_norm.py": [],
+    "src/sdd_pipeline/structural.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/template_taxonomy.py": [
+      "src/sdd_pipeline/ast_parser.py",
+      "src/sdd_pipeline/header_norm.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/structural.py"
+    ]
+  }
+}

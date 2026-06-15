@@ -1,0 +1,219 @@
+{
+  "nodes": [
+    {
+      "id": "document:docs/learn/exercises/01-trace-a-document.md",
+      "type": "document",
+      "name": "01-trace-a-document.md",
+      "filePath": "docs/learn/exercises/01-trace-a-document.md",
+      "summary": "Read-only learning exercise that runs the model-free dump tool on two corpus documents and traces a page through the pipeline by inspecting the ast/enriched/chunks artifacts, calibrating the reader's mental model before any code changes.",
+      "tags": ["documentation", "exercise", "learning", "pipeline", "tracing"],
+      "complexity": "moderate",
+      "languageNotes": "Walkthrough-style exercise with a hidden answer key in a <details> block; references dump.py and enrichment internals (_SECTION_RULES, _write_to_field)."
+    },
+    {
+      "id": "document:docs/learn/exercises/02-add-a-section-keyword.md",
+      "type": "document",
+      "name": "02-add-a-section-keyword.md",
+      "filePath": "docs/learn/exercises/02-add-a-section-keyword.md",
+      "summary": "Hands-on exercise to add an 'Observability' keyword to enrichment's _SECTION_RULES so such headings classify to a real SectionType, while respecting rule order and substring-collision constraints, and to extend the parametrized classification test.",
+      "tags": ["documentation", "exercise", "learning", "enrichment", "classification"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/exercises/03-parametrize-header-norm.md",
+      "type": "document",
+      "name": "03-parametrize-header-norm.md",
+      "filePath": "docs/learn/exercises/03-parametrize-header-norm.md",
+      "summary": "Test-writing exercise that has the reader add a pytest.mark.parametrize case set against header_norm.normalise_header's 5-step spec, predicting each output first to catch misread specs (e.g. the 'apis' singularise-guard trap).",
+      "tags": ["documentation", "exercise", "learning", "testing", "header-normalization"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/exercises/04-add-a-config-field.md",
+      "type": "document",
+      "name": "04-add-a-config-field.md",
+      "filePath": "docs/learn/exercises/04-add-a-config-field.md",
+      "summary": "Exercise to add a search_default_results setting to PipelineConfig, teaching the dual-branch trap where config.py defines the class twice (pydantic-settings v2 and a v1 fallback) and both branches must stay in sync.",
+      "tags": ["documentation", "exercise", "learning", "configuration", "pydantic"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "type": "document",
+      "name": "05-extend-an-entity-pattern.md",
+      "filePath": "docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "summary": "Exercise to extend enrichment's _SERVICE_PATTERN regex with Orchestrator/Dispatcher suffixes, test it, then re-dump a real corpus doc to measure the (empty) blast radius — teaching the verify-before/verify-after discipline.",
+      "tags": ["documentation", "exercise", "learning", "enrichment", "entity-extraction"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/exercises/06-add-a-cli-flag.md",
+      "type": "document",
+      "name": "06-add-a-cli-flag.md",
+      "filePath": "docs/learn/exercises/06-add-a-cli-flag.md",
+      "summary": "Exercise to add a --json flag to the cli.py search command that emits SearchResult records as JSON, and to test the command with typer's CliRunner plus monkeypatch faking of SemanticPipeline so no embedding model loads.",
+      "tags": ["documentation", "exercise", "learning", "cli", "testing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/exercises/07-tune-hybrid-search-and-measure.md",
+      "type": "document",
+      "name": "07-tune-hybrid-search-and-measure.md",
+      "filePath": "docs/learn/exercises/07-tune-hybrid-search-and-measure.md",
+      "summary": "Experiment-only exercise that uses the eval_retrieval.py harness and the frozen golden query set to compare dense-only vs hybrid search across rrf_k values on recall@5/MRR, teaching honest measurement and the flag-vs-env-var wiring of hybrid search.",
+      "tags": ["documentation", "exercise", "learning", "hybrid-search", "evaluation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "type": "document",
+      "name": "08-use-the-library-from-scratch.md",
+      "filePath": "docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "summary": "Capstone exercise to write a standalone scratch script that imports SemanticPipeline as a library consumer, parses a corpus doc with parse_file + enrich_document, and recurses over the Section dataclass tree to print an indented section-type tree.",
+      "tags": ["documentation", "exercise", "learning", "library-usage", "pipeline"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:docs/learn/exercises/01-trace-a-document.md",
+      "target": "file:src/sdd_pipeline/dump.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/01-trace-a-document.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/02-add-a-section-keyword.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/02-add-a-section-keyword.md",
+      "target": "file:tests/test_enrichment.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/03-parametrize-header-norm.md",
+      "target": "file:src/sdd_pipeline/header_norm.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/03-parametrize-header-norm.md",
+      "target": "file:tests/test_header_norm.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/04-add-a-config-field.md",
+      "target": "file:src/sdd_pipeline/config.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/04-add-a-config-field.md",
+      "target": "file:tests/test_config.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/04-add-a-config-field.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "target": "file:tests/test_enrichment.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "target": "file:src/sdd_pipeline/dump.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/06-add-a-cli-flag.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/06-add-a-cli-flag.md",
+      "target": "file:tests/test_cli.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/06-add-a-cli-flag.md",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/07-tune-hybrid-search-and-measure.md",
+      "target": "file:src/tools/scripts/eval_retrieval.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/07-tune-hybrid-search-and-measure.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "src/sdd_pipeline/__init__.py", "language": "python", "sizeLines": 33, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/chunking.py", "language": "python", "sizeLines": 287, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/config.py", "language": "python", "sizeLines": 213, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/embeddings.py", "language": "python", "sizeLines": 230, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/extract_prose.py", "language": "python", "sizeLines": 94, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/models.py", "language": "python", "sizeLines": 356, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/pipeline.py", "language": "python", "sizeLines": 390, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/quality.py", "language": "python", "sizeLines": 419, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/tui.py", "language": "python", "sizeLines": 262, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/vector_store.py", "language": "python", "sizeLines": 515, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/vocabulary.py", "language": "python", "sizeLines": 38, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "src/sdd_pipeline/__init__.py": ["src/sdd_pipeline/config.py","src/sdd_pipeline/models.py","src/sdd_pipeline/pipeline.py"],
+    "src/sdd_pipeline/chunking.py": ["src/sdd_pipeline/models.py"],
+    "src/sdd_pipeline/config.py": [],
+    "src/sdd_pipeline/embeddings.py": ["src/sdd_pipeline/models.py"],
+    "src/sdd_pipeline/extract_prose.py": ["src/sdd_pipeline/models.py"],
+    "src/sdd_pipeline/models.py": [],
+    "src/sdd_pipeline/pipeline.py": ["src/sdd_pipeline/ast_parser.py","src/sdd_pipeline/chunking.py","src/sdd_pipeline/config.py","src/sdd_pipeline/embeddings.py","src/sdd_pipeline/enrichment.py","src/sdd_pipeline/models.py","src/sdd_pipeline/quality.py","src/sdd_pipeline/structural.py","src/sdd_pipeline/vector_store.py","src/sdd_pipeline/vocabulary.py"],
+    "src/sdd_pipeline/quality.py": [],
+    "src/sdd_pipeline/tui.py": ["src/sdd_pipeline/models.py","src/sdd_pipeline/pipeline.py"],
+    "src/sdd_pipeline/vector_store.py": ["src/sdd_pipeline/models.py"],
+    "src/sdd_pipeline/vocabulary.py": []
+  }
+}

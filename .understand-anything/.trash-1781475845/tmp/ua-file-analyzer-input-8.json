@@ -1,0 +1,13 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md", "language": "markdown", "sizeLines": 632, "fileCategory": "docs"},
+    {"path": "docs/inbox/Convert.Linux.Readme.md", "language": "markdown", "sizeLines": 171, "fileCategory": "docs"},
+    {"path": "docs/inbox/Convert.Windows.Readme.md", "language": "markdown", "sizeLines": 168, "fileCategory": "docs"}
+  ],
+  "batchImportData": {
+    "docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md": [],
+    "docs/inbox/Convert.Linux.Readme.md": [],
+    "docs/inbox/Convert.Windows.Readme.md": []
+  }
+}

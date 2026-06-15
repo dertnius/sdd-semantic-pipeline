@@ -1,0 +1,17 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md", "language": "markdown", "sizeLines": 79, "fileCategory": "docs"},
+    {"path": "src/tools/eval/corpus/airflow-aip107.md", "language": "markdown", "sizeLines": 184, "fileCategory": "docs"},
+    {"path": "src/tools/eval/corpus/impala-vscode.md", "language": "markdown", "sizeLines": 112, "fileCategory": "docs"},
+    {"path": "src/tools/eval/corpus/sad-retailnexus-oms.md", "language": "markdown", "sizeLines": 371, "fileCategory": "docs"},
+    {"path": "src/tools/eval/corpus/scripting-on-dtk.md", "language": "markdown", "sizeLines": 488, "fileCategory": "docs"}
+  ],
+  "batchImportData": {
+    "src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md": [],
+    "src/tools/eval/corpus/airflow-aip107.md": [],
+    "src/tools/eval/corpus/impala-vscode.md": [],
+    "src/tools/eval/corpus/sad-retailnexus-oms.md": [],
+    "src/tools/eval/corpus/scripting-on-dtk.md": []
+  }
+}

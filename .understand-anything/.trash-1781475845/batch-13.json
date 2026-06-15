@@ -1,0 +1,94 @@
+{
+  "nodes": [
+    {
+      "id": "document:src/tools/eval/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "src/tools/eval/README.md",
+      "summary": "Guide to the retrieval-evaluation harness: explains the frozen golden set, corpus provenance/disclosure, how to run eval_retrieval.py, and the real-document and chunk-hygiene e2e proofs that gate the enrichment overhaul's definition of done.",
+      "tags": ["documentation", "entry-point", "evaluation", "retrieval", "testing"],
+      "complexity": "moderate",
+      "languageNotes": "Documents a measurement-first workflow: a frozen golden set must be authored and locked before recording a baseline so scores aren't chased."
+    },
+    {
+      "id": "document:src/tools/eval/RETRIEVAL_LOG.md",
+      "type": "document",
+      "name": "RETRIEVAL_LOG.md",
+      "filePath": "src/tools/eval/RETRIEVAL_LOG.md",
+      "summary": "Append-only score log recording retrieval quality (recall@5/@10, MRR) on the frozen golden set across milestones; contains a mock-embedder wiring check and a pending real-embedder baseline that the enrichment overhaul must beat.",
+      "tags": ["documentation", "evaluation", "retrieval", "metrics", "changelog"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:src/tools/eval/e2e_queries.yaml",
+      "type": "config",
+      "name": "e2e_queries.yaml",
+      "filePath": "src/tools/eval/e2e_queries.yaml",
+      "summary": "Frozen golden query set for the real-document e2e test, pairing natural-language queries (categorized as lexical/prose/cross-reference) with expected docs and breadcrumb sections across GitLab, Azure, rcherara, and RetailNexus corpora.",
+      "tags": ["configuration", "evaluation", "golden-set", "e2e", "retrieval"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:src/tools/eval/e2e_sources.yaml",
+      "type": "config",
+      "name": "e2e_sources.yaml",
+      "filePath": "src/tools/eval/e2e_sources.yaml",
+      "summary": "Manifest of real public architecture documents for the e2e test, listing commit-pinned source URLs plus license/attribution notes; consumed by fetch_e2e_corpus.py to download docs on demand without redistributing content.",
+      "tags": ["configuration", "evaluation", "e2e", "data-source", "manifest"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:src/tools/eval/queries.yaml",
+      "type": "config",
+      "name": "queries.yaml",
+      "filePath": "src/tools/eval/queries.yaml",
+      "summary": "Frozen retrieval golden set authored against the eval corpus before any enrichment change, mapping cross-reference/paraphrase/lexical-control queries to expected docs and sections so the baseline measurement stays honest.",
+      "tags": ["configuration", "evaluation", "golden-set", "retrieval", "benchmark"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:src/tools/eval/queries.yaml",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:src/tools/eval/e2e_queries.yaml",
+      "target": "config:src/tools/eval/e2e_sources.yaml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:src/tools/eval/README.md",
+      "target": "config:src/tools/eval/queries.yaml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:src/tools/eval/README.md",
+      "target": "config:src/tools/eval/e2e_queries.yaml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:src/tools/eval/README.md",
+      "target": "config:src/tools/eval/e2e_sources.yaml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:src/tools/eval/RETRIEVAL_LOG.md",
+      "target": "config:src/tools/eval/queries.yaml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

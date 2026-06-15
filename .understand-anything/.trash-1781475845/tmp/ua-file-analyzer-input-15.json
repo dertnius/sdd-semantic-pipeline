@@ -1,0 +1,15 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "tests/convert/examples/README.md", "language": "markdown", "sizeLines": 104, "fileCategory": "docs"},
+    {"path": "tests/convert/examples/adversarial-edge-cases.html", "language": "html", "sizeLines": 118, "fileCategory": "markup"},
+    {"path": "tests/convert/examples/order-management-sad.html", "language": "html", "sizeLines": 301, "fileCategory": "markup"},
+    {"path": "tests/convert/examples/order-management-sad.storage.html", "language": "html", "sizeLines": 50, "fileCategory": "markup"}
+  ],
+  "batchImportData": {
+    "tests/convert/examples/README.md": [],
+    "tests/convert/examples/adversarial-edge-cases.html": [],
+    "tests/convert/examples/order-management-sad.html": [],
+    "tests/convert/examples/order-management-sad.storage.html": []
+  }
+}

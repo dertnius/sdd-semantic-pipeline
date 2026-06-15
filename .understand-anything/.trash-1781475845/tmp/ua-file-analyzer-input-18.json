@@ -1,0 +1,21 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "tests/test_search_offline.py", "language": "python", "sizeLines": 76, "fileCategory": "code"},
+    {"path": "tests/test_structural.py", "language": "python", "sizeLines": 562, "fileCategory": "code"},
+    {"path": "tests/test_template_taxonomy.py", "language": "python", "sizeLines": 106, "fileCategory": "code"},
+    {"path": "tests/test_tui.py", "language": "python", "sizeLines": 147, "fileCategory": "code"},
+    {"path": "tests/test_vector_store.py", "language": "python", "sizeLines": 266, "fileCategory": "code"},
+    {"path": "tests/test_vocabulary.py", "language": "python", "sizeLines": 30, "fileCategory": "code"},
+    {"path": "tests/test_workspace.py", "language": "python", "sizeLines": 143, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "tests/test_search_offline.py": [],
+    "tests/test_structural.py": [],
+    "tests/test_template_taxonomy.py": [],
+    "tests/test_tui.py": [],
+    "tests/test_vector_store.py": [],
+    "tests/test_vocabulary.py": [],
+    "tests/test_workspace.py": []
+  }
+}

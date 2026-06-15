@@ -1,0 +1,13 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "docs/learn/walkthroughs/01-life-of-a-document.md", "language": "markdown", "sizeLines": 277, "fileCategory": "docs"},
+    {"path": "docs/learn/walkthroughs/02-architecture-map.md", "language": "markdown", "sizeLines": 109, "fileCategory": "docs"},
+    {"path": "docs/learn/walkthroughs/03-test-suite-tour.md", "language": "markdown", "sizeLines": 115, "fileCategory": "docs"}
+  ],
+  "batchImportData": {
+    "docs/learn/walkthroughs/01-life-of-a-document.md": [],
+    "docs/learn/walkthroughs/02-architecture-map.md": [],
+    "docs/learn/walkthroughs/03-test-suite-tour.md": []
+  }
+}

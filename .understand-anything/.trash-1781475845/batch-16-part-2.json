@@ -1,0 +1,420 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/sdd_pipeline/cli.py",
+      "type": "file",
+      "name": "cli.py",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "summary": "Typer CLI entry point ('sdd-pipeline') wiring every command — index, convert, export, lint, scan, scan-taxonomy, search, tui, and check — to the pipeline and converter layers.",
+      "tags": ["entry-point", "cli", "orchestration", "command-handler"],
+      "complexity": "complex",
+      "languageNotes": "Single large command surface; each command is a thin handler delegating to SemanticPipeline / convert internals."
+    },
+    {
+      "id": "function:src/sdd_pipeline/cli.py:index",
+      "type": "function",
+      "name": "index",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "lineRange": [47, 184],
+      "summary": "CLI command that indexes a file or directory into the vector store, wiring embedder/backend selection, optional cross-corpus vocabulary scan, and provenance recording.",
+      "tags": ["cli", "command-handler", "indexing"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/sdd_pipeline/cli.py:convert",
+      "type": "function",
+      "name": "convert",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "lineRange": [194, 417],
+      "summary": "CLI command batching the HTML to GitLab-Markdown converter over docs/**/*.html, applying the confidence/quarantine gate and emitting a per-file plus aggregate JSON report.",
+      "tags": ["cli", "command-handler", "conversion"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/sdd_pipeline/cli.py:export",
+      "type": "function",
+      "name": "export",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "lineRange": [424, 598],
+      "summary": "CLI command exporting each file's SemanticChunks to per-file .chunks.json/.jsonl artifacts plus an export-report, model-free, with merge-prose/merge-definitions options.",
+      "tags": ["cli", "command-handler", "export"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/sdd_pipeline/cli.py:lint",
+      "type": "function",
+      "name": "lint",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "lineRange": [605, 752],
+      "summary": "CLI command running the report-only raw-markdown linter (check_markdown) over a corpus directory and writing a quality-report.json without rewriting any files.",
+      "tags": ["cli", "command-handler", "quality"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/sdd_pipeline/cli.py:scan",
+      "type": "function",
+      "name": "scan",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "lineRange": [759, 823],
+      "summary": "CLI command running only the cross-corpus discovery half — parse all docs, scan_corpus, persist the entity vocabulary JSON for review before an index run.",
+      "tags": ["cli", "command-handler", "vocabulary"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/cli.py:scan_taxonomy",
+      "type": "function",
+      "name": "scan_taxonomy",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "lineRange": [830, 901],
+      "summary": "CLI command that scans a corpus to surface section-type/taxonomy distribution for inspection and tuning.",
+      "tags": ["cli", "command-handler", "taxonomy"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/cli.py:search",
+      "type": "function",
+      "name": "search",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "lineRange": [908, 1004],
+      "summary": "CLI command querying the vector store with optional section-type/space filters and hybrid (dense+BM25/RRF) retrieval, verifying index provenance before searching.",
+      "tags": ["cli", "command-handler", "search"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/sdd_pipeline/cli.py:tui",
+      "type": "function",
+      "name": "tui",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "lineRange": [1011, 1067],
+      "summary": "CLI command launching the interactive Textual search TUI, importing the optional textual dependency only when invoked.",
+      "tags": ["cli", "command-handler", "tui"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/cli.py:check",
+      "type": "function",
+      "name": "check",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "lineRange": [1074, 1149],
+      "summary": "CLI command reporting environment readiness — pandoc, optional deps (chromadb, openai), and whether Azure env vars are set.",
+      "tags": ["cli", "command-handler", "diagnostics"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/cli.py:show_help",
+      "type": "function",
+      "name": "show_help",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "lineRange": [1153, 1233],
+      "summary": "Renders the rich custom help/overview text for the CLI.",
+      "tags": ["cli", "help", "presentation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "type": "file",
+      "name": "confluence_pf_filter.py",
+      "filePath": "src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "summary": "Stage-C in-process panflute filter for the HTML->Markdown converter: rewrites admonitions, expands, lozenges, layouts, and unconditionally simplifies tables (pipe-escaping, line-break handling) on the pandoc AST.",
+      "tags": ["conversion", "ast-transform", "panflute", "filter"],
+      "complexity": "complex",
+      "languageNotes": "Operates on panflute element trees via a dispatch function; pure transformation with notes side-channel."
+    },
+    {
+      "id": "function:src/sdd_pipeline/convert/confluence_pf_filter.py:run_confluence_filter",
+      "type": "function",
+      "name": "run_confluence_filter",
+      "filePath": "src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "lineRange": [113, 119],
+      "summary": "Entry helper that applies the Confluence panflute filter over a parsed document, returning the transformed AST.",
+      "tags": ["conversion", "entry-point", "panflute"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/convert/confluence_pf_filter.py:_dispatch",
+      "type": "function",
+      "name": "_dispatch",
+      "filePath": "src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "lineRange": [122, 160],
+      "summary": "Per-element dispatcher routing each panflute node to the matching handler (admonition, expand, lozenge, codelang, table-simplify, etc.).",
+      "tags": ["conversion", "dispatch", "ast-transform"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/convert/confluence_pf_filter.py:_table_simplify",
+      "type": "function",
+      "name": "_table_simplify",
+      "filePath": "src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "lineRange": [272, 367],
+      "summary": "Unconditionally flattens and simplifies tables — pads rows, folds tiered intermediate header rows, escapes pipes in code cells, and converts cell line breaks to <br />.",
+      "tags": ["conversion", "table", "ast-transform"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/sdd_pipeline/convert/confluence_pf_filter.py:_flatten_cell",
+      "type": "function",
+      "name": "_flatten_cell",
+      "filePath": "src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "lineRange": [391, 411],
+      "summary": "Flattens a table cell's block content (including lists) into a single inline run suitable for a GFM pipe cell.",
+      "tags": ["conversion", "table", "ast-transform"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/sdd_pipeline/retrieval.py",
+      "type": "file",
+      "name": "retrieval.py",
+      "filePath": "src/sdd_pipeline/retrieval.py",
+      "summary": "Stage-7c lexical retrieval: a pure-Python BM25 index plus reciprocal rank fusion, complementing dense vector search with a deterministic sparse keyword signal.",
+      "tags": ["service", "search", "bm25", "ranking"],
+      "complexity": "moderate",
+      "languageNotes": "Dependency-free (math/re/Counter only) to keep the lexical scorer deterministic and installable everywhere."
+    },
+    {
+      "id": "class:src/sdd_pipeline/retrieval.py:BM25Index",
+      "type": "class",
+      "name": "BM25Index",
+      "filePath": "src/sdd_pipeline/retrieval.py",
+      "lineRange": [27, 79],
+      "summary": "In-memory BM25 lexical index over tokenized corpus documents, scoring a query against stored term frequencies and document lengths.",
+      "tags": ["bm25", "search", "data-model"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/retrieval.py:reciprocal_rank_fusion",
+      "type": "function",
+      "name": "reciprocal_rank_fusion",
+      "filePath": "src/sdd_pipeline/retrieval.py",
+      "lineRange": [82, 96],
+      "summary": "Fuses two (or more) ranked id-lists via Reciprocal Rank Fusion, robust to scorers on different scales.",
+      "tags": ["ranking", "fusion", "search"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/tools/scripts/convert-docs.ps1",
+      "type": "file",
+      "name": "convert-docs.ps1",
+      "filePath": "src/tools/scripts/convert-docs.ps1",
+      "summary": "PowerShell helper running the four-step 'just convert documents' Flow B against the project venv: check, convert HTML to Markdown, review the report, and lint the output (pandoc-only, no model).",
+      "tags": ["script", "automation", "conversion", "powershell"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/tools/scripts/ctx.py",
+      "type": "file",
+      "name": "ctx.py",
+      "filePath": "src/tools/scripts/ctx.py",
+      "summary": "Standalone tooling script that estimates token/context usage across documents and renders an ASCII chart and manifest panel for inspecting corpus size.",
+      "tags": ["script", "tooling", "analysis", "cli"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/tools/scripts/ctx.py:analyze",
+      "type": "function",
+      "name": "analyze",
+      "filePath": "src/tools/scripts/ctx.py",
+      "lineRange": [97, 117],
+      "summary": "Analyzes a collected document set, computing per-item token estimates and structural labels.",
+      "tags": ["analysis", "tokens", "tooling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/tools/scripts/ctx.py:chart_lines",
+      "type": "function",
+      "name": "chart_lines",
+      "filePath": "src/tools/scripts/ctx.py",
+      "lineRange": [166, 200],
+      "summary": "Builds the ASCII bar-chart lines visualizing relative document sizes.",
+      "tags": ["rendering", "chart", "tooling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/tools/scripts/ctx.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src/tools/scripts/ctx.py",
+      "lineRange": [248, 330],
+      "summary": "Script entry point: parses args, collects and analyzes documents, and prints the chart + manifest panel.",
+      "tags": ["entry-point", "cli", "tooling"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/tools/scripts/eval_retrieval.py",
+      "type": "file",
+      "name": "eval_retrieval.py",
+      "filePath": "src/tools/scripts/eval_retrieval.py",
+      "summary": "Offline retrieval-quality harness: builds a model-free hashing-embedder index over a corpus and scores labelled queries with recall@k and reciprocal rank, emitting a report and append-only log.",
+      "tags": ["script", "evaluation", "retrieval", "metrics"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/tools/scripts/eval_retrieval.py:HashingEmbedder",
+      "type": "class",
+      "name": "HashingEmbedder",
+      "filePath": "src/tools/scripts/eval_retrieval.py",
+      "lineRange": [136, 155],
+      "summary": "Deterministic model-free embedder (feature hashing) used so the retrieval eval runs without downloading an ML model.",
+      "tags": ["embedding", "deterministic", "evaluation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/tools/scripts/eval_retrieval.py:run_eval",
+      "type": "function",
+      "name": "run_eval",
+      "filePath": "src/tools/scripts/eval_retrieval.py",
+      "lineRange": [178, 245],
+      "summary": "Runs the full evaluation: scores each labelled query against the index and aggregates recall@k and MRR metrics.",
+      "tags": ["evaluation", "metrics", "retrieval"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/tools/scripts/eval_retrieval.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src/tools/scripts/eval_retrieval.py",
+      "lineRange": [292, 333],
+      "summary": "Script entry point: loads queries, builds the index, runs the eval, prints the report, and appends to the eval log.",
+      "tags": ["entry-point", "cli", "evaluation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/tools/scripts/fetch_e2e_corpus.py",
+      "type": "file",
+      "name": "fetch_e2e_corpus.py",
+      "filePath": "src/tools/scripts/fetch_e2e_corpus.py",
+      "summary": "Utility script that downloads the end-to-end test corpus files used by slow/integration tests.",
+      "tags": ["script", "tooling", "test-fixture", "download"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/tools/scripts/fetch_e2e_corpus.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src/tools/scripts/fetch_e2e_corpus.py",
+      "lineRange": [31, 56],
+      "summary": "Script entry point that fetches each corpus file into the local fixtures directory.",
+      "tags": ["entry-point", "download", "tooling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/tools/scripts/otelmeter.py",
+      "type": "file",
+      "name": "otelmeter.py",
+      "filePath": "src/tools/scripts/otelmeter.py",
+      "summary": "Self-contained OpenTelemetry metrics/traces inspector: parses OTLP protobuf and JSON exports, ingests sessions/spans/model usage, estimates cost, and renders ASCII model and trace views; can also run as a tiny collector handler.",
+      "tags": ["script", "tooling", "observability", "telemetry"],
+      "complexity": "complex",
+      "languageNotes": "Hand-rolled varint/protobuf decoding (no protobuf dependency) so it can read OTLP exports standalone."
+    },
+    {
+      "id": "function:src/tools/scripts/otelmeter.py:inspect_file",
+      "type": "function",
+      "name": "inspect_file",
+      "filePath": "src/tools/scripts/otelmeter.py",
+      "lineRange": [358, 406],
+      "summary": "Inspects a single OTEL export file, dispatching to protobuf or JSON extraction and recording sessions, traces, and model usage.",
+      "tags": ["telemetry", "parsing", "tooling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/tools/scripts/otelmeter.py:render_tree",
+      "type": "function",
+      "name": "render_tree",
+      "filePath": "src/tools/scripts/otelmeter.py",
+      "lineRange": [599, 643],
+      "summary": "Renders an ASCII tree view of traces/spans with timing and cost annotations.",
+      "tags": ["rendering", "telemetry", "tooling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/tools/scripts/otelmeter.py:make_handler",
+      "type": "function",
+      "name": "make_handler",
+      "filePath": "src/tools/scripts/otelmeter.py",
+      "lineRange": [681, 754],
+      "summary": "Builds an HTTP request handler that ingests pushed OTLP payloads, letting the script act as a minimal local OTEL collector.",
+      "tags": ["telemetry", "http-handler", "collector"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/tools/scripts/otelmeter.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src/tools/scripts/otelmeter.py",
+      "lineRange": [764, 887],
+      "summary": "Script entry point: parses args, either serves the collector or inspects files, ingests data, and renders model/trace reports with cost estimates.",
+      "tags": ["entry-point", "cli", "telemetry"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/tools/scripts/setup-second-brain.ps1",
+      "type": "file",
+      "name": "setup-second-brain.ps1",
+      "filePath": "src/tools/scripts/setup-second-brain.ps1",
+      "summary": "PowerShell bootstrap script that creates a 'second brain' folder structure and copies template files into a project root.",
+      "tags": ["script", "automation", "scaffolding", "powershell"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/tools/scripts/setup-second-brain.ps1:Create-Dir",
+      "type": "function",
+      "name": "Create-Dir",
+      "filePath": "src/tools/scripts/setup-second-brain.ps1",
+      "lineRange": [18, 26],
+      "summary": "Creates a directory if it does not already exist.",
+      "tags": ["scaffolding", "filesystem", "powershell"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/tools/scripts/setup-second-brain.ps1:Create-File",
+      "type": "function",
+      "name": "Create-File",
+      "filePath": "src/tools/scripts/setup-second-brain.ps1",
+      "lineRange": [27, 40],
+      "summary": "Writes a file with the given content, used to seed template files into the scaffolded structure.",
+      "tags": ["scaffolding", "filesystem", "powershell"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "function:src/sdd_pipeline/cli.py:index", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "function:src/sdd_pipeline/cli.py:convert", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "function:src/sdd_pipeline/cli.py:export", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "function:src/sdd_pipeline/cli.py:lint", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "function:src/sdd_pipeline/cli.py:scan", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "function:src/sdd_pipeline/cli.py:scan_taxonomy", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "function:src/sdd_pipeline/cli.py:search", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "function:src/sdd_pipeline/cli.py:tui", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "function:src/sdd_pipeline/cli.py:check", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "function:src/sdd_pipeline/cli.py:show_help", "type": "contains", "direction": "forward", "weight": 1.0},
+
+    {"source": "file:src/sdd_pipeline/convert/confluence_pf_filter.py", "target": "function:src/sdd_pipeline/convert/confluence_pf_filter.py:run_confluence_filter", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/convert/confluence_pf_filter.py", "target": "function:src/sdd_pipeline/convert/confluence_pf_filter.py:_dispatch", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/convert/confluence_pf_filter.py", "target": "function:src/sdd_pipeline/convert/confluence_pf_filter.py:_table_simplify", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/convert/confluence_pf_filter.py", "target": "function:src/sdd_pipeline/convert/confluence_pf_filter.py:_flatten_cell", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/convert/confluence_pf_filter.py", "target": "function:src/sdd_pipeline/convert/confluence_pf_filter.py:run_confluence_filter", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/retrieval.py", "target": "class:src/sdd_pipeline/retrieval.py:BM25Index", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/retrieval.py", "target": "function:src/sdd_pipeline/retrieval.py:reciprocal_rank_fusion", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/retrieval.py", "target": "class:src/sdd_pipeline/retrieval.py:BM25Index", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/retrieval.py", "target": "function:src/sdd_pipeline/retrieval.py:reciprocal_rank_fusion", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/tools/scripts/ctx.py", "target": "function:src/tools/scripts/ctx.py:analyze", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/tools/scripts/ctx.py", "target": "function:src/tools/scripts/ctx.py:chart_lines", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/tools/scripts/ctx.py", "target": "function:src/tools/scripts/ctx.py:main", "type": "contains", "direction": "forward", "weight": 1.0},
+
+    {"source": "file:src/tools/scripts/eval_retrieval.py", "target": "class:src/tools/scripts/eval_retrieval.py:HashingEmbedder", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/tools/scripts/eval_retrieval.py", "target": "function:src/tools/scripts/eval_retrieval.py:run_eval", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/tools/scripts/eval_retrieval.py", "target": "function:src/tools/scripts/eval_retrieval.py:main", "type": "contains", "direction": "forward", "weight": 1.0},
+
+    {"source": "file:src/tools/scripts/fetch_e2e_corpus.py", "target": "function:src/tools/scripts/fetch_e2e_corpus.py:main", "type": "contains", "direction": "forward", "weight": 1.0},
+
+    {"source": "file:src/tools/scripts/otelmeter.py", "target": "function:src/tools/scripts/otelmeter.py:inspect_file", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/tools/scripts/otelmeter.py", "target": "function:src/tools/scripts/otelmeter.py:render_tree", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/tools/scripts/otelmeter.py", "target": "function:src/tools/scripts/otelmeter.py:make_handler", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/tools/scripts/otelmeter.py", "target": "function:src/tools/scripts/otelmeter.py:main", "type": "contains", "direction": "forward", "weight": 1.0},
+
+    {"source": "file:src/tools/scripts/setup-second-brain.ps1", "target": "function:src/tools/scripts/setup-second-brain.ps1:Create-Dir", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/tools/scripts/setup-second-brain.ps1", "target": "function:src/tools/scripts/setup-second-brain.ps1:Create-File", "type": "contains", "direction": "forward", "weight": 1.0}
+  ]
+}

@@ -1,0 +1,375 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 8,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "docs/learn/exercises/01-trace-a-document.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 116,
+      "nonEmptyLines": 93,
+      "sections": [
+        {
+          "heading": "Exercise 01 — Trace a document through the pipeline",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Before you start",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "Files",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Steps",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Cleanup",
+          "level": 2,
+          "line": 84
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/learn/exercises/02-add-a-section-keyword.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 90,
+      "nonEmptyLines": 69,
+      "sections": [
+        {
+          "heading": "Exercise 02 — Add a section-classification keyword",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Before you start",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "Files",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "Steps",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 69
+        },
+        {
+          "heading": "Cleanup",
+          "level": 2,
+          "line": 80
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/learn/exercises/03-parametrize-header-norm.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 100,
+      "nonEmptyLines": 76,
+      "sections": [
+        {
+          "heading": "Exercise 03 — Parametrize the header-normalisation spec",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Before you start",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Files",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "Steps",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "Cleanup",
+          "level": 2,
+          "line": 95
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/learn/exercises/04-add-a-config-field.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 89,
+      "nonEmptyLines": 72,
+      "sections": [
+        {
+          "heading": "Exercise 04 — Add a config field (the dual-branch trap)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Before you start",
+          "level": 2,
+          "line": 21
+        },
+        {
+          "heading": "Files",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "Steps",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 67
+        },
+        {
+          "heading": "Cleanup",
+          "level": 2,
+          "line": 84
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 91,
+      "nonEmptyLines": 71,
+      "sections": [
+        {
+          "heading": "Exercise 05 — Extend the service-entity pattern (and measure the blast radius)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Before you start",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Files",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "Steps",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "Cleanup",
+          "level": 2,
+          "line": 85
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/learn/exercises/06-add-a-cli-flag.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 102,
+      "nonEmptyLines": 83,
+      "sections": [
+        {
+          "heading": "Exercise 06 — Add a `--json` flag to the search command",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Before you start",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "Files",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "Steps",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 87
+        },
+        {
+          "heading": "Cleanup",
+          "level": 2,
+          "line": 97
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/learn/exercises/07-tune-hybrid-search-and-measure.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 119,
+      "nonEmptyLines": 92,
+      "sections": [
+        {
+          "heading": "Exercise 07 — Tune hybrid search and measure it honestly",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Before you start",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Files",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "Steps",
+          "level": 2,
+          "line": 42
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 109
+        },
+        {
+          "heading": "Cleanup",
+          "level": 2,
+          "line": 116
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 100,
+      "nonEmptyLines": 78,
+      "sections": [
+        {
+          "heading": "Exercise 08 — Use the pipeline as a library",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Before you start",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Files",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Steps",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 81
+        },
+        {
+          "heading": "Cleanup",
+          "level": 2,
+          "line": 95
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    }
+  ]
+}

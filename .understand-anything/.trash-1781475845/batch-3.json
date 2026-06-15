@@ -1,0 +1,274 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/sdd_pipeline/dump.py",
+      "type": "file",
+      "name": "dump.py",
+      "filePath": "src/sdd_pipeline/dump.py",
+      "summary": "Model-free debugging entry point that runs pandoc -> structural -> enrich -> chunk for a single markdown file and writes the AST, enriched model, and chunks as JSON artifacts under the workspace outbox.",
+      "tags": ["entry-point", "script", "debugging", "serialization"],
+      "complexity": "moderate",
+      "languageNotes": "Run as `python -m sdd_pipeline.dump`; loads no embedding model so it works without the ML model download."
+    },
+    {
+      "id": "function:src/sdd_pipeline/dump.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src/sdd_pipeline/dump.py",
+      "lineRange": [39, 84],
+      "summary": "CLI driver that resolves input/output paths under the workspace contract, then dumps the pandoc AST, enriched document model, and semantic chunks to JSON files.",
+      "tags": ["entry-point", "cli", "orchestration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/sdd_pipeline/enrichment.py",
+      "type": "file",
+      "name": "enrichment.py",
+      "filePath": "src/sdd_pipeline/enrichment.py",
+      "summary": "Rule-based enrichment stage that classifies section types, extracts entities and tags, applies inventory/direction-driven field writes, and scans a corpus to discover a cross-document entity vocabulary.",
+      "tags": ["service", "validation", "data-model", "deterministic"],
+      "complexity": "complex",
+      "languageNotes": "Pure stdlib `re` with precompiled patterns; deterministic and unit-testable per the architecture guardrails."
+    },
+    {
+      "id": "function:src/sdd_pipeline/enrichment.py:classify_section_type",
+      "type": "function",
+      "name": "classify_section_type",
+      "filePath": "src/sdd_pipeline/enrichment.py",
+      "lineRange": [286, 298],
+      "summary": "Maps a section title to a SectionType by matching ordered keyword rules (first match wins).",
+      "tags": ["classification", "validation", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/enrichment.py:extract_entities",
+      "type": "function",
+      "name": "extract_entities",
+      "filePath": "src/sdd_pipeline/enrichment.py",
+      "lineRange": [311, 334],
+      "summary": "Extracts domain entities from section text via service/tech/protocol regex patterns plus optional injected project vocabulary, returning a sorted canonical list.",
+      "tags": ["entity-extraction", "validation", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/enrichment.py:extract_tags",
+      "type": "function",
+      "name": "extract_tags",
+      "filePath": "src/sdd_pipeline/enrichment.py",
+      "lineRange": [337, 353],
+      "summary": "Derives content tags from a section's title, classified type, and code-fence languages for use in the chunk embed header.",
+      "tags": ["tagging", "utility", "metadata"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/enrichment.py:enrich_section",
+      "type": "function",
+      "name": "enrich_section",
+      "filePath": "src/sdd_pipeline/enrichment.py",
+      "lineRange": [356, 390],
+      "summary": "Recursively enriches a section in place: classifies its type, computes entities and tags, and applies any matching inventory records before recursing into children.",
+      "tags": ["service", "recursion", "data-model"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/enrichment.py:enrich_document",
+      "type": "function",
+      "name": "enrich_document",
+      "filePath": "src/sdd_pipeline/enrichment.py",
+      "lineRange": [393, 420],
+      "summary": "Top-level enrichment entry that loads field directions and enriches every root section of a DocumentModel with entity terms and inventory data.",
+      "tags": ["service", "orchestration", "data-model"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/enrichment.py:_write_to_field",
+      "type": "function",
+      "name": "_write_to_field",
+      "filePath": "src/sdd_pipeline/enrichment.py",
+      "lineRange": [428, 445],
+      "summary": "Routes a reconciled entity record into the appropriate section field (entities, tags, or metadata) based on its resolved direction.",
+      "tags": ["data-model", "validation", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/enrichment.py:_apply_inventory",
+      "type": "function",
+      "name": "_apply_inventory",
+      "filePath": "src/sdd_pipeline/enrichment.py",
+      "lineRange": [448, 464],
+      "summary": "Reconciles a section's inventory records by confidence threshold and writes the surviving records into the section's fields.",
+      "tags": ["data-model", "validation", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/enrichment.py:_collect_raw_terms",
+      "type": "function",
+      "name": "_collect_raw_terms",
+      "filePath": "src/sdd_pipeline/enrichment.py",
+      "lineRange": [473, 493],
+      "summary": "Discovery-only term collector that broadens recall using service/tech/protocol plus all-caps and backtick patterns for the corpus scan.",
+      "tags": ["entity-extraction", "utility", "data-pipeline"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/enrichment.py:scan_corpus",
+      "type": "function",
+      "name": "scan_corpus",
+      "filePath": "src/sdd_pipeline/enrichment.py",
+      "lineRange": [507, 540],
+      "summary": "Scans a set of documents seeded with known terms to build a cross-corpus entity vocabulary so a term seen in one doc is recognized in all.",
+      "tags": ["entity-extraction", "data-pipeline", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/sdd_pipeline/reconcile.py",
+      "type": "file",
+      "name": "reconcile.py",
+      "filePath": "src/sdd_pipeline/reconcile.py",
+      "summary": "Deduplicates EntityRecords by canonical key, keeping the highest-confidence/superseding record per entity for enrichment.",
+      "tags": ["utility", "validation", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/reconcile.py:reconcile",
+      "type": "function",
+      "name": "reconcile",
+      "filePath": "src/sdd_pipeline/reconcile.py",
+      "lineRange": [16, 26],
+      "summary": "Folds a list of EntityRecords into the best record per canonical key (case-folded), resolving conflicts via the supersedes rule and returning a stable sorted result.",
+      "tags": ["utility", "deduplication", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/reconcile.py:_supersedes",
+      "type": "function",
+      "name": "_supersedes",
+      "filePath": "src/sdd_pipeline/reconcile.py",
+      "lineRange": [29, 41],
+      "summary": "Decides whether a candidate EntityRecord should replace the current incumbent based on confidence and tie-breaking criteria.",
+      "tags": ["utility", "validation", "comparison"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/sdd_pipeline/workspace.py",
+      "type": "file",
+      "name": "workspace.py",
+      "filePath": "src/sdd_pipeline/workspace.py",
+      "summary": "Workspace path-contract helpers that confine CLI inputs to the inbox and outputs to the outbox, resolving/validating paths and creating directories with containment enforcement.",
+      "tags": ["utility", "validation", "security", "path-handling"],
+      "complexity": "moderate",
+      "languageNotes": "Uses pathlib containment checks (`is_relative_to` + case-folded prefix) to prevent path traversal outside the workspace roots."
+    },
+    {
+      "id": "class:src/sdd_pipeline/workspace.py:WorkspaceError",
+      "type": "class",
+      "name": "WorkspaceError",
+      "filePath": "src/sdd_pipeline/workspace.py",
+      "lineRange": [37, 43],
+      "summary": "Exception raised when a user-supplied path violates the inbox/outbox workspace containment contract.",
+      "tags": ["exception", "validation", "error-handling"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/workspace.py:resolve_input",
+      "type": "function",
+      "name": "resolve_input",
+      "filePath": "src/sdd_pipeline/workspace.py",
+      "lineRange": [64, 88],
+      "summary": "Resolves a user input path against the inbox directory, enforcing containment unless the workspace contract is disabled.",
+      "tags": ["validation", "security", "path-handling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/workspace.py:resolve_output_dir",
+      "type": "function",
+      "name": "resolve_output_dir",
+      "filePath": "src/sdd_pipeline/workspace.py",
+      "lineRange": [110, 133],
+      "summary": "Resolves and optionally creates an output directory under the outbox, enforcing workspace containment.",
+      "tags": ["validation", "security", "path-handling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/workspace.py:resolve_output_file",
+      "type": "function",
+      "name": "resolve_output_file",
+      "filePath": "src/sdd_pipeline/workspace.py",
+      "lineRange": [136, 159],
+      "summary": "Resolves an output file path under the outbox, enforcing containment and optionally creating its parent directory.",
+      "tags": ["validation", "security", "path-handling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/workspace.py:resolve_index_path",
+      "type": "function",
+      "name": "resolve_index_path",
+      "filePath": "src/sdd_pipeline/workspace.py",
+      "lineRange": [162, 181],
+      "summary": "Resolves the vector-index path under the outbox, applying the workspace containment contract.",
+      "tags": ["validation", "security", "path-handling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/workspace.py:ensure_inbox_exists",
+      "type": "function",
+      "name": "ensure_inbox_exists",
+      "filePath": "src/sdd_pipeline/workspace.py",
+      "lineRange": [184, 196],
+      "summary": "Verifies the inbox directory exists when the workspace contract is enforced, raising WorkspaceError otherwise.",
+      "tags": ["validation", "utility", "path-handling"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:src/sdd_pipeline/dump.py", "target": "file:src/sdd_pipeline/ast_parser.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/dump.py", "target": "file:src/sdd_pipeline/enrichment.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/dump.py", "target": "file:src/sdd_pipeline/pipeline.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/dump.py", "target": "file:src/sdd_pipeline/workspace.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "file:src/sdd_pipeline/direction.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "file:src/sdd_pipeline/reconcile.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/reconcile.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:src/sdd_pipeline/dump.py", "target": "function:src/sdd_pipeline/dump.py:main", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/dump.py", "target": "function:src/sdd_pipeline/dump.py:main", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:classify_section_type", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:classify_section_type", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:extract_entities", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:extract_entities", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:extract_tags", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:extract_tags", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:enrich_section", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:enrich_section", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:enrich_document", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:enrich_document", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:_write_to_field", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:_apply_inventory", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:_collect_raw_terms", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:scan_corpus", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "function:src/sdd_pipeline/enrichment.py:scan_corpus", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/reconcile.py", "target": "function:src/sdd_pipeline/reconcile.py:reconcile", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/reconcile.py", "target": "function:src/sdd_pipeline/reconcile.py:reconcile", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/reconcile.py", "target": "function:src/sdd_pipeline/reconcile.py:_supersedes", "type": "contains", "direction": "forward", "weight": 1.0},
+
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "class:src/sdd_pipeline/workspace.py:WorkspaceError", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "class:src/sdd_pipeline/workspace.py:WorkspaceError", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "function:src/sdd_pipeline/workspace.py:resolve_input", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "function:src/sdd_pipeline/workspace.py:resolve_input", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "function:src/sdd_pipeline/workspace.py:resolve_output_dir", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "function:src/sdd_pipeline/workspace.py:resolve_output_dir", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "function:src/sdd_pipeline/workspace.py:resolve_output_file", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "function:src/sdd_pipeline/workspace.py:resolve_output_file", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "function:src/sdd_pipeline/workspace.py:resolve_index_path", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "function:src/sdd_pipeline/workspace.py:resolve_index_path", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "function:src/sdd_pipeline/workspace.py:ensure_inbox_exists", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/workspace.py", "target": "function:src/sdd_pipeline/workspace.py:ensure_inbox_exists", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "function:src/sdd_pipeline/dump.py:main", "target": "function:src/sdd_pipeline/enrichment.py:enrich_document", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/dump.py:main", "target": "function:src/sdd_pipeline/workspace.py:resolve_input", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/dump.py:main", "target": "function:src/sdd_pipeline/workspace.py:resolve_output_dir", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/enrichment.py:enrich_section", "target": "function:src/sdd_pipeline/reconcile.py:reconcile", "type": "calls", "direction": "forward", "weight": 0.8}
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "issues": [],
+  "warnings": [
+    "Node 'document:docs/archive/DISCOVERED_INTERFACES.md' has no edges (orphan)",
+    "Node 'document:docs/learn/README.md' has no edges (orphan)",
+    "Node 'file:src/tools/scripts/convert-docs.ps1' has no edges (orphan)",
+    "Node 'file:tests/__init__.py' has no edges (orphan)",
+    "Node 'file:tests/convert/__init__.py' has no edges (orphan)"
+  ],
+  "stats": {
+    "totalNodes": 299,
+    "totalEdges": 557,
+    "totalLayers": 8,
+    "tourSteps": 14,
+    "nodeTypes": {
+      "file": 73,
+      "config": 12,
+      "function": 124,
+      "class": 31,
+      "document": 59
+    },
+    "edgeTypes": {
+      "imports": 45,
+      "contains": 155,
+      "exports": 60,
+      "depends_on": 6,
+      "calls": 72,
+      "configures": 13,
+      "related": 31,
+      "documents": 137,
+      "tested_by": 38
+    }
+  }
+}

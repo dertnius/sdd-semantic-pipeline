@@ -1,0 +1,157 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 5,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/tools/eval/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 86,
+      "nonEmptyLines": 69,
+      "sections": [
+        {
+          "heading": "Retrieval evaluation",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Layout",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Run",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "Corpus provenance & disclosure",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Adding documents (recommended — grows the metric from directional to robust)",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "E2E test on real public documents",
+          "level": 2,
+          "line": 46
+        },
+        {
+          "heading": "E2E chunk-hygiene proof (model-free, non-skippable)",
+          "level": 2,
+          "line": 73
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "src/tools/eval/RETRIEVAL_LOG.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 60,
+      "nonEmptyLines": 48,
+      "sections": [
+        {
+          "heading": "Retrieval evaluation log",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "How to read this",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Wiring check — mock embedder (NOT a baseline)",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Baseline (pre-overhaul) — PENDING",
+          "level": 2,
+          "line": 37
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "src/tools/eval/e2e_queries.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 83,
+      "nonEmptyLines": 71,
+      "sections": [
+        {
+          "heading": "queries",
+          "level": 1,
+          "line": 7
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "src/tools/eval/e2e_sources.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 28,
+      "nonEmptyLines": 25,
+      "sections": [
+        {
+          "heading": "docs",
+          "level": 1,
+          "line": 8
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "src/tools/eval/queries.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 158,
+      "nonEmptyLines": 136,
+      "sections": [
+        {
+          "heading": "queries",
+          "level": 1,
+          "line": 23
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,2386 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/sdd_pipeline/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/sdd_pipeline/__init__.py",
+      "summary": "Package entry point for the sdd_pipeline package; re-exports the public API (PipelineConfig, the data models, and SemanticPipeline) so callers can import from the top-level package."
+    },
+    {
+      "id": "file:src/sdd_pipeline/chunking.py",
+      "type": "file",
+      "name": "chunking.py",
+      "filePath": "src/sdd_pipeline/chunking.py",
+      "summary": "Deterministic stage that turns a DocumentModel section tree into a list of SemanticChunks, handling prose/definition merging, embed-budget-aware text splitting, and per-chunk entity scoping."
+    },
+    {
+      "id": "config:src/sdd_pipeline/config.py",
+      "type": "config",
+      "name": "config.py",
+      "filePath": "src/sdd_pipeline/config.py",
+      "summary": "Defines PipelineConfig, the pydantic-settings configuration model that loads all pipeline settings from PIPELINE_-prefixed env vars or a .env file, with a pydantic-v1 fallback branch."
+    },
+    {
+      "id": "file:src/sdd_pipeline/embeddings.py",
+      "type": "file",
+      "name": "embeddings.py",
+      "filePath": "src/sdd_pipeline/embeddings.py",
+      "summary": "The only module that loads an embedding backend: provides EmbedderProtocol plus local sentence-transformers and Azure OpenAI embedders, selected by make_embedder(config)."
+    },
+    {
+      "id": "file:src/sdd_pipeline/extract_prose.py",
+      "type": "file",
+      "name": "extract_prose.py",
+      "filePath": "src/sdd_pipeline/extract_prose.py",
+      "summary": "Extracts candidate entity terms from prose sections using regex heuristics (all-caps, backtick, PascalCase, kebab, paths) and optional spaCy noun chunks, producing a prose inventory for enrichment."
+    },
+    {
+      "id": "file:src/sdd_pipeline/models.py",
+      "type": "file",
+      "name": "models.py",
+      "filePath": "src/sdd_pipeline/models.py",
+      "summary": "Pure data contracts for the pipeline: ContentBlock/Section/DocumentModel structural types, the SemanticChunk record with its embed-text/metadata/dict serializers, enums (ContentType, SectionType), and EntityRecord."
+    },
+    {
+      "id": "file:src/sdd_pipeline/pipeline.py",
+      "type": "file",
+      "name": "pipeline.py",
+      "filePath": "src/sdd_pipeline/pipeline.py",
+      "summary": "Orchestrates the 7-stage indexing/search flow via SemanticPipeline, lazily wiring the embedder and vector store, enforcing the chunk-quality gate, verifying index provenance, and running dense plus hybrid (RRF) search."
+    },
+    {
+      "id": "file:src/sdd_pipeline/quality.py",
+      "type": "file",
+      "name": "quality.py",
+      "filePath": "src/sdd_pipeline/quality.py",
+      "summary": "Stdlib-only quality gates: check_markdown lints raw source markdown for embedding-harmful residue, and check_chunk is the binding structural-absence hygiene gate run on produced chunk embed-text."
+    },
+    {
+      "id": "file:src/sdd_pipeline/tui.py",
+      "type": "file",
+      "name": "tui.py",
+      "filePath": "src/sdd_pipeline/tui.py",
+      "summary": "Interactive Textual-based search TUI (SearchApp) layered over SemanticPipeline that keeps the embedder and index warm across queries, with live query box, section/space filters, and a hybrid toggle."
+    },
+    {
+      "id": "file:src/sdd_pipeline/vector_store.py",
+      "type": "file",
+      "name": "vector_store.py",
+      "filePath": "src/sdd_pipeline/vector_store.py",
+      "summary": "The only module touching vector-store backends: defines VectorStoreProtocol with pluggable in-memory (langchain-core) and Chroma implementations, plus SearchResult, selected by make_vector_store(config)."
+    },
+    {
+      "id": "file:src/sdd_pipeline/vocabulary.py",
+      "type": "file",
+      "name": "vocabulary.py",
+      "filePath": "src/sdd_pipeline/vocabulary.py",
+      "summary": "JSON load/save helpers for the cross-corpus entity vocabulary, keeping vocabulary file I/O out of enrichment.py."
+    },
+    {
+      "id": "file:src/sdd_pipeline/ast_parser.py",
+      "type": "file",
+      "name": "ast_parser.py",
+      "filePath": "src/sdd_pipeline/ast_parser.py",
+      "summary": "Thin subprocess wrapper around pandoc that converts Markdown files into pandoc JSON ASTs; the only module in flow A that invokes pandoc."
+    },
+    {
+      "id": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "type": "file",
+      "name": "corpus_taxonomy.py",
+      "filePath": "src/sdd_pipeline/corpus_taxonomy.py",
+      "summary": "Builds a cross-document field taxonomy and vocabulary by parsing pipe tables across a corpus and gating fields by minimum document frequency."
+    },
+    {
+      "id": "file:src/sdd_pipeline/direction.py",
+      "type": "file",
+      "name": "direction.py",
+      "filePath": "src/sdd_pipeline/direction.py",
+      "summary": "Loads and resolves per-field directional metadata (e.g. depends_on / exposes) from a YAML config, normalising field names via header normalisation."
+    },
+    {
+      "id": "file:src/sdd_pipeline/doc_router.py",
+      "type": "file",
+      "name": "doc_router.py",
+      "filePath": "src/sdd_pipeline/doc_router.py",
+      "summary": "Routes a document to a taxonomy by fingerprinting its heading keys against known doc types (e.g. SAD) above a match threshold."
+    },
+    {
+      "id": "file:src/sdd_pipeline/extract_structural.py",
+      "type": "file",
+      "name": "extract_structural.py",
+      "filePath": "src/sdd_pipeline/extract_structural.py",
+      "summary": "Extracts structured entity records from a document's pipe tables, keyed by section, distinguishing wide tables from key-value tables."
+    },
+    {
+      "id": "file:src/sdd_pipeline/header_norm.py",
+      "type": "file",
+      "name": "header_norm.py",
+      "filePath": "src/sdd_pipeline/header_norm.py",
+      "summary": "Normalises heading and field labels to a canonical lowercase singular form so variant spellings collapse to one taxonomy key."
+    },
+    {
+      "id": "file:src/sdd_pipeline/structural.py",
+      "type": "file",
+      "name": "structural.py",
+      "filePath": "src/sdd_pipeline/structural.py",
+      "summary": "Converts a pandoc JSON AST into a DocumentModel section tree using panflute, serialising inlines, lists, and tables and synthesising a root section for preamble content."
+    },
+    {
+      "id": "file:src/sdd_pipeline/template_taxonomy.py",
+      "type": "file",
+      "name": "template_taxonomy.py",
+      "filePath": "src/sdd_pipeline/template_taxonomy.py",
+      "summary": "Extracts a canonical field taxonomy from a single template Markdown file by parsing its pipe tables and section headings, with a CLI entry point."
+    },
+    {
+      "id": "file:src/sdd_pipeline/dump.py",
+      "type": "file",
+      "name": "dump.py",
+      "filePath": "src/sdd_pipeline/dump.py",
+      "summary": "Model-free debugging entry point that runs pandoc -> structural -> enrich -> chunk for a single markdown file and writes the AST, enriched model, and chunks as JSON artifacts under the workspace outbox."
+    },
+    {
+      "id": "file:src/sdd_pipeline/enrichment.py",
+      "type": "file",
+      "name": "enrichment.py",
+      "filePath": "src/sdd_pipeline/enrichment.py",
+      "summary": "Rule-based enrichment stage that classifies section types, extracts entities and tags, applies inventory/direction-driven field writes, and scans a corpus to discover a cross-document entity vocabulary."
+    },
+    {
+      "id": "file:src/sdd_pipeline/reconcile.py",
+      "type": "file",
+      "name": "reconcile.py",
+      "filePath": "src/sdd_pipeline/reconcile.py",
+      "summary": "Deduplicates EntityRecords by canonical key, keeping the highest-confidence/superseding record per entity for enrichment."
+    },
+    {
+      "id": "file:src/sdd_pipeline/workspace.py",
+      "type": "file",
+      "name": "workspace.py",
+      "filePath": "src/sdd_pipeline/workspace.py",
+      "summary": "Workspace path-contract helpers that confine CLI inputs to the inbox and outputs to the outbox, resolving/validating paths and creating directories with containment enforcement."
+    },
+    {
+      "id": "file:src/sdd_pipeline/convert/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/sdd_pipeline/convert/__init__.py",
+      "summary": "Package barrel for the HTML-to-GitLab-Markdown converter (flow B), re-exporting the public surface (convert_file, postprocess, resolve_pandoc, stats, ConversionError, ConversionNotes) so importing the package never pulls in the indexing pipeline."
+    },
+    {
+      "id": "file:src/sdd_pipeline/convert/base.py",
+      "type": "file",
+      "name": "base.py",
+      "filePath": "src/sdd_pipeline/convert/base.py",
+      "summary": "Engine-agnostic shared layer for the converter: pandoc resolution/invocation, fence-aware markdown post-processing, YAML-safe frontmatter emission, and document statistics, reusable by both the HTML and the planned docx conversion paths."
+    },
+    {
+      "id": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "file",
+      "name": "html_to_gitlab_md.py",
+      "filePath": "src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "summary": "The rendered-HTML conversion path of flow B: BeautifulSoup pre-clean that rewrites Confluence constructs into PFI-HTML, the pandoc html->json->gfm bridge, page-chrome harvesting, a storage-format front door, and the convert_file public entry plus a CLI."
+    },
+    {
+      "id": "config:.env.example",
+      "type": "config",
+      "name": ".env.example",
+      "filePath": ".env.example",
+      "summary": "Template of runtime environment variables (PIPELINE_* prefix) documenting the pandoc format, embedding model/provider, chunk size, vector-store backend, Chroma persist dir, and collection name used to configure PipelineConfig."
+    },
+    {
+      "id": "document:CLAUDE.md",
+      "type": "document",
+      "name": "CLAUDE.md",
+      "filePath": "CLAUDE.md",
+      "summary": "Project guidance for Claude Code covering commands, the two-flow architecture (indexing/search pipeline and HTMLâ†’GitLab-MD converter), module boundaries, known pitfalls, configuration, embedding providers, and vector-store backends."
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Primary project documentation: quick start, workspace contract, full CLI reference (index/search/convert/export/scan/lint/check), pipeline stages, embedding providers, vector-store backends, environment setup, and Python API examples."
+    },
+    {
+      "id": "config:devfile.yaml",
+      "type": "config",
+      "name": "devfile.yaml",
+      "filePath": "devfile.yaml",
+      "summary": "Eclipse Che / OpenShift Dev Spaces devfile defining the remote development container, components, and named run-task commands for building and exercising the pipeline."
+    },
+    {
+      "id": "config:environment.yml",
+      "type": "config",
+      "name": "environment.yml",
+      "filePath": "environment.yml",
+      "summary": "Conda/micromamba environment specification pinning the Python version, channels, and dependencies needed to run the pipeline (including pandoc) on Windows."
+    },
+    {
+      "id": "config:pyproject.toml",
+      "type": "config",
+      "name": "pyproject.toml",
+      "filePath": "pyproject.toml",
+      "summary": "Python package definition and tooling config: dependencies, optional extras (dev/chroma/azure/tui), the sdd-pipeline console script entry point, plus pytest, coverage, ruff, and mypy settings."
+    },
+    {
+      "id": "config:config/entity-vocab.json",
+      "type": "config",
+      "name": "entity-vocab.json",
+      "filePath": "config/entity-vocab.json",
+      "summary": "Committed seed cross-corpus entity vocabulary (a JSON array of project domain terms like KPO, XCom, triggerer) loaded by vocabulary.py and merged into the two-pass corpus scan so these terms are recognised as entities across all documents."
+    },
+    {
+      "id": "config:config/field_directions.yaml",
+      "type": "config",
+      "name": "field_directions.yaml",
+      "filePath": "config/field_directions.yaml",
+      "summary": "Dependency-direction map that routes a document table's field name (after header_norm normalisation) to either Section.exposes or Section.depends_on during enrichment; loaded by direction.load_field_directions and seeded from the eval-corpus field vocabulary."
+    },
+    {
+      "id": "config:config/taxonomy.json",
+      "type": "config",
+      "name": "taxonomy.json",
+      "filePath": "config/taxonomy.json",
+      "summary": "Committed SAD-template taxonomy mapping each known section heading (definitions, quality attribute, solution components, stakeholder) to its canonical field list and table orientation (wide vs key_value); loaded by doc_router.load_taxonomy to drive structural inventory extraction."
+    },
+    {
+      "id": "document:docs/guides/confluence-storage-format-gitlab-markdown.md",
+      "type": "document",
+      "name": "confluence-storage-format-gitlab-markdown.md",
+      "filePath": "docs/guides/confluence-storage-format-gitlab-markdown.md",
+      "summary": "Superseded reference note on converting Confluence storage format to GitLab Markdown, kept for history after confluence-conversion-rules.md replaced it."
+    },
+    {
+      "id": "document:docs/guides/convert-html-gitlab-markdown-linux.md",
+      "type": "document",
+      "name": "convert-html-gitlab-markdown-linux.md",
+      "filePath": "docs/guides/convert-html-gitlab-markdown-linux.md",
+      "summary": "Linux operator instructions for running the HTML-to-GitLab-Markdown converter, covering setup and invocation steps."
+    },
+    {
+      "id": "document:docs/guides/convert-html-gitlab-markdown-windows.md",
+      "type": "document",
+      "name": "convert-html-gitlab-markdown-windows.md",
+      "filePath": "docs/guides/convert-html-gitlab-markdown-windows.md",
+      "summary": "Windows operator instructions for running the HTML-to-GitLab-Markdown converter, covering setup and invocation steps."
+    },
+    {
+      "id": "document:docs/guides/index.md",
+      "type": "document",
+      "name": "index.md",
+      "filePath": "docs/guides/index.md",
+      "summary": "Wiki index page that catalogs all guide pages and the learning knowledge base, with per-page summaries and last-updated dates serving as the documentation entry point."
+    },
+    {
+      "id": "document:docs/guides/log.md",
+      "type": "document",
+      "name": "log.md",
+      "filePath": "docs/guides/log.md",
+      "summary": "Chronological wiki ingestion log recording each source-to-wiki-page mapping and feature/refactor event in the documentation workflow."
+    },
+    {
+      "id": "document:docs/guides/pipeline-101.md",
+      "type": "document",
+      "name": "pipeline-101.md",
+      "filePath": "docs/guides/pipeline-101.md",
+      "summary": "Comprehensive operator runbook covering the seven-stage indexing pipeline: onboarding a document to chunks, incremental updates without a full re-index, vocabulary/taxonomy management, semantic-quality evaluation, and a troubleshooting loop."
+    },
+    {
+      "id": "document:docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md",
+      "type": "document",
+      "name": "CONFLUENCE_FORMAT_INSTRUCTIONS.md",
+      "filePath": "docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md",
+      "summary": "Authoritative reference spec mapping every Confluence storage-format element (headings, text effects, links, images, code blocks, tables, macros, layouts, ri/ac namespaces) to its GitLab-Markdown handling, governing the html_to_gitlab_md.py converter for Confluence Data Center 8.5.x."
+    },
+    {
+      "id": "document:docs/inbox/Convert.Linux.Readme.md",
+      "type": "document",
+      "name": "Convert.Linux.Readme.md",
+      "filePath": "docs/inbox/Convert.Linux.Readme.md",
+      "summary": "Linux usage guide for the HTML-to-GitLab-Markdown converter covering prerequisites, UTF-8 handling, single-file and batch invocation, CLI options, and verification with an example run."
+    },
+    {
+      "id": "document:docs/inbox/Convert.Windows.Readme.md",
+      "type": "document",
+      "name": "Convert.Windows.Readme.md",
+      "filePath": "docs/inbox/Convert.Windows.Readme.md",
+      "summary": "Windows usage guide for the HTML-to-GitLab-Markdown converter covering prerequisites, PYTHONUTF8 console encoding, single-file and batch invocation, CLI options, and verification with an example run."
+    },
+    {
+      "id": "document:docs/learn/bridge/01-project-anatomy-and-tooling.md",
+      "type": "document",
+      "name": "01-project-anatomy-and-tooling.md",
+      "filePath": "docs/learn/bridge/01-project-anatomy-and-tooling.md",
+      "summary": "Onboarding bridge doc mapping the project's pyproject.toml layout, venv, editable install, and tool tables onto familiar .NET/.csproj concepts for a C# developer learning Python tooling."
+    },
+    {
+      "id": "document:docs/learn/bridge/02-dataclasses-vs-csharp-records.md",
+      "type": "document",
+      "name": "02-dataclasses-vs-csharp-records.md",
+      "filePath": "docs/learn/bridge/02-dataclasses-vs-csharp-records.md",
+      "summary": "Bridge doc teaching Python dataclasses, frozen instances, default_factory, StrEnum, and asdict by analogy to C# records, using the project's models.py data contracts as the worked example."
+    },
+    {
+      "id": "document:docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "type": "document",
+      "name": "03-protocols-typing-and-unions.md",
+      "filePath": "docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "summary": "Bridge doc explaining structural typing via Protocol, optional unions, TYPE_CHECKING cycle-breaking, and constructor injection, grounded in the project's EmbedderProtocol/VectorStoreProtocol and SemanticPipeline wiring."
+    },
+    {
+      "id": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "type": "document",
+      "name": "04-iteration-comprehensions-generators.md",
+      "filePath": "docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "summary": "Bridge doc covering comprehensions, generators, sorted/key, Counter/defaultdict, slicing and enumerate by analogy to LINQ, using real call sites in retrieval.py, enrichment.py, and template_taxonomy.py."
+    },
+    {
+      "id": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "type": "document",
+      "name": "05-modules-imports-and-lazy-patterns.md",
+      "filePath": "docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "summary": "Bridge doc on Python modules-as-singletons, package __init__.py re-exports, @property lazy-init, optional imports, logging, pathlib, and the __main__ guard, illustrated with pipeline.py, vector_store.py, and dump.py."
+    },
+    {
+      "id": "document:docs/learn/bridge/06-pydantic-settings-and-typer.md",
+      "type": "document",
+      "name": "06-pydantic-settings-and-typer.md",
+      "filePath": "docs/learn/bridge/06-pydantic-settings-and-typer.md",
+      "summary": "Bridge doc explaining pydantic-settings BaseSettings (the dual-branch config trap) and typer CLI construction by analogy to IConfiguration/IOptions and System.CommandLine, grounded in config.py and cli.py."
+    },
+    {
+      "id": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "type": "document",
+      "name": "07-pytest-for-xunit-developers.md",
+      "filePath": "docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "summary": "Bridge doc teaching pytest discovery, fixtures, parametrize/markers, monkeypatch/mocker, and mock-at-the-seam injection for xUnit developers, using conftest.py and the project's test suite as worked examples."
+    },
+    {
+      "id": "document:docs/learn/exercises/01-trace-a-document.md",
+      "type": "document",
+      "name": "01-trace-a-document.md",
+      "filePath": "docs/learn/exercises/01-trace-a-document.md",
+      "summary": "Read-only learning exercise that runs the model-free dump tool on two corpus documents and traces a page through the pipeline by inspecting the ast/enriched/chunks artifacts, calibrating the reader's mental model before any code changes."
+    },
+    {
+      "id": "document:docs/learn/exercises/02-add-a-section-keyword.md",
+      "type": "document",
+      "name": "02-add-a-section-keyword.md",
+      "filePath": "docs/learn/exercises/02-add-a-section-keyword.md",
+      "summary": "Hands-on exercise to add an 'Observability' keyword to enrichment's _SECTION_RULES so such headings classify to a real SectionType, while respecting rule order and substring-collision constraints, and to extend the parametrized classification test."
+    },
+    {
+      "id": "document:docs/learn/exercises/03-parametrize-header-norm.md",
+      "type": "document",
+      "name": "03-parametrize-header-norm.md",
+      "filePath": "docs/learn/exercises/03-parametrize-header-norm.md",
+      "summary": "Test-writing exercise that has the reader add a pytest.mark.parametrize case set against header_norm.normalise_header's 5-step spec, predicting each output first to catch misread specs (e.g. the 'apis' singularise-guard trap)."
+    },
+    {
+      "id": "document:docs/learn/exercises/04-add-a-config-field.md",
+      "type": "document",
+      "name": "04-add-a-config-field.md",
+      "filePath": "docs/learn/exercises/04-add-a-config-field.md",
+      "summary": "Exercise to add a search_default_results setting to PipelineConfig, teaching the dual-branch trap where config.py defines the class twice (pydantic-settings v2 and a v1 fallback) and both branches must stay in sync."
+    },
+    {
+      "id": "document:docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "type": "document",
+      "name": "05-extend-an-entity-pattern.md",
+      "filePath": "docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "summary": "Exercise to extend enrichment's _SERVICE_PATTERN regex with Orchestrator/Dispatcher suffixes, test it, then re-dump a real corpus doc to measure the (empty) blast radius â€” teaching the verify-before/verify-after discipline."
+    },
+    {
+      "id": "document:docs/learn/exercises/06-add-a-cli-flag.md",
+      "type": "document",
+      "name": "06-add-a-cli-flag.md",
+      "filePath": "docs/learn/exercises/06-add-a-cli-flag.md",
+      "summary": "Exercise to add a --json flag to the cli.py search command that emits SearchResult records as JSON, and to test the command with typer's CliRunner plus monkeypatch faking of SemanticPipeline so no embedding model loads."
+    },
+    {
+      "id": "document:docs/learn/exercises/07-tune-hybrid-search-and-measure.md",
+      "type": "document",
+      "name": "07-tune-hybrid-search-and-measure.md",
+      "filePath": "docs/learn/exercises/07-tune-hybrid-search-and-measure.md",
+      "summary": "Experiment-only exercise that uses the eval_retrieval.py harness and the frozen golden query set to compare dense-only vs hybrid search across rrf_k values on recall@5/MRR, teaching honest measurement and the flag-vs-env-var wiring of hybrid search."
+    },
+    {
+      "id": "document:docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "type": "document",
+      "name": "08-use-the-library-from-scratch.md",
+      "filePath": "docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "summary": "Capstone exercise to write a standalone scratch script that imports SemanticPipeline as a library consumer, parses a corpus doc with parse_file + enrich_document, and recurses over the Section dataclass tree to print an indented section-type tree."
+    },
+    {
+      "id": "document:docs/learn/tours/01-models-and-config.md",
+      "type": "document",
+      "name": "01-models-and-config.md",
+      "filePath": "docs/learn/tours/01-models-and-config.md",
+      "summary": "Guided learning tour of the contract layer (models.py and config.py), explaining the dataclass contracts, the SemanticChunk's two textual identities (content vs to_embed_text), and how a config knob travels from PipelineConfig into chunking."
+    },
+    {
+      "id": "document:docs/learn/tours/02-ast-parser-and-structural.md",
+      "type": "document",
+      "name": "02-ast-parser-and-structural.md",
+      "filePath": "docs/learn/tours/02-ast-parser-and-structural.md",
+      "summary": "Guided tour of stages 2-4: how ast_parser.py shells out to pandoc for a JSON AST and structural.py turns that flat header sequence into a typed DocumentModel tree via a level-keyed stack."
+    },
+    {
+      "id": "document:docs/learn/tours/03-enrichment.md",
+      "type": "document",
+      "name": "03-enrichment.md",
+      "filePath": "docs/learn/tours/03-enrichment.md",
+      "summary": "Guided tour of stage 5 enrichment: the ordered keyword rules for section-type classification, the three precision entity-extraction regexes, and the optional inventory routing into depends_on/exposes."
+    },
+    {
+      "id": "document:docs/learn/tours/04-vocabulary-and-two-pass-scan.md",
+      "type": "document",
+      "name": "04-vocabulary-and-two-pass-scan.md",
+      "filePath": "docs/learn/tours/04-vocabulary-and-two-pass-scan.md",
+      "summary": "Guided tour of the cross-corpus vocabulary: vocabulary.py I/O plus the two-pass scan flow (scan_corpus discovery then enrich-with-full-list) that lets a term coined in one document be recognized in all."
+    },
+    {
+      "id": "document:docs/learn/tours/05-taxonomy-modules.md",
+      "type": "document",
+      "name": "05-taxonomy-modules.md",
+      "filePath": "docs/learn/tours/05-taxonomy-modules.md",
+      "summary": "Guided tour of the four taxonomy modules (header_norm, template_taxonomy, corpus_taxonomy, doc_router) that determine which fields a SAD template defines per section so live document tables can be matched against them."
+    },
+    {
+      "id": "document:docs/learn/tours/06-inventory-extraction-modules.md",
+      "type": "document",
+      "name": "06-inventory-extraction-modules.md",
+      "filePath": "docs/learn/tours/06-inventory-extraction-modules.md",
+      "summary": "Guided tour of stage 3.5 inventory extraction: how extract_structural, extract_prose, direction, and reconcile mine per-section EntityRecords from tables and prose and route them by field name into depends_on/exposes/metadata."
+    },
+    {
+      "id": "document:docs/learn/tours/07-chunking.md",
+      "type": "document",
+      "name": "07-chunking.md",
+      "filePath": "docs/learn/tours/07-chunking.md",
+      "summary": "Guided tour of stage 6 chunking: how chunk_document flattens the enriched section tree into SemanticChunks, the three merge strategies, the split cascade, dual char budgets, and per-chunk entity scoping."
+    },
+    {
+      "id": "document:docs/learn/tours/08-embeddings-and-vector-store.md",
+      "type": "document",
+      "name": "08-embeddings-and-vector-store.md",
+      "filePath": "docs/learn/tours/08-embeddings-and-vector-store.md",
+      "summary": "Guided tour of stage 7: the EmbedderProtocol and VectorStoreProtocol seams, lazy model loading, memory vs Chroma backends, precomputed-vector writes, and the provenance check that refuses to search a foreign index."
+    },
+    {
+      "id": "document:docs/learn/tours/09-retrieval-and-hybrid-search.md",
+      "type": "document",
+      "name": "09-retrieval-and-hybrid-search.md",
+      "filePath": "docs/learn/tours/09-retrieval-and-hybrid-search.md",
+      "summary": "Guided tour of hybrid retrieval: retrieval.py's Okapi BM25 and Reciprocal Rank Fusion, plus pipeline._hybrid_search step by step (over-fetch dense pool, BM25 over get_corpus, fuse, map back)."
+    },
+    {
+      "id": "document:docs/learn/tours/10-pipeline-orchestrator-and-cli.md",
+      "type": "document",
+      "name": "10-pipeline-orchestrator-and-cli.md",
+      "filePath": "docs/learn/tours/10-pipeline-orchestrator-and-cli.md",
+      "summary": "Guided tour of the composition root: how SemanticPipeline wires the seven stages method by method and how cli.py's eight typer commands map onto pipeline calls, including the config-override pattern."
+    },
+    {
+      "id": "document:docs/learn/tours/11-quality-linter.md",
+      "type": "document",
+      "name": "11-quality-linter.md",
+      "filePath": "docs/learn/tours/11-quality-linter.md",
+      "summary": "Guided tour of quality.py and the lint command: a read-only raw-markdown linter that flags conversion residue before pandoc, its de-fencing strategy, the six checks, and its relationship to the binding chunk gate."
+    },
+    {
+      "id": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "type": "document",
+      "name": "01-life-of-a-document.md",
+      "filePath": "docs/learn/walkthroughs/01-life-of-a-document.md",
+      "summary": "End-to-end walkthrough that traces one real SAD document (sad-retailnexus-oms.md) through every pipeline stage â€” pandoc AST, structural tree, inventory + enrichment, chunking (content vs embed_text), and index/search â€” using real dumped artifacts and dense-vs-hybrid search comparisons."
+    },
+    {
+      "id": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "type": "document",
+      "name": "02-architecture-map.md",
+      "filePath": "docs/learn/walkthroughs/02-architecture-map.md",
+      "summary": "Single-page architecture overview of the whole system, with a Mermaid module dependency graph, the onion-style layering rule (contracts â†’ stages â†’ composition root â†’ entry points), the core data-model class diagram, and a complexity-ranked code-reading order."
+    },
+    {
+      "id": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "type": "document",
+      "name": "03-test-suite-tour.md",
+      "filePath": "docs/learn/walkthroughs/03-test-suite-tour.md",
+      "summary": "Tour of the test suite as living documentation â€” the 1:1 test/module convention, the conftest fixture ladder, the slow/integration marker tiers, the e2e wiring tests, and the separate retrieval-quality eval harness, ending with a decision guide for where a new test belongs."
+    },
+    {
+      "id": "document:src/tools/eval/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "src/tools/eval/README.md",
+      "summary": "Guide to the retrieval-evaluation harness: explains the frozen golden set, corpus provenance/disclosure, how to run eval_retrieval.py, and the real-document and chunk-hygiene e2e proofs that gate the enrichment overhaul's definition of done."
+    },
+    {
+      "id": "document:src/tools/eval/RETRIEVAL_LOG.md",
+      "type": "document",
+      "name": "RETRIEVAL_LOG.md",
+      "filePath": "src/tools/eval/RETRIEVAL_LOG.md",
+      "summary": "Append-only score log recording retrieval quality (recall@5/@10, MRR) on the frozen golden set across milestones; contains a mock-embedder wiring check and a pending real-embedder baseline that the enrichment overhaul must beat."
+    },
+    {
+      "id": "config:src/tools/eval/e2e_queries.yaml",
+      "type": "config",
+      "name": "e2e_queries.yaml",
+      "filePath": "src/tools/eval/e2e_queries.yaml",
+      "summary": "Frozen golden query set for the real-document e2e test, pairing natural-language queries (categorized as lexical/prose/cross-reference) with expected docs and breadcrumb sections across GitLab, Azure, rcherara, and RetailNexus corpora."
+    },
+    {
+      "id": "config:src/tools/eval/e2e_sources.yaml",
+      "type": "config",
+      "name": "e2e_sources.yaml",
+      "filePath": "src/tools/eval/e2e_sources.yaml",
+      "summary": "Manifest of real public architecture documents for the e2e test, listing commit-pinned source URLs plus license/attribution notes; consumed by fetch_e2e_corpus.py to download docs on demand without redistributing content."
+    },
+    {
+      "id": "config:src/tools/eval/queries.yaml",
+      "type": "config",
+      "name": "queries.yaml",
+      "filePath": "src/tools/eval/queries.yaml",
+      "summary": "Frozen retrieval golden set authored against the eval corpus before any enrichment change, mapping cross-reference/paraphrase/lexical-control queries to expected docs and sections so the baseline measurement stays honest."
+    },
+    {
+      "id": "document:src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md",
+      "type": "document",
+      "name": "adr-0001-modular-semantic-pipeline.md",
+      "filePath": "src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md",
+      "summary": "Sample Architecture Decision Record fixture (ADR-0001) used as an evaluation corpus input, documenting the decision to build a modular semantic pipeline with Status/Context/Decision/Consequences/Alternatives sections."
+    },
+    {
+      "id": "document:src/tools/eval/corpus/airflow-aip107.md",
+      "type": "document",
+      "name": "airflow-aip107.md",
+      "filePath": "src/tools/eval/corpus/airflow-aip107.md",
+      "summary": "Sample Airflow Improvement Proposal (AIP-107) fixture used as evaluation corpus input, covering motivation, problem details, considerations, migration effort, and AIP done criteria."
+    },
+    {
+      "id": "document:src/tools/eval/corpus/impala-vscode.md",
+      "type": "document",
+      "name": "impala-vscode.md",
+      "filePath": "src/tools/eval/corpus/impala-vscode.md",
+      "summary": "Sample developer how-to fixture used as evaluation corpus input, describing front-end development, unit-test debugging, and Dev Container setup for Impala in VSCode."
+    },
+    {
+      "id": "document:src/tools/eval/corpus/sad-retailnexus-oms.md",
+      "type": "document",
+      "name": "sad-retailnexus-oms.md",
+      "filePath": "src/tools/eval/corpus/sad-retailnexus-oms.md",
+      "summary": "Large Software Architecture Document fixture for the fictional RetailNexus OMS, used as evaluation corpus input â€” covers system overview, component/integration/data/security/deployment architecture, ADRs, and a risk register."
+    },
+    {
+      "id": "document:src/tools/eval/corpus/scripting-on-dtk.md",
+      "type": "document",
+      "name": "scripting-on-dtk.md",
+      "filePath": "src/tools/eval/corpus/scripting-on-dtk.md",
+      "summary": "Reference/spec fixture used as evaluation corpus input, documenting DTK scripting commands (COPY, SOQLQUERY, BULKDELETE, BULKUPSERT, RECORDCREATE/UPDATE/DELETE, APEXEXECUTE, DEPLOYZIP) with syntax and examples."
+    },
+    {
+      "id": "document:tests/convert/examples/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "tests/convert/examples/README.md",
+      "summary": "Documents the hand-authored Confluence-to-GitLab-Markdown converter fixtures and the converter's actual verified output, defining a three-tier 'no information loss' bar and a per-construct scenario map used to validate the convert subpackage end-to-end."
+    },
+    {
+      "id": "document:tests/convert/examples/adversarial-edge-cases.html",
+      "type": "document",
+      "name": "adversarial-edge-cases.html",
+      "filePath": "tests/convert/examples/adversarial-edge-cases.html",
+      "summary": "Sanitized HTML repros of real Confluence-export failure modes (layout-via-table, colour-coded cells, tiered/merged headers, custom brush DSL, unsupported macros, draw.io/SVG) used to drive the converter's loss-and-noise regression checks."
+    },
+    {
+      "id": "document:tests/convert/examples/order-management-sad.html",
+      "type": "document",
+      "name": "order-management-sad.html",
+      "filePath": "tests/convert/examples/order-management-sad.html",
+      "summary": "Clean rendered-export mock Confluence page exercising every supported construct on its happy path; serves as the regression baseline for the HTML-to-GitLab-Markdown converter."
+    },
+    {
+      "id": "document:tests/convert/examples/order-management-sad.storage.html",
+      "type": "document",
+      "name": "order-management-sad.storage.html",
+      "filePath": "tests/convert/examples/order-management-sad.storage.html",
+      "summary": "Confluence storage-format (ac:/ri:/at:) mock exercising the converter's best-effort element-based legacy handlers, deliberately excluding CDATA macro bodies that lxml drops."
+    },
+    {
+      "id": "config:.devcontainer/devcontainer.json",
+      "type": "config",
+      "name": "devcontainer.json",
+      "filePath": ".devcontainer/devcontainer.json",
+      "summary": "VS Code Dev Container definition based on a Python 3.11 Debian image, installing pandoc and GitHub CLI features and bootstrapping the editable install plus an 'sdd-pipeline check' on create."
+    },
+    {
+      "id": "document:.github/agents/adr-generator.agent.md",
+      "type": "document",
+      "name": "adr-generator.agent.md",
+      "filePath": ".github/agents/adr-generator.agent.md",
+      "summary": "Prompt definition for an 'ADR Generator' Copilot agent that produces comprehensive Architectural Decision Records with structured formatting optimized for AI and human readers."
+    },
+    {
+      "id": "document:.github/copilot-instructions.md",
+      "type": "document",
+      "name": "copilot-instructions.md",
+      "filePath": ".github/copilot-instructions.md",
+      "summary": "Concise Copilot guidance for the SDD semantic pipeline repo, summarizing the 7-stage architecture and linking to source docs for editing conventions and module boundaries."
+    },
+    {
+      "id": "document:docs/adr/adr-0001-modular-semantic-pipeline.md",
+      "type": "document",
+      "name": "adr-0001-modular-semantic-pipeline.md",
+      "filePath": "docs/adr/adr-0001-modular-semantic-pipeline.md",
+      "summary": "Architectural Decision Record proposing adoption of the modular 7-stage semantic pipeline, with context, decision, consequences, and weighed alternatives."
+    },
+    {
+      "id": "document:docs/archive/DISCOVERED_INTERFACES.md",
+      "type": "document",
+      "name": "DISCOVERED_INTERFACES.md",
+      "filePath": "docs/archive/DISCOVERED_INTERFACES.md",
+      "summary": "Archived reference cataloguing the real attribute and function names of the data model and enrichment surface (with file:line refs) used to ground a later enrichment overhaul."
+    },
+    {
+      "id": "document:docs/confluence-conversion-rules.md",
+      "type": "document",
+      "name": "confluence-conversion-rules.md",
+      "filePath": "docs/confluence-conversion-rules.md",
+      "summary": "Definitive rule set for converting Confluence Server/DC storage-format XHTML and rendered HTML exports into GitLab-flavoured Markdown optimized for vector embedding; the spec backing the convert subpackage."
+    },
+    {
+      "id": "document:docs/learn/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "docs/learn/README.md",
+      "summary": "Index for a self-study curriculum aimed at a senior C# developer new to Python, routing the reader through bridge concept maps, per-module tours, and code-grounded exercises."
+    },
+    {
+      "id": "document:docs/notes/SPIKE_FINDINGS.md",
+      "type": "document",
+      "name": "SPIKE_FINDINGS.md",
+      "filePath": "docs/notes/SPIKE_FINDINGS.md",
+      "summary": "Spike notes verifying template-derived enrichment assumptions at the pipeline layer (build_structural_model output), documenting how tables flatten to pipe-strings and other extraction observations."
+    },
+    {
+      "id": "document:docs/template/template.md",
+      "type": "document",
+      "name": "template.md",
+      "filePath": "docs/template/template.md",
+      "summary": "Large SDD document template with a full numbered section skeleton (executive summary, requirements, architecture, decisions) used as a fixture for enrichment and chunking spikes."
+    },
+    {
+      "id": "file:src/sdd_pipeline/cli.py",
+      "type": "file",
+      "name": "cli.py",
+      "filePath": "src/sdd_pipeline/cli.py",
+      "summary": "Typer CLI entry point ('sdd-pipeline') wiring every command â€” index, convert, export, lint, scan, scan-taxonomy, search, tui, and check â€” to the pipeline and converter layers."
+    },
+    {
+      "id": "file:src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "type": "file",
+      "name": "confluence_pf_filter.py",
+      "filePath": "src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "summary": "Stage-C in-process panflute filter for the HTML->Markdown converter: rewrites admonitions, expands, lozenges, layouts, and unconditionally simplifies tables (pipe-escaping, line-break handling) on the pandoc AST."
+    },
+    {
+      "id": "file:src/sdd_pipeline/retrieval.py",
+      "type": "file",
+      "name": "retrieval.py",
+      "filePath": "src/sdd_pipeline/retrieval.py",
+      "summary": "Stage-7c lexical retrieval: a pure-Python BM25 index plus reciprocal rank fusion, complementing dense vector search with a deterministic sparse keyword signal."
+    },
+    {
+      "id": "file:src/tools/scripts/convert-docs.ps1",
+      "type": "file",
+      "name": "convert-docs.ps1",
+      "filePath": "src/tools/scripts/convert-docs.ps1",
+      "summary": "PowerShell helper running the four-step 'just convert documents' Flow B against the project venv: check, convert HTML to Markdown, review the report, and lint the output (pandoc-only, no model)."
+    },
+    {
+      "id": "file:src/tools/scripts/ctx.py",
+      "type": "file",
+      "name": "ctx.py",
+      "filePath": "src/tools/scripts/ctx.py",
+      "summary": "Standalone tooling script that estimates token/context usage across documents and renders an ASCII chart and manifest panel for inspecting corpus size."
+    },
+    {
+      "id": "file:src/tools/scripts/eval_retrieval.py",
+      "type": "file",
+      "name": "eval_retrieval.py",
+      "filePath": "src/tools/scripts/eval_retrieval.py",
+      "summary": "Offline retrieval-quality harness: builds a model-free hashing-embedder index over a corpus and scores labelled queries with recall@k and reciprocal rank, emitting a report and append-only log."
+    },
+    {
+      "id": "file:src/tools/scripts/fetch_e2e_corpus.py",
+      "type": "file",
+      "name": "fetch_e2e_corpus.py",
+      "filePath": "src/tools/scripts/fetch_e2e_corpus.py",
+      "summary": "Utility script that downloads the end-to-end test corpus files used by slow/integration tests."
+    },
+    {
+      "id": "file:src/tools/scripts/otelmeter.py",
+      "type": "file",
+      "name": "otelmeter.py",
+      "filePath": "src/tools/scripts/otelmeter.py",
+      "summary": "Self-contained OpenTelemetry metrics/traces inspector: parses OTLP protobuf and JSON exports, ingests sessions/spans/model usage, estimates cost, and renders ASCII model and trace views; can also run as a tiny collector handler."
+    },
+    {
+      "id": "file:src/tools/scripts/setup-second-brain.ps1",
+      "type": "file",
+      "name": "setup-second-brain.ps1",
+      "filePath": "src/tools/scripts/setup-second-brain.ps1",
+      "summary": "PowerShell bootstrap script that creates a 'second brain' folder structure and copies template files into a project root."
+    },
+    {
+      "id": "file:src/tools/scripts/tok.py",
+      "type": "file",
+      "name": "tok.py",
+      "filePath": "src/tools/scripts/tok.py",
+      "summary": "Standalone token-usage accounting script that parses Claude and Copilot usage exports, estimates cost, and renders ASCII charts and per-model breakdowns."
+    },
+    {
+      "id": "file:tests/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "tests/__init__.py",
+      "summary": "Empty package marker making the tests directory an importable Python package."
+    },
+    {
+      "id": "file:tests/conftest.py",
+      "type": "file",
+      "name": "conftest.py",
+      "filePath": "tests/conftest.py",
+      "summary": "Shared pytest fixtures for the suite â€” workspace env isolation, sample markdown/AST/DocumentModel/chunks, and a deterministic model-free hashing_embedder used to exercise the real index->search path in the fast lane."
+    },
+    {
+      "id": "file:tests/convert/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "tests/convert/__init__.py",
+      "summary": "Empty package marker for the convert test subpackage."
+    },
+    {
+      "id": "file:tests/convert/test_confluence_pf_filter.py",
+      "type": "file",
+      "name": "test_confluence_pf_filter.py",
+      "filePath": "tests/convert/test_confluence_pf_filter.py",
+      "summary": "Unit tests for the Stage-C panflute filter, asserting admonition/expand/lozenge/layout rewrites and table simplification behaviors (row padding, header folding, pipe escaping, cell line breaks)."
+    },
+    {
+      "id": "file:tests/convert/test_convert_cli.py",
+      "type": "file",
+      "name": "test_convert_cli.py",
+      "filePath": "tests/convert/test_convert_cli.py",
+      "summary": "Tests for the convert CLI command covering the confidence/quarantine verdict, frontmatter emission, the legacy script entry point, and an end-to-end quarantine path."
+    },
+    {
+      "id": "file:tests/convert/test_html_to_gitlab_md_v3.py",
+      "type": "file",
+      "name": "test_html_to_gitlab_md_v3.py",
+      "filePath": "tests/convert/test_html_to_gitlab_md_v3.py",
+      "summary": "Comprehensive tests for the HTML->GitLab-Markdown path: chrome/metadata harvest, PFI preprocess rewrites, post-process, TOC flag, corpus examples, and end-to-end chunk hygiene."
+    },
+    {
+      "id": "file:tests/convert/test_html_to_gitlab_md.py",
+      "type": "file",
+      "name": "test_html_to_gitlab_md.py",
+      "filePath": "tests/convert/test_html_to_gitlab_md.py",
+      "summary": "Comprehensive test suite for the HTML to GitLab-Markdown converter, covering stats counting, pandoc resolution, content-root selection, spec conformance for Confluence constructs, and the convert CLI command."
+    },
+    {
+      "id": "file:tests/test_ast_parser.py",
+      "type": "file",
+      "name": "test_ast_parser.py",
+      "filePath": "tests/test_ast_parser.py",
+      "summary": "Tests the pandoc AST wrapper: version probing, single-file AST generation with required keys, and batch generation including JSON output writing."
+    },
+    {
+      "id": "file:tests/test_chunk_gate.py",
+      "type": "file",
+      "name": "test_chunk_gate.py",
+      "filePath": "tests/test_chunk_gate.py",
+      "summary": "Tests the binding chunk hygiene gate (quality.check_chunk), validating that poisoned markup-residue chunks are flagged while clean and code chunks pass."
+    },
+    {
+      "id": "file:tests/test_chunking.py",
+      "type": "file",
+      "name": "test_chunking.py",
+      "filePath": "tests/test_chunking.py",
+      "summary": "Tests the deterministic chunking stage: text splitting, chunk_document metadata inheritance, entity scoping, merge-definitions/merge-prose modes, embed budget, and junk filtering."
+    },
+    {
+      "id": "file:tests/test_cli_workspace.py",
+      "type": "file",
+      "name": "test_cli_workspace.py",
+      "filePath": "tests/test_cli_workspace.py",
+      "summary": "Tests the CLI workspace zone guards, ensuring index/lint reject out-of-zone input/output paths and that defaults land in the configured inbox/outbox zones."
+    },
+    {
+      "id": "file:tests/test_cli.py",
+      "type": "file",
+      "name": "test_cli.py",
+      "filePath": "tests/test_cli.py",
+      "summary": "End-to-end tests for the export, scan, and lint CLI commands, covering format validation, vocabulary persistence, merge-definitions colocation, and lint exit codes."
+    },
+    {
+      "id": "file:tests/test_config.py",
+      "type": "file",
+      "name": "test_config.py",
+      "filePath": "tests/test_config.py",
+      "summary": "Tests PipelineConfig loading: workspace defaults and env overrides, entity-terms JSON parsing, embed/merge defaults, and vector-store backend selection."
+    },
+    {
+      "id": "file:tests/test_corpus_taxonomy.py",
+      "type": "file",
+      "name": "test_corpus_taxonomy.py",
+      "filePath": "tests/test_corpus_taxonomy.py",
+      "summary": "Tests the corpus taxonomy module that classifies and aggregates document taxonomy across the corpus."
+    },
+    {
+      "id": "file:tests/test_direction.py",
+      "type": "file",
+      "name": "test_direction.py",
+      "filePath": "tests/test_direction.py",
+      "summary": "Tests the direction module: loading field directions and resolving the direction for a given field."
+    },
+    {
+      "id": "file:tests/test_doc_router.py",
+      "type": "file",
+      "name": "test_doc_router.py",
+      "filePath": "tests/test_doc_router.py",
+      "summary": "Tests the document router: detecting document type, loading taxonomy, and resolving the taxonomy applicable to a document."
+    },
+    {
+      "id": "file:tests/test_e2e_real_docs.py",
+      "type": "file",
+      "name": "test_e2e_real_docs.py",
+      "filePath": "tests/test_e2e_real_docs.py",
+      "summary": "End-to-end tests running the full SemanticPipeline against real documents, exercising the parse-through-search flow with actual fixtures."
+    },
+    {
+      "id": "file:tests/test_embeddings.py",
+      "type": "file",
+      "name": "test_embeddings.py",
+      "filePath": "tests/test_embeddings.py",
+      "summary": "Tests the embeddings layer: the Azure OpenAI embedder batching/ordering/error handling and the make_embedder factory dispatch between local and azure providers."
+    },
+    {
+      "id": "file:tests/test_enrichment_inventory.py",
+      "type": "file",
+      "name": "test_enrichment_inventory.py",
+      "filePath": "tests/test_enrichment_inventory.py",
+      "summary": "Tests enrichment inventory behavior, validating enrich_section produces expected entity records and section metadata."
+    },
+    {
+      "id": "file:tests/test_enrichment.py",
+      "type": "file",
+      "name": "test_enrichment.py",
+      "filePath": "tests/test_enrichment.py",
+      "summary": "Comprehensive tests for the enrichment stage: section-type classification, entity extraction, tag extraction, recursive section enrichment, and the cross-corpus scan_corpus discovery."
+    },
+    {
+      "id": "file:tests/test_eval_retrieval.py",
+      "type": "file",
+      "name": "test_eval_retrieval.py",
+      "filePath": "tests/test_eval_retrieval.py",
+      "summary": "Unit tests for the retrieval-eval scoring core in src/tools/scripts/eval_retrieval.py, loaded by path since the scripts dir is not on the import path."
+    },
+    {
+      "id": "file:tests/test_extract_prose.py",
+      "type": "file",
+      "name": "test_extract_prose.py",
+      "filePath": "tests/test_extract_prose.py",
+      "summary": "Tests the prose extraction module: build_prose_inventory and extract_prose over a DocumentModel."
+    },
+    {
+      "id": "file:tests/test_extract_structural.py",
+      "type": "file",
+      "name": "test_extract_structural.py",
+      "filePath": "tests/test_extract_structural.py",
+      "summary": "Tests the structural extraction module: build_structural_inventory and extract_structural over a DocumentModel section tree."
+    },
+    {
+      "id": "file:tests/test_header_norm.py",
+      "type": "file",
+      "name": "test_header_norm.py",
+      "filePath": "tests/test_header_norm.py",
+      "summary": "Tests the header normalization helper (normalise_header) that canonicalizes section heading text."
+    },
+    {
+      "id": "file:tests/test_memory_vector_store.py",
+      "type": "file",
+      "name": "test_memory_vector_store.py",
+      "filePath": "tests/test_memory_vector_store.py",
+      "summary": "Tests the in-memory vector store backend: roundtrip search, filters, corpus retrieval, delete/reset, persistence reload, protocol conformance, and the make_vector_store factory."
+    },
+    {
+      "id": "file:tests/test_models.py",
+      "type": "file",
+      "name": "test_models.py",
+      "filePath": "tests/test_models.py",
+      "summary": "Tests the pure dataclass models: ContentBlock, enums, DocumentModel section iteration, and the SemanticChunk embed-text/metadata/dict serialization contracts."
+    },
+    {
+      "id": "file:tests/test_pipeline_inventory_e2e.py",
+      "type": "file",
+      "name": "test_pipeline_inventory_e2e.py",
+      "filePath": "tests/test_pipeline_inventory_e2e.py",
+      "summary": "End-to-end tests verifying the pipeline produces the expected inventory output over a constructed DocumentModel."
+    },
+    {
+      "id": "file:tests/test_pipeline.py",
+      "type": "file",
+      "name": "test_pipeline.py",
+      "filePath": "tests/test_pipeline.py",
+      "summary": "Core tests for SemanticPipeline orchestration: stable doc ids, lazy embedder/store construction, process/index file and directory flows, cross-corpus scan, search delegation/provenance, and the chunk gate."
+    },
+    {
+      "id": "file:tests/test_quality.py",
+      "type": "file",
+      "name": "test_quality.py",
+      "filePath": "tests/test_quality.py",
+      "summary": "Tests the raw-markdown linter (quality.check_markdown), validating detection of embedding-harmful residue like leaked HTML, macros, code dumps, and near-empty stubs."
+    },
+    {
+      "id": "file:tests/test_reconcile.py",
+      "type": "file",
+      "name": "test_reconcile.py",
+      "filePath": "tests/test_reconcile.py",
+      "summary": "Tests the reconcile module that merges and deduplicates EntityRecord instances."
+    },
+    {
+      "id": "file:tests/test_retrieval.py",
+      "type": "file",
+      "name": "test_retrieval.py",
+      "filePath": "tests/test_retrieval.py",
+      "summary": "Tests the lexical retrieval primitives: tokenize, the BM25Index ranking, and reciprocal_rank_fusion used by hybrid search."
+    },
+    {
+      "id": "file:tests/test_search_offline.py",
+      "type": "file",
+      "name": "test_search_offline.py",
+      "filePath": "tests/test_search_offline.py",
+      "summary": "Model-free contract tests for the enrichâ†’chunkâ†’embedâ†’storeâ†’search path, using the deterministic hashing_embedder fixture to validate that filters narrow, output is stable, and the hybrid/RRF path runs without a real model."
+    },
+    {
+      "id": "file:tests/test_structural.py",
+      "type": "file",
+      "name": "test_structural.py",
+      "filePath": "tests/test_structural.py",
+      "summary": "Exhaustive unit tests for structural.build_structural_model â€” section-tree construction, preamble synthesis, breadcrumbs, and the deterministic markdown serialization of links, lists, tables, code blocks, and blockquotes."
+    },
+    {
+      "id": "file:tests/test_template_taxonomy.py",
+      "type": "file",
+      "name": "test_template_taxonomy.py",
+      "filePath": "tests/test_template_taxonomy.py",
+      "summary": "Unit tests for template_taxonomy pipe-table parsing and field extraction, asserting wide vs key-value table orientation handling, pipe unescaping, deterministic canonical JSON, and that body sample values never leak into the taxonomy."
+    },
+    {
+      "id": "file:tests/test_tui.py",
+      "type": "file",
+      "name": "test_tui.py",
+      "filePath": "tests/test_tui.py",
+      "summary": "Tests for the interactive search TUI â€” pure helpers (parse_top_k, resolve_section_type, format_preview) plus the Textual SearchApp driven through the headless run_test() pilot for populate/error/empty-index flows."
+    },
+    {
+      "id": "file:tests/test_vector_store.py",
+      "type": "file",
+      "name": "test_vector_store.py",
+      "filePath": "tests/test_vector_store.py",
+      "summary": "Unit tests for the Chroma vector-store backend and SearchResult â€” covering cosine score mapping, upsert counts, scalar-only metadata, where-clause filter assembly, provenance keys (excluding hnsw:*), delete, and reset."
+    },
+    {
+      "id": "file:tests/test_vocabulary.py",
+      "type": "file",
+      "name": "test_vocabulary.py",
+      "filePath": "tests/test_vocabulary.py",
+      "summary": "Small unit tests for vocabulary load/save JSON round-tripping â€” verifying sorted/deduped output, empty result on a missing path, parent-directory creation, and str-path acceptance."
+    },
+    {
+      "id": "file:tests/test_workspace.py",
+      "type": "file",
+      "name": "test_workspace.py",
+      "filePath": "tests/test_workspace.py",
+      "summary": "Security-focused tests for workspace path resolution â€” verifying inbox/outbox containment, rejection of outside paths, ../ traversal, and symlink escapes, plus enforce=False escape hatch and ensure_inbox_exists behavior."
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/sdd_pipeline/__init__.py",
+      "target": "config:src/sdd_pipeline/config.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/__init__.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/__init__.py",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/chunking.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/embeddings.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/extract_prose.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:src/sdd_pipeline/ast_parser.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:src/sdd_pipeline/chunking.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "config:src/sdd_pipeline/config.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:src/sdd_pipeline/embeddings.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:src/sdd_pipeline/quality.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:src/sdd_pipeline/structural.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:src/sdd_pipeline/vocabulary.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/tui.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/tui.py",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/vector_store.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "config:src/sdd_pipeline/config.py",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "configures"
+    },
+    {
+      "source": "config:src/sdd_pipeline/config.py",
+      "target": "file:src/sdd_pipeline/embeddings.py",
+      "type": "configures"
+    },
+    {
+      "source": "config:src/sdd_pipeline/config.py",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "configures"
+    },
+    {
+      "source": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "target": "file:src/sdd_pipeline/ast_parser.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "target": "file:src/sdd_pipeline/structural.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "target": "file:src/sdd_pipeline/template_taxonomy.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/direction.py",
+      "target": "file:src/sdd_pipeline/header_norm.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/doc_router.py",
+      "target": "file:src/sdd_pipeline/header_norm.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/doc_router.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/doc_router.py",
+      "target": "file:src/sdd_pipeline/template_taxonomy.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/extract_structural.py",
+      "target": "file:src/sdd_pipeline/header_norm.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/extract_structural.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/extract_structural.py",
+      "target": "file:src/sdd_pipeline/template_taxonomy.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/structural.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/template_taxonomy.py",
+      "target": "file:src/sdd_pipeline/ast_parser.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/template_taxonomy.py",
+      "target": "file:src/sdd_pipeline/header_norm.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/template_taxonomy.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/template_taxonomy.py",
+      "target": "file:src/sdd_pipeline/structural.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/dump.py",
+      "target": "file:src/sdd_pipeline/ast_parser.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/dump.py",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/dump.py",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/dump.py",
+      "target": "file:src/sdd_pipeline/workspace.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/enrichment.py",
+      "target": "file:src/sdd_pipeline/direction.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/enrichment.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/enrichment.py",
+      "target": "file:src/sdd_pipeline/reconcile.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/reconcile.py",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/convert/__init__.py",
+      "target": "file:src/sdd_pipeline/convert/base.py",
+      "type": "imports"
+    },
+    {
+      "source": "file:src/sdd_pipeline/convert/__init__.py",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "imports"
+    },
+    {
+      "source": "config:pyproject.toml",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "configures"
+    },
+    {
+      "source": "config:.env.example",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "configures"
+    },
+    {
+      "source": "config:environment.yml",
+      "target": "config:pyproject.toml",
+      "type": "related"
+    },
+    {
+      "source": "config:devfile.yaml",
+      "target": "config:pyproject.toml",
+      "type": "depends_on"
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:CLAUDE.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:CLAUDE.md",
+      "target": "config:pyproject.toml",
+      "type": "documents"
+    },
+    {
+      "source": "config:config/entity-vocab.json",
+      "target": "file:src/sdd_pipeline/vocabulary.py",
+      "type": "configures"
+    },
+    {
+      "source": "config:config/entity-vocab.json",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "configures"
+    },
+    {
+      "source": "config:config/field_directions.yaml",
+      "target": "file:src/sdd_pipeline/direction.py",
+      "type": "configures"
+    },
+    {
+      "source": "config:config/field_directions.yaml",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "configures"
+    },
+    {
+      "source": "config:config/taxonomy.json",
+      "target": "file:src/sdd_pipeline/doc_router.py",
+      "type": "configures"
+    },
+    {
+      "source": "config:config/taxonomy.json",
+      "target": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "type": "configures"
+    },
+    {
+      "source": "document:docs/guides/index.md",
+      "target": "document:docs/guides/pipeline-101.md",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/guides/index.md",
+      "target": "document:docs/guides/confluence-storage-format-gitlab-markdown.md",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/guides/index.md",
+      "target": "document:docs/guides/convert-html-gitlab-markdown-linux.md",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/guides/index.md",
+      "target": "document:docs/guides/convert-html-gitlab-markdown-windows.md",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/guides/log.md",
+      "target": "document:docs/guides/confluence-storage-format-gitlab-markdown.md",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/guides/log.md",
+      "target": "document:docs/guides/convert-html-gitlab-markdown-linux.md",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/guides/log.md",
+      "target": "document:docs/guides/convert-html-gitlab-markdown-windows.md",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/guides/pipeline-101.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/guides/pipeline-101.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/guides/pipeline-101.md",
+      "target": "file:src/sdd_pipeline/quality.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/guides/convert-html-gitlab-markdown-linux.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/guides/convert-html-gitlab-markdown-windows.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/inbox/Convert.Linux.Readme.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/inbox/Convert.Windows.Readme.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/01-project-anatomy-and-tooling.md",
+      "target": "config:pyproject.toml",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/01-project-anatomy-and-tooling.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/01-project-anatomy-and-tooling.md",
+      "target": "file:src/sdd_pipeline/embeddings.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/01-project-anatomy-and-tooling.md",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/02-dataclasses-vs-csharp-records.md",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "target": "file:src/sdd_pipeline/embeddings.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "target": "file:tests/test_pipeline.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "target": "file:src/sdd_pipeline/retrieval.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "target": "file:src/sdd_pipeline/template_taxonomy.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "target": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "target": "file:src/sdd_pipeline/embeddings.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "target": "file:src/sdd_pipeline/__init__.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "target": "file:src/sdd_pipeline/embeddings.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "target": "file:src/sdd_pipeline/dump.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/06-pydantic-settings-and-typer.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/06-pydantic-settings-and-typer.md",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/06-pydantic-settings-and-typer.md",
+      "target": "file:tests/test_config.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "target": "file:tests/conftest.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "target": "file:tests/test_pipeline.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "target": "file:tests/test_enrichment.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "target": "file:tests/test_config.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "target": "file:tests/test_ast_parser.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "target": "file:tests/test_vector_store.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "target": "config:pyproject.toml",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/exercises/01-trace-a-document.md",
+      "target": "file:src/sdd_pipeline/dump.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/01-trace-a-document.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/02-add-a-section-keyword.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/02-add-a-section-keyword.md",
+      "target": "file:tests/test_enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/03-parametrize-header-norm.md",
+      "target": "file:src/sdd_pipeline/header_norm.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/03-parametrize-header-norm.md",
+      "target": "file:tests/test_header_norm.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/04-add-a-config-field.md",
+      "target": "file:tests/test_config.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/04-add-a-config-field.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "target": "file:tests/test_enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "target": "file:src/sdd_pipeline/dump.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/exercises/06-add-a-cli-flag.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/06-add-a-cli-flag.md",
+      "target": "file:tests/test_cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/06-add-a-cli-flag.md",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/exercises/07-tune-hybrid-search-and-measure.md",
+      "target": "file:src/tools/scripts/eval_retrieval.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/07-tune-hybrid-search-and-measure.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/tours/01-models-and-config.md",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/01-models-and-config.md",
+      "target": "file:src/sdd_pipeline/chunking.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/02-ast-parser-and-structural.md",
+      "target": "file:src/sdd_pipeline/ast_parser.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/02-ast-parser-and-structural.md",
+      "target": "file:src/sdd_pipeline/structural.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/03-enrichment.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/04-vocabulary-and-two-pass-scan.md",
+      "target": "file:src/sdd_pipeline/vocabulary.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/04-vocabulary-and-two-pass-scan.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/04-vocabulary-and-two-pass-scan.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/04-vocabulary-and-two-pass-scan.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/05-taxonomy-modules.md",
+      "target": "file:src/sdd_pipeline/header_norm.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/05-taxonomy-modules.md",
+      "target": "file:src/sdd_pipeline/template_taxonomy.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/05-taxonomy-modules.md",
+      "target": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/05-taxonomy-modules.md",
+      "target": "file:src/sdd_pipeline/doc_router.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/06-inventory-extraction-modules.md",
+      "target": "file:src/sdd_pipeline/extract_structural.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/06-inventory-extraction-modules.md",
+      "target": "file:src/sdd_pipeline/extract_prose.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/06-inventory-extraction-modules.md",
+      "target": "file:src/sdd_pipeline/direction.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/06-inventory-extraction-modules.md",
+      "target": "file:src/sdd_pipeline/reconcile.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/07-chunking.md",
+      "target": "file:src/sdd_pipeline/chunking.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/08-embeddings-and-vector-store.md",
+      "target": "file:src/sdd_pipeline/embeddings.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/08-embeddings-and-vector-store.md",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/09-retrieval-and-hybrid-search.md",
+      "target": "file:src/sdd_pipeline/retrieval.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/09-retrieval-and-hybrid-search.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/10-pipeline-orchestrator-and-cli.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/10-pipeline-orchestrator-and-cli.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/11-quality-linter.md",
+      "target": "file:src/sdd_pipeline/quality.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/11-quality-linter.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "file:src/sdd_pipeline/dump.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "file:src/sdd_pipeline/ast_parser.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "file:src/sdd_pipeline/structural.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "file:src/sdd_pipeline/extract_structural.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "file:src/sdd_pipeline/extract_prose.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "file:src/sdd_pipeline/chunking.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "target": "file:src/sdd_pipeline/doc_router.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/dump.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/ast_parser.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/structural.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/chunking.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/embeddings.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/retrieval.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/vocabulary.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/models.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/doc_router.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/template_taxonomy.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/direction.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/reconcile.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/header_norm.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/extract_structural.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "file:src/sdd_pipeline/extract_prose.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "target": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "type": "related"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "target": "file:tests/conftest.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "target": "file:tests/test_pipeline.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "target": "file:tests/test_ast_parser.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "target": "file:tests/test_chunking.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "target": "file:tests/test_enrichment.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "target": "file:tests/test_embeddings.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "target": "file:tests/test_pipeline_inventory_e2e.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "target": "file:tests/test_e2e_real_docs.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "target": "file:src/tools/scripts/eval_retrieval.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "target": "file:src/tools/scripts/fetch_e2e_corpus.py",
+      "type": "documents"
+    },
+    {
+      "source": "config:src/tools/eval/queries.yaml",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related"
+    },
+    {
+      "source": "config:src/tools/eval/e2e_queries.yaml",
+      "target": "config:src/tools/eval/e2e_sources.yaml",
+      "type": "depends_on"
+    },
+    {
+      "source": "document:src/tools/eval/README.md",
+      "target": "config:src/tools/eval/queries.yaml",
+      "type": "documents"
+    },
+    {
+      "source": "document:src/tools/eval/README.md",
+      "target": "config:src/tools/eval/e2e_queries.yaml",
+      "type": "documents"
+    },
+    {
+      "source": "document:src/tools/eval/README.md",
+      "target": "config:src/tools/eval/e2e_sources.yaml",
+      "type": "documents"
+    },
+    {
+      "source": "document:src/tools/eval/RETRIEVAL_LOG.md",
+      "target": "config:src/tools/eval/queries.yaml",
+      "type": "documents"
+    },
+    {
+      "source": "document:src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related"
+    },
+    {
+      "source": "document:src/tools/eval/corpus/airflow-aip107.md",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related"
+    },
+    {
+      "source": "document:src/tools/eval/corpus/impala-vscode.md",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related"
+    },
+    {
+      "source": "document:src/tools/eval/corpus/sad-retailnexus-oms.md",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related"
+    },
+    {
+      "source": "document:src/tools/eval/corpus/scripting-on-dtk.md",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related"
+    },
+    {
+      "source": "document:tests/convert/examples/README.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:tests/convert/examples/order-management-sad.storage.html",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "related"
+    },
+    {
+      "source": "config:.devcontainer/devcontainer.json",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "configures"
+    },
+    {
+      "source": "document:.github/copilot-instructions.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/confluence-conversion-rules.md",
+      "target": "file:src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/notes/SPIKE_FINDINGS.md",
+      "target": "document:docs/template/template.md",
+      "type": "related"
+    },
+    {
+      "source": "document:.github/agents/adr-generator.agent.md",
+      "target": "document:docs/adr/adr-0001-modular-semantic-pipeline.md",
+      "type": "related"
+    },
+    {
+      "source": "file:src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "target": "file:tests/convert/test_confluence_pf_filter.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/cli.py",
+      "target": "file:tests/convert/test_convert_cli.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "target": "file:tests/convert/test_html_to_gitlab_md.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/cli.py",
+      "target": "file:tests/convert/test_html_to_gitlab_md.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/ast_parser.py",
+      "target": "file:tests/test_ast_parser.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/quality.py",
+      "target": "file:tests/test_chunk_gate.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/models.py",
+      "target": "file:tests/test_chunk_gate.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/chunking.py",
+      "target": "file:tests/test_chunking.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/models.py",
+      "target": "file:tests/test_chunking.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/cli.py",
+      "target": "file:tests/test_cli_workspace.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/cli.py",
+      "target": "file:tests/test_cli.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "target": "file:tests/test_corpus_taxonomy.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/direction.py",
+      "target": "file:tests/test_direction.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/doc_router.py",
+      "target": "file:tests/test_doc_router.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:tests/test_e2e_real_docs.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/embeddings.py",
+      "target": "file:tests/test_embeddings.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/enrichment.py",
+      "target": "file:tests/test_enrichment_inventory.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/enrichment.py",
+      "target": "file:tests/test_enrichment.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/tools/scripts/eval_retrieval.py",
+      "target": "file:tests/test_eval_retrieval.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/extract_prose.py",
+      "target": "file:tests/test_extract_prose.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/extract_structural.py",
+      "target": "file:tests/test_extract_structural.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/header_norm.py",
+      "target": "file:tests/test_header_norm.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/vector_store.py",
+      "target": "file:tests/test_memory_vector_store.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/models.py",
+      "target": "file:tests/test_models.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:tests/test_pipeline_inventory_e2e.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:tests/test_pipeline.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/vocabulary.py",
+      "target": "file:tests/test_pipeline.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/quality.py",
+      "target": "file:tests/test_quality.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/reconcile.py",
+      "target": "file:tests/test_reconcile.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/retrieval.py",
+      "target": "file:tests/test_retrieval.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/pipeline.py",
+      "target": "file:tests/test_search_offline.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/structural.py",
+      "target": "file:tests/test_structural.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/chunking.py",
+      "target": "file:tests/test_structural.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/template_taxonomy.py",
+      "target": "file:tests/test_template_taxonomy.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/tui.py",
+      "target": "file:tests/test_tui.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/vector_store.py",
+      "target": "file:tests/test_vector_store.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/vocabulary.py",
+      "target": "file:tests/test_vocabulary.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "file:src/sdd_pipeline/workspace.py",
+      "target": "file:tests/test_workspace.py",
+      "type": "tested_by"
+    },
+    {
+      "source": "config:.env.example",
+      "target": "config:src/sdd_pipeline/config.py",
+      "type": "configures"
+    },
+    {
+      "source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "target": "config:src/sdd_pipeline/config.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "target": "config:src/sdd_pipeline/config.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/bridge/06-pydantic-settings-and-typer.md",
+      "target": "config:src/sdd_pipeline/config.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/exercises/04-add-a-config-field.md",
+      "target": "config:src/sdd_pipeline/config.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/tours/01-models-and-config.md",
+      "target": "config:src/sdd_pipeline/config.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "target": "config:src/sdd_pipeline/config.py",
+      "type": "documents"
+    },
+    {
+      "source": "document:tests/convert/examples/README.md",
+      "target": "document:tests/convert/examples/order-management-sad.html",
+      "type": "related"
+    },
+    {
+      "source": "document:tests/convert/examples/README.md",
+      "target": "document:tests/convert/examples/adversarial-edge-cases.html",
+      "type": "related"
+    },
+    {
+      "source": "document:tests/convert/examples/README.md",
+      "target": "document:tests/convert/examples/order-management-sad.storage.html",
+      "type": "related"
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:data-config",
+      "name": "Data Contracts & Configuration",
+      "description": "Pure dataclasses, enums, and serializers (models.py) plus the pydantic-settings PipelineConfig and all committed seed/config files (taxonomy, entity vocab, pyproject, env, devcontainer) that the two flows share."
+    },
+    {
+      "id": "layer:indexing-pipeline",
+      "name": "Indexing Pipeline (Flow A)",
+      "description": "Deterministic Confluence-MD to SemanticChunk stages: pandoc AST parse, structural section tree, enrichment/taxonomy tagging, inventory extraction, header normalization, vocabulary scan, reconciliation, routing, and chunking."
+    },
+    {
+      "id": "layer:embedding-retrieval",
+      "name": "Embedding & Vector Search",
+      "description": "Embedding backends (local sentence-transformers / Azure OpenAI), pluggable vector-store backends, and dense plus hybrid (RRF) retrieval over the index."
+    },
+    {
+      "id": "layer:orchestration-cli",
+      "name": "Orchestration & CLI",
+      "description": "SemanticPipeline orchestrator that wires the stages together, plus the Typer CLI, Textual search TUI, workspace IO guard, and package barrel that expose the flows to users."
+    },
+    {
+      "id": "layer:convert",
+      "name": "HTML to Markdown Converter (Flow B)",
+      "description": "Independent HTML to GitLab-Markdown conversion subpackage: shared pandoc/text base, the BeautifulSoup HTML path, and the in-process Confluence panflute filter."
+    },
+    {
+      "id": "layer:tooling",
+      "name": "Developer Tooling & Evaluation",
+      "description": "Dev/ops scripts (context, token counting, OTel metering, corpus fetch, PowerShell helpers) and the retrieval-evaluation harness with its sample corpus, query sets, and logs."
+    },
+    {
+      "id": "layer:test",
+      "name": "Test Suite",
+      "description": "Pytest unit, offline, and end-to-end tests for both flows, shared fixtures (conftest), and the HTML/storage fixtures under tests/convert."
+    },
+    {
+      "id": "layer:documentation",
+      "name": "Documentation",
+      "description": "README, CLAUDE.md, design guides, ADRs, the learn/ onboarding tours/exercises/walkthroughs, conversion specs, and CI/agent instruction docs."
+    }
+  ]
+}

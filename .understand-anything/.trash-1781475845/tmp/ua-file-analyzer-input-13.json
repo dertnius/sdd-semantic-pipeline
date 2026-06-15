@@ -1,0 +1,11 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "src/tools/eval/README.md", "language": "markdown", "sizeLines": 86, "fileCategory": "docs"},
+    {"path": "src/tools/eval/RETRIEVAL_LOG.md", "language": "markdown", "sizeLines": 60, "fileCategory": "docs"},
+    {"path": "src/tools/eval/e2e_queries.yaml", "language": "yaml", "sizeLines": 83, "fileCategory": "config"},
+    {"path": "src/tools/eval/e2e_sources.yaml", "language": "yaml", "sizeLines": 28, "fileCategory": "config"},
+    {"path": "src/tools/eval/queries.yaml", "language": "yaml", "sizeLines": 158, "fileCategory": "config"}
+  ],
+  "batchImportData": {"src/tools/eval/README.md":[],"src/tools/eval/RETRIEVAL_LOG.md":[],"src/tools/eval/e2e_queries.yaml":[],"src/tools/eval/e2e_sources.yaml":[],"src/tools/eval/queries.yaml":[]}
+}

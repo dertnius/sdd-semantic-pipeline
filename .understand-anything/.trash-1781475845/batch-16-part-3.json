@@ -1,0 +1,196 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/tools/scripts/tok.py",
+      "type": "file",
+      "name": "tok.py",
+      "filePath": "src/tools/scripts/tok.py",
+      "summary": "Standalone token-usage accounting script that parses Claude and Copilot usage exports, estimates cost, and renders ASCII charts and per-model breakdowns.",
+      "tags": ["script", "tooling", "tokens", "cost-analysis"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/tools/scripts/tok.py:parse_claude",
+      "type": "function",
+      "name": "parse_claude",
+      "filePath": "src/tools/scripts/tok.py",
+      "lineRange": [88, 142],
+      "summary": "Parses Claude usage export data into normalized per-model token/cost records.",
+      "tags": ["parsing", "tokens", "tooling"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/tools/scripts/tok.py:parse_copilot",
+      "type": "function",
+      "name": "parse_copilot",
+      "filePath": "src/tools/scripts/tok.py",
+      "lineRange": [145, 178],
+      "summary": "Parses Copilot usage export data into normalized per-model usage records.",
+      "tags": ["parsing", "tokens", "tooling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/tools/scripts/tok.py:chart",
+      "type": "function",
+      "name": "chart",
+      "filePath": "src/tools/scripts/tok.py",
+      "lineRange": [181, 214],
+      "summary": "Builds the ASCII bar chart visualizing token/cost distribution across models.",
+      "tags": ["rendering", "chart", "tooling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/tools/scripts/tok.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src/tools/scripts/tok.py",
+      "lineRange": [288, 339],
+      "summary": "Script entry point: parses args, loads Claude/Copilot usage, and renders the combined report.",
+      "tags": ["entry-point", "cli", "tooling"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "tests/__init__.py",
+      "summary": "Empty package marker making the tests directory an importable Python package.",
+      "tags": ["test", "package-marker", "barrel"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/conftest.py",
+      "type": "file",
+      "name": "conftest.py",
+      "filePath": "tests/conftest.py",
+      "summary": "Shared pytest fixtures for the suite — workspace env isolation, sample markdown/AST/DocumentModel/chunks, and a deterministic model-free hashing_embedder used to exercise the real index->search path in the fast lane.",
+      "tags": ["test", "fixtures", "pytest", "test-harness"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/conftest.py:HashingEmbedder",
+      "type": "class",
+      "name": "HashingEmbedder",
+      "filePath": "tests/conftest.py",
+      "lineRange": [354, 377],
+      "summary": "Deterministic model-free embedder fixture backing class, embedding chunks/queries via feature hashing so search-contract tests run without a model.",
+      "tags": ["test", "embedding", "deterministic"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/conftest.py:sample_document_model",
+      "type": "function",
+      "name": "sample_document_model",
+      "filePath": "tests/conftest.py",
+      "lineRange": [215, 311],
+      "summary": "Fixture building a representative DocumentModel section tree used across enrichment, chunking, and search tests.",
+      "tags": ["test", "fixture", "data-model"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/conftest.py:sample_chunks",
+      "type": "function",
+      "name": "sample_chunks",
+      "filePath": "tests/conftest.py",
+      "lineRange": [315, 348],
+      "summary": "Fixture producing a list of SemanticChunks derived from the sample document for chunk/search tests.",
+      "tags": ["test", "fixture", "chunking"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/convert/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "tests/convert/__init__.py",
+      "summary": "Empty package marker for the convert test subpackage.",
+      "tags": ["test", "package-marker", "barrel"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/convert/test_confluence_pf_filter.py",
+      "type": "file",
+      "name": "test_confluence_pf_filter.py",
+      "filePath": "tests/convert/test_confluence_pf_filter.py",
+      "summary": "Unit tests for the Stage-C panflute filter, asserting admonition/expand/lozenge/layout rewrites and table simplification behaviors (row padding, header folding, pipe escaping, cell line breaks).",
+      "tags": ["test", "conversion", "panflute", "unit-test"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/convert/test_convert_cli.py",
+      "type": "file",
+      "name": "test_convert_cli.py",
+      "filePath": "tests/convert/test_convert_cli.py",
+      "summary": "Tests for the convert CLI command covering the confidence/quarantine verdict, frontmatter emission, the legacy script entry point, and an end-to-end quarantine path.",
+      "tags": ["test", "cli", "conversion", "integration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/convert/test_convert_cli.py:TestConvertConfidenceVerdict",
+      "type": "class",
+      "name": "TestConvertConfidenceVerdict",
+      "filePath": "tests/convert/test_convert_cli.py",
+      "lineRange": [44, 69],
+      "summary": "Test class verifying the converter confidence-gate verdict logic (quarantine reasons, unrecognized-tag thresholds).",
+      "tags": ["test", "conversion", "quarantine"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/convert/test_convert_cli.py:TestConvertFrontmatter",
+      "type": "class",
+      "name": "TestConvertFrontmatter",
+      "filePath": "tests/convert/test_convert_cli.py",
+      "lineRange": [72, 112],
+      "summary": "Test class asserting that the convert command writes YAML-safe frontmatter keys (space/source-url/labels) correctly.",
+      "tags": ["test", "conversion", "frontmatter"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/convert/test_html_to_gitlab_md_v3.py",
+      "type": "file",
+      "name": "test_html_to_gitlab_md_v3.py",
+      "filePath": "tests/convert/test_html_to_gitlab_md_v3.py",
+      "summary": "Comprehensive tests for the HTML->GitLab-Markdown path: chrome/metadata harvest, PFI preprocess rewrites, post-process, TOC flag, corpus examples, and end-to-end chunk hygiene.",
+      "tags": ["test", "conversion", "html", "unit-test"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/convert/test_html_to_gitlab_md_v3.py:TestPfiPreprocess",
+      "type": "class",
+      "name": "TestPfiPreprocess",
+      "filePath": "tests/convert/test_html_to_gitlab_md_v3.py",
+      "lineRange": [100, 258],
+      "summary": "Large test class covering the BeautifulSoup PFI pre-clean stage that rewrites Confluence constructs into PFI-HTML carriers.",
+      "tags": ["test", "conversion", "preprocess"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/convert/test_html_to_gitlab_md_v3.py:TestHarvestAndChrome",
+      "type": "class",
+      "name": "TestHarvestAndChrome",
+      "filePath": "tests/convert/test_html_to_gitlab_md_v3.py",
+      "lineRange": [58, 94],
+      "summary": "Test class verifying page-chrome metadata harvest (title/space/author/date/page_id) before content-root selection.",
+      "tags": ["test", "conversion", "metadata"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {"source": "file:src/tools/scripts/tok.py", "target": "function:src/tools/scripts/tok.py:parse_claude", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/tools/scripts/tok.py", "target": "function:src/tools/scripts/tok.py:parse_copilot", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/tools/scripts/tok.py", "target": "function:src/tools/scripts/tok.py:chart", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/tools/scripts/tok.py", "target": "function:src/tools/scripts/tok.py:main", "type": "contains", "direction": "forward", "weight": 1.0},
+
+    {"source": "file:tests/conftest.py", "target": "class:tests/conftest.py:HashingEmbedder", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:tests/conftest.py", "target": "function:tests/conftest.py:sample_document_model", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:tests/conftest.py", "target": "function:tests/conftest.py:sample_chunks", "type": "contains", "direction": "forward", "weight": 1.0},
+
+    {"source": "file:tests/convert/test_confluence_pf_filter.py", "target": "file:src/sdd_pipeline/convert/confluence_pf_filter.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:tests/convert/test_convert_cli.py", "target": "class:tests/convert/test_convert_cli.py:TestConvertConfidenceVerdict", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:tests/convert/test_convert_cli.py", "target": "class:tests/convert/test_convert_cli.py:TestConvertFrontmatter", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:tests/convert/test_convert_cli.py", "target": "file:src/sdd_pipeline/cli.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:tests/convert/test_html_to_gitlab_md_v3.py", "target": "class:tests/convert/test_html_to_gitlab_md_v3.py:TestPfiPreprocess", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:tests/convert/test_html_to_gitlab_md_v3.py", "target": "class:tests/convert/test_html_to_gitlab_md_v3.py:TestHarvestAndChrome", "type": "contains", "direction": "forward", "weight": 1.0}
+  ]
+}

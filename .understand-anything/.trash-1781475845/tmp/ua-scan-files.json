@@ -1,0 +1,1379 @@
+{
+  "scriptCompleted": true,
+  "files": [
+    {
+      "path": ".devcontainer/devcontainer.json",
+      "language": "json",
+      "sizeLines": 72,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".env.example",
+      "language": "config",
+      "sizeLines": 45,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".github/agents/adr-generator.agent.md",
+      "language": "markdown",
+      "sizeLines": 224,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "language": "markdown",
+      "sizeLines": 366,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_accepts_str_path0/vocab.json",
+      "language": "json",
+      "sizeLines": 3,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_calls_all_stages0/auth-service.md",
+      "language": "markdown",
+      "sizeLines": 53,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_calls_embedder_and_store0/auth-service.md",
+      "language": "markdown",
+      "sizeLines": 53,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_clean_corpus_exits_zero0/ok.md",
+      "language": "markdown",
+      "sizeLines": 3,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_clean_corpus_exits_zero0/quality-report.json",
+      "language": "json",
+      "sizeLines": 12,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_collections_are_independe0/col_a.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_content_type_filter0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_corrupt_provenance_sideca0/sdd_docs.provenance.json",
+      "language": "json",
+      "sizeLines": 0,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_delete_document_removes_o0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 26,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_delete_unknown_doc_return0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_doc_id_filter0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_enforce_false_allows_out_0/outside/ok.md",
+      "language": "markdown",
+      "sizeLines": 3,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_enforce_false_allows_out_0/outside/report.json",
+      "language": "json",
+      "sizeLines": 12,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_error_returns_minus_one0/docs/bad.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_expected_files_on_disk0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_expected_files_on_disk0/sdd_docs.provenance.json",
+      "language": "json",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_filtered_subset0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_filters_are_anded0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_hybrid_path_runs_without_0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 2671,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_hybrid_path_runs_without_0/sdd_docs.provenance.json",
+      "language": "json",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_identical_vector_is_perfe0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_index_and_provenance_surv0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_index_and_provenance_surv0/sdd_docs.provenance.json",
+      "language": "json",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_k_larger_than_count0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_lint_default_report_under0/inbox/ok.md",
+      "language": "markdown",
+      "sizeLines": 3,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_lint_default_report_under0/outbox/reports/quality-report.json",
+      "language": "json",
+      "sizeLines": 12,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_lint_rejects_out_of_zone_1/inbox/ok.md",
+      "language": "markdown",
+      "sizeLines": 3,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_load_normalises_config_en0/d.yaml",
+      "language": "yaml",
+      "sizeLines": 2,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_load_queries_parses_match0/queries.json",
+      "language": "json",
+      "sizeLines": 0,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_metadata_is_a_copy0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_nearest_result_first0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_non_dict_provenance_retur0/sdd_docs.provenance.json",
+      "language": "json",
+      "sizeLines": 0,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_non_matching_filter_retur0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_offline_search_returns_sh0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 2671,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_offline_search_returns_sh0/sdd_docs.provenance.json",
+      "language": "json",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_output_dir_mirrors_tree0/docs/sub/page.html",
+      "language": "html",
+      "sizeLines": 0,
+      "fileCategory": "markup"
+    },
+    {
+      "path": ".tmp_pytest/test_output_dir_mirrors_tree0/md_out/sub/page.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_output_dir_mirrors_tree0/report.json",
+      "language": "json",
+      "sizeLines": 43,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_partial_failure_captured_0/_ws_outbox/md/good.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_partial_failure_captured_0/docs/bad.html",
+      "language": "html",
+      "sizeLines": 0,
+      "fileCategory": "markup"
+    },
+    {
+      "path": ".tmp_pytest/test_partial_failure_captured_0/docs/good.html",
+      "language": "html",
+      "sizeLines": 0,
+      "fileCategory": "markup"
+    },
+    {
+      "path": ".tmp_pytest/test_partial_failure_captured_0/report.json",
+      "language": "json",
+      "sizeLines": 52,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_passes_from_format_to_ast0/auth-service.md",
+      "language": "markdown",
+      "sizeLines": 53,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_persists_and_accumulates_0/docs/a.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_persists_and_accumulates_0/vocab.json",
+      "language": "json",
+      "sizeLines": 3,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_report_written_with_metri0/_ws_outbox/md/a.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_report_written_with_metri0/_ws_outbox/md/b.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_report_written_with_metri0/docs/a.html",
+      "language": "html",
+      "sizeLines": 0,
+      "fileCategory": "markup"
+    },
+    {
+      "path": ".tmp_pytest/test_report_written_with_metri0/docs/b.html",
+      "language": "html",
+      "sizeLines": 0,
+      "fileCategory": "markup"
+    },
+    {
+      "path": ".tmp_pytest/test_reports_issues_and_handle0/bad.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_reports_issues_and_handle0/clean.md",
+      "language": "markdown",
+      "sizeLines": 3,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_reports_issues_and_handle0/dirty.md",
+      "language": "markdown",
+      "sizeLines": 5,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_reports_issues_and_handle0/quality-report.json",
+      "language": "json",
+      "sizeLines": 35,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_reset_clears_chunks_and_p0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 0,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_returns_all_with_zero_dis0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_returns_count_per_file0/docs/doc0.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_returns_count_per_file0/docs/doc1.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_returns_count_per_file0/docs/doc2.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_returns_list_of_chunks0/auth-service.md",
+      "language": "markdown",
+      "sizeLines": 53,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_returns_vocab_parsed_fail0/vocab.json",
+      "language": "json",
+      "sizeLines": 2,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_returns_zero_for_empty_do0/auth-service.md",
+      "language": "markdown",
+      "sizeLines": 53,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_round_trip_sorted_and_ded0/vocab.json",
+      "language": "json",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_save_creates_parent_dirs0/nested/dir/vocab.json",
+      "language": "json",
+      "sizeLines": 2,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_search_is_deterministic0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 2671,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_search_is_deterministic0/sdd_docs.provenance.json",
+      "language": "json",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_search_metadata_is_a_copy0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_section_type_filter_narro0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 2671,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_section_type_filter_narro0/sdd_docs.provenance.json",
+      "language": "json",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_section_type_filter0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_seeds_from_entity_terms_a0/vocab.json",
+      "language": "json",
+      "sizeLines": 3,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_space_filter0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_strict_exits_nonzero_only0/_ws_outbox/reports/quality-report.json",
+      "language": "json",
+      "sizeLines": 28,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_strict_exits_nonzero_only0/stub.md",
+      "language": "markdown",
+      "sizeLines": 3,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_term_from_doc_a_tags_doc_0/docs/a.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_term_from_doc_a_tags_doc_0/docs/b.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_term_from_doc_a_tags_doc_0/vocab.json",
+      "language": "json",
+      "sizeLines": 2,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_toc_default_off_and_opt_i0/_ws_outbox/md/a.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".tmp_pytest/test_toc_default_off_and_opt_i0/docs/a.html",
+      "language": "html",
+      "sizeLines": 0,
+      "fileCategory": "markup"
+    },
+    {
+      "path": ".tmp_pytest/test_toc_default_off_and_opt_i0/r.json",
+      "language": "json",
+      "sizeLines": 43,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".tmp_pytest/test_upsert_replaces_same_chun0/sdd_docs.json",
+      "language": "json",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".understand-anything/.understandignore",
+      "language": "unknown",
+      "sizeLines": 52,
+      "fileCategory": "code"
+    },
+    {
+      "path": "CLAUDE.md",
+      "language": "markdown",
+      "sizeLines": 337,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "config/entity-vocab.json",
+      "language": "json",
+      "sizeLines": 5,
+      "fileCategory": "config"
+    },
+    {
+      "path": "config/field_directions.yaml",
+      "language": "yaml",
+      "sizeLines": 37,
+      "fileCategory": "config"
+    },
+    {
+      "path": "config/taxonomy.json",
+      "language": "json",
+      "sizeLines": 48,
+      "fileCategory": "config"
+    },
+    {
+      "path": "devfile.yaml",
+      "language": "yaml",
+      "sizeLines": 143,
+      "fileCategory": "config"
+    },
+    {
+      "path": "docs/adr/adr-0001-modular-semantic-pipeline.md",
+      "language": "markdown",
+      "sizeLines": 79,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/archive/DISCOVERED_INTERFACES.md",
+      "language": "markdown",
+      "sizeLines": 54,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/confluence-conversion-rules.md",
+      "language": "markdown",
+      "sizeLines": 1226,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/confluence-storage-format-gitlab-markdown.md",
+      "language": "markdown",
+      "sizeLines": 45,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/convert-html-gitlab-markdown-linux.md",
+      "language": "markdown",
+      "sizeLines": 36,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/convert-html-gitlab-markdown-windows.md",
+      "language": "markdown",
+      "sizeLines": 34,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/index.md",
+      "language": "markdown",
+      "sizeLines": 48,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/log.md",
+      "language": "markdown",
+      "sizeLines": 38,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/pipeline-101.md",
+      "language": "markdown",
+      "sizeLines": 613,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md",
+      "language": "markdown",
+      "sizeLines": 632,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/inbox/Convert.Linux.Readme.md",
+      "language": "markdown",
+      "sizeLines": 171,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/inbox/Convert.Windows.Readme.md",
+      "language": "markdown",
+      "sizeLines": 168,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/01-project-anatomy-and-tooling.md",
+      "language": "markdown",
+      "sizeLines": 121,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/02-dataclasses-vs-csharp-records.md",
+      "language": "markdown",
+      "sizeLines": 122,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "language": "markdown",
+      "sizeLines": 124,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "language": "markdown",
+      "sizeLines": 126,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "language": "markdown",
+      "sizeLines": 131,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/06-pydantic-settings-and-typer.md",
+      "language": "markdown",
+      "sizeLines": 123,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "language": "markdown",
+      "sizeLines": 135,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/01-trace-a-document.md",
+      "language": "markdown",
+      "sizeLines": 116,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/02-add-a-section-keyword.md",
+      "language": "markdown",
+      "sizeLines": 90,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/03-parametrize-header-norm.md",
+      "language": "markdown",
+      "sizeLines": 100,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/04-add-a-config-field.md",
+      "language": "markdown",
+      "sizeLines": 89,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "language": "markdown",
+      "sizeLines": 91,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/06-add-a-cli-flag.md",
+      "language": "markdown",
+      "sizeLines": 102,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/07-tune-hybrid-search-and-measure.md",
+      "language": "markdown",
+      "sizeLines": 119,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "language": "markdown",
+      "sizeLines": 100,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/README.md",
+      "language": "markdown",
+      "sizeLines": 88,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/01-models-and-config.md",
+      "language": "markdown",
+      "sizeLines": 148,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/02-ast-parser-and-structural.md",
+      "language": "markdown",
+      "sizeLines": 130,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/03-enrichment.md",
+      "language": "markdown",
+      "sizeLines": 110,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/04-vocabulary-and-two-pass-scan.md",
+      "language": "markdown",
+      "sizeLines": 118,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/05-taxonomy-modules.md",
+      "language": "markdown",
+      "sizeLines": 122,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/06-inventory-extraction-modules.md",
+      "language": "markdown",
+      "sizeLines": 128,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/07-chunking.md",
+      "language": "markdown",
+      "sizeLines": 126,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/08-embeddings-and-vector-store.md",
+      "language": "markdown",
+      "sizeLines": 120,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/09-retrieval-and-hybrid-search.md",
+      "language": "markdown",
+      "sizeLines": 115,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/10-pipeline-orchestrator-and-cli.md",
+      "language": "markdown",
+      "sizeLines": 125,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/11-quality-linter.md",
+      "language": "markdown",
+      "sizeLines": 92,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/walkthroughs/01-life-of-a-document.md",
+      "language": "markdown",
+      "sizeLines": 277,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/walkthroughs/02-architecture-map.md",
+      "language": "markdown",
+      "sizeLines": 109,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/walkthroughs/03-test-suite-tour.md",
+      "language": "markdown",
+      "sizeLines": 115,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/notes/SPIKE_FINDINGS.md",
+      "language": "markdown",
+      "sizeLines": 63,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/template/template.md",
+      "language": "markdown",
+      "sizeLines": 521,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "environment.yml",
+      "language": "yaml",
+      "sizeLines": 57,
+      "fileCategory": "config"
+    },
+    {
+      "path": "pyproject.toml",
+      "language": "toml",
+      "sizeLines": 120,
+      "fileCategory": "config"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 591,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/sdd_pipeline/__init__.py",
+      "language": "python",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/ast_parser.py",
+      "language": "python",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/chunking.py",
+      "language": "python",
+      "sizeLines": 287,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/cli.py",
+      "language": "python",
+      "sizeLines": 1237,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/config.py",
+      "language": "python",
+      "sizeLines": 213,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/convert/__init__.py",
+      "language": "python",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/convert/base.py",
+      "language": "python",
+      "sizeLines": 298,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "language": "python",
+      "sizeLines": 463,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "language": "python",
+      "sizeLines": 1690,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/corpus_taxonomy.py",
+      "language": "python",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/direction.py",
+      "language": "python",
+      "sizeLines": 51,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/doc_router.py",
+      "language": "python",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/dump.py",
+      "language": "python",
+      "sizeLines": 88,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/embeddings.py",
+      "language": "python",
+      "sizeLines": 230,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/enrichment.py",
+      "language": "python",
+      "sizeLines": 540,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/extract_prose.py",
+      "language": "python",
+      "sizeLines": 94,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/extract_structural.py",
+      "language": "python",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/header_norm.py",
+      "language": "python",
+      "sizeLines": 49,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/models.py",
+      "language": "python",
+      "sizeLines": 356,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/pipeline.py",
+      "language": "python",
+      "sizeLines": 390,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/quality.py",
+      "language": "python",
+      "sizeLines": 419,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/reconcile.py",
+      "language": "python",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/retrieval.py",
+      "language": "python",
+      "sizeLines": 96,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/structural.py",
+      "language": "python",
+      "sizeLines": 398,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/template_taxonomy.py",
+      "language": "python",
+      "sizeLines": 173,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/tui.py",
+      "language": "python",
+      "sizeLines": 262,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/vector_store.py",
+      "language": "python",
+      "sizeLines": 515,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/vocabulary.py",
+      "language": "python",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/workspace.py",
+      "language": "python",
+      "sizeLines": 196,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md",
+      "language": "markdown",
+      "sizeLines": 79,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/corpus/airflow-aip107.md",
+      "language": "markdown",
+      "sizeLines": 184,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/corpus/impala-vscode.md",
+      "language": "markdown",
+      "sizeLines": 112,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/corpus/sad-retailnexus-oms.md",
+      "language": "markdown",
+      "sizeLines": 371,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/corpus/scripting-on-dtk.md",
+      "language": "markdown",
+      "sizeLines": 488,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/e2e_queries.yaml",
+      "language": "yaml",
+      "sizeLines": 83,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/tools/eval/e2e_sources.yaml",
+      "language": "yaml",
+      "sizeLines": 28,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/tools/eval/queries.yaml",
+      "language": "yaml",
+      "sizeLines": 158,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/tools/eval/README.md",
+      "language": "markdown",
+      "sizeLines": 86,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/RETRIEVAL_LOG.md",
+      "language": "markdown",
+      "sizeLines": 60,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/scripts/convert-docs.ps1",
+      "language": "powershell",
+      "sizeLines": 106,
+      "fileCategory": "script"
+    },
+    {
+      "path": "src/tools/scripts/ctx.py",
+      "language": "python",
+      "sizeLines": 332,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/tools/scripts/eval_retrieval.py",
+      "language": "python",
+      "sizeLines": 337,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/tools/scripts/fetch_e2e_corpus.py",
+      "language": "python",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/tools/scripts/otelmeter.py",
+      "language": "python",
+      "sizeLines": 890,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/tools/scripts/setup-second-brain.ps1",
+      "language": "powershell",
+      "sizeLines": 109,
+      "fileCategory": "script"
+    },
+    {
+      "path": "src/tools/scripts/tok.py",
+      "language": "python",
+      "sizeLines": 341,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/conftest.py",
+      "language": "python",
+      "sizeLines": 383,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/convert/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/convert/examples/adversarial-edge-cases.html",
+      "language": "html",
+      "sizeLines": 118,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "tests/convert/examples/order-management-sad.html",
+      "language": "html",
+      "sizeLines": 301,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "tests/convert/examples/order-management-sad.storage.html",
+      "language": "html",
+      "sizeLines": 50,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "tests/convert/examples/README.md",
+      "language": "markdown",
+      "sizeLines": 104,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/convert/test_confluence_pf_filter.py",
+      "language": "python",
+      "sizeLines": 336,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/convert/test_convert_cli.py",
+      "language": "python",
+      "sizeLines": 169,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/convert/test_html_to_gitlab_md_v3.py",
+      "language": "python",
+      "sizeLines": 453,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/convert/test_html_to_gitlab_md.py",
+      "language": "python",
+      "sizeLines": 467,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_ast_parser.py",
+      "language": "python",
+      "sizeLines": 155,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_chunk_gate.py",
+      "language": "python",
+      "sizeLines": 162,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_chunking.py",
+      "language": "python",
+      "sizeLines": 344,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_cli_workspace.py",
+      "language": "python",
+      "sizeLines": 97,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_cli.py",
+      "language": "python",
+      "sizeLines": 203,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_config.py",
+      "language": "python",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_corpus_taxonomy.py",
+      "language": "python",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_direction.py",
+      "language": "python",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_doc_router.py",
+      "language": "python",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_e2e_real_docs.py",
+      "language": "python",
+      "sizeLines": 170,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_embeddings.py",
+      "language": "python",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_enrichment_inventory.py",
+      "language": "python",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_enrichment.py",
+      "language": "python",
+      "sizeLines": 320,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_eval_retrieval.py",
+      "language": "python",
+      "sizeLines": 165,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_extract_prose.py",
+      "language": "python",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_extract_structural.py",
+      "language": "python",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_header_norm.py",
+      "language": "python",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_memory_vector_store.py",
+      "language": "python",
+      "sizeLines": 309,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_models.py",
+      "language": "python",
+      "sizeLines": 299,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_pipeline_inventory_e2e.py",
+      "language": "python",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_pipeline.py",
+      "language": "python",
+      "sizeLines": 521,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_quality.py",
+      "language": "python",
+      "sizeLines": 194,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_reconcile.py",
+      "language": "python",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_retrieval.py",
+      "language": "python",
+      "sizeLines": 89,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_search_offline.py",
+      "language": "python",
+      "sizeLines": 76,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_structural.py",
+      "language": "python",
+      "sizeLines": 562,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_template_taxonomy.py",
+      "language": "python",
+      "sizeLines": 106,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_tui.py",
+      "language": "python",
+      "sizeLines": 147,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_vector_store.py",
+      "language": "python",
+      "sizeLines": 266,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_vocabulary.py",
+      "language": "python",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_workspace.py",
+      "language": "python",
+      "sizeLines": 143,
+      "fileCategory": "code"
+    }
+  ],
+  "totalFiles": 225,
+  "filteredByIgnore": 0,
+  "estimatedComplexity": "large",
+  "stats": {
+    "filesScanned": 225,
+    "byCategory": {
+      "config": 60,
+      "docs": 81,
+      "markup": 9,
+      "code": 73,
+      "script": 2
+    },
+    "byLanguage": {
+      "json": 51,
+      "config": 1,
+      "markdown": 81,
+      "yaml": 7,
+      "html": 9,
+      "unknown": 1,
+      "toml": 1,
+      "python": 72,
+      "powershell": 2
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "docs/learn/bridge/01-project-anatomy-and-tooling.md", "language": "markdown", "sizeLines": 121, "fileCategory": "docs"},
+    {"path": "docs/learn/bridge/02-dataclasses-vs-csharp-records.md", "language": "markdown", "sizeLines": 122, "fileCategory": "docs"},
+    {"path": "docs/learn/bridge/03-protocols-typing-and-unions.md", "language": "markdown", "sizeLines": 124, "fileCategory": "docs"},
+    {"path": "docs/learn/bridge/04-iteration-comprehensions-generators.md", "language": "markdown", "sizeLines": 126, "fileCategory": "docs"},
+    {"path": "docs/learn/bridge/05-modules-imports-and-lazy-patterns.md", "language": "markdown", "sizeLines": 131, "fileCategory": "docs"},
+    {"path": "docs/learn/bridge/06-pydantic-settings-and-typer.md", "language": "markdown", "sizeLines": 123, "fileCategory": "docs"},
+    {"path": "docs/learn/bridge/07-pytest-for-xunit-developers.md", "language": "markdown", "sizeLines": 135, "fileCategory": "docs"}
+  ],
+  "batchImportData": {
+    "docs/learn/bridge/01-project-anatomy-and-tooling.md": [],
+    "docs/learn/bridge/02-dataclasses-vs-csharp-records.md": [],
+    "docs/learn/bridge/03-protocols-typing-and-unions.md": [],
+    "docs/learn/bridge/04-iteration-comprehensions-generators.md": [],
+    "docs/learn/bridge/05-modules-imports-and-lazy-patterns.md": [],
+    "docs/learn/bridge/06-pydantic-settings-and-typer.md": [],
+    "docs/learn/bridge/07-pytest-for-xunit-developers.md": []
+  }
+}

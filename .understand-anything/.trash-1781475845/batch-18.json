@@ -1,0 +1,264 @@
+{
+  "nodes": [
+    {
+      "id": "file:tests/test_search_offline.py",
+      "type": "file",
+      "name": "test_search_offline.py",
+      "filePath": "tests/test_search_offline.py",
+      "summary": "Model-free contract tests for the enrich→chunk→embed→store→search path, using the deterministic hashing_embedder fixture to validate that filters narrow, output is stable, and the hybrid/RRF path runs without a real model.",
+      "tags": ["test", "search", "pipeline", "offline"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_structural.py",
+      "type": "file",
+      "name": "test_structural.py",
+      "filePath": "tests/test_structural.py",
+      "summary": "Exhaustive unit tests for structural.build_structural_model — section-tree construction, preamble synthesis, breadcrumbs, and the deterministic markdown serialization of links, lists, tables, code blocks, and blockquotes.",
+      "tags": ["test", "structural", "serialization", "ast"],
+      "complexity": "complex",
+      "languageNotes": "Heavy use of hand-built pandoc-AST block/inline literals and small AST-builder helpers (_ast_titled/_para/_header1/_doc/_h1) to exercise the panflute serializer deterministically."
+    },
+    {
+      "id": "file:tests/test_template_taxonomy.py",
+      "type": "file",
+      "name": "test_template_taxonomy.py",
+      "filePath": "tests/test_template_taxonomy.py",
+      "summary": "Unit tests for template_taxonomy pipe-table parsing and field extraction, asserting wide vs key-value table orientation handling, pipe unescaping, deterministic canonical JSON, and that body sample values never leak into the taxonomy.",
+      "tags": ["test", "taxonomy", "table-parsing", "determinism"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_tui.py",
+      "type": "file",
+      "name": "test_tui.py",
+      "filePath": "tests/test_tui.py",
+      "summary": "Tests for the interactive search TUI — pure helpers (parse_top_k, resolve_section_type, format_preview) plus the Textual SearchApp driven through the headless run_test() pilot for populate/error/empty-index flows.",
+      "tags": ["test", "tui", "textual", "async"],
+      "complexity": "moderate",
+      "languageNotes": "Drives the Textual app via asyncio.run + headless run_test() pilot with fake-pipeline SimpleNamespace stubs to keep the test model-free."
+    },
+    {
+      "id": "file:tests/test_vector_store.py",
+      "type": "file",
+      "name": "test_vector_store.py",
+      "filePath": "tests/test_vector_store.py",
+      "summary": "Unit tests for the Chroma vector-store backend and SearchResult — covering cosine score mapping, upsert counts, scalar-only metadata, where-clause filter assembly, provenance keys (excluding hnsw:*), delete, and reset.",
+      "tags": ["test", "vector-store", "chroma", "mocking"],
+      "complexity": "complex",
+      "languageNotes": "Uses a mocker-built patched_store fixture and a _make_query_response helper to stub Chroma's collection without the optional chromadb dependency installed."
+    },
+    {
+      "id": "file:tests/test_vocabulary.py",
+      "type": "file",
+      "name": "test_vocabulary.py",
+      "filePath": "tests/test_vocabulary.py",
+      "summary": "Small unit tests for vocabulary load/save JSON round-tripping — verifying sorted/deduped output, empty result on a missing path, parent-directory creation, and str-path acceptance.",
+      "tags": ["test", "vocabulary", "serialization", "io"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_workspace.py",
+      "type": "file",
+      "name": "test_workspace.py",
+      "filePath": "tests/test_workspace.py",
+      "summary": "Security-focused tests for workspace path resolution — verifying inbox/outbox containment, rejection of outside paths, ../ traversal, and symlink escapes, plus enforce=False escape hatch and ensure_inbox_exists behavior.",
+      "tags": ["test", "workspace", "security", "path-validation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/test_structural.py:TestBuildStructuralModel",
+      "type": "class",
+      "name": "TestBuildStructuralModel",
+      "filePath": "tests/test_structural.py",
+      "lineRange": [39, 140],
+      "summary": "Test suite verifying build_structural_model extracts doc id, title/space metadata, h1/h2 section nesting, breadcrumbs, code blocks with language, paragraphs, lists, and unique block/section ids.",
+      "tags": ["test", "structural", "section-tree"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/test_structural.py:TestPreambleSynthesis",
+      "type": "class",
+      "name": "TestPreambleSynthesis",
+      "filePath": "tests/test_structural.py",
+      "lineRange": [143, 175],
+      "summary": "Tests that content before the first heading (or in a heading-less doc) is attached to a synthesized title-derived root section so a page never yields zero chunks, falling back to a 'document' root when untitled.",
+      "tags": ["test", "structural", "preamble"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/test_structural.py:TestSemanticSerialization",
+      "type": "class",
+      "name": "TestSemanticSerialization",
+      "filePath": "tests/test_structural.py",
+      "lineRange": [195, 562],
+      "summary": "Exercises deterministic markdown serialization of every block/inline form — links, inline code, ordered/nested lists, fenced code with language, pipe tables, blockquotes, emphasis, images, and edge cases like empty paras and numbering gaps.",
+      "tags": ["test", "serialization", "markdown"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/test_vector_store.py:TestSearchResult",
+      "type": "class",
+      "name": "TestSearchResult",
+      "filePath": "tests/test_vector_store.py",
+      "lineRange": [36, 61],
+      "summary": "Verifies SearchResult score semantics: score equals 1 minus cosine distance, zero distance is a perfect score, repr surfaces the score, and a fused score overrides the cosine score.",
+      "tags": ["test", "vector-store", "scoring"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/test_vector_store.py:TestSearch",
+      "type": "class",
+      "name": "TestSearch",
+      "filePath": "tests/test_vector_store.py",
+      "lineRange": [130, 180],
+      "summary": "Tests the Chroma search path: returns SearchResult objects, passes None where with no filters, omits the $and wrapper for a single filter, uses $and for multiple filters, and handles empty results.",
+      "tags": ["test", "vector-store", "filters"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/test_vector_store.py:TestProvenance",
+      "type": "class",
+      "name": "TestProvenance",
+      "filePath": "tests/test_vector_store.py",
+      "lineRange": [206, 242],
+      "summary": "Tests provenance metadata handling: set_provenance excludes reserved hnsw:* keys and adds provider/model keys, swallows collection.modify errors, and get_provenance returns recorded keys or empty when absent.",
+      "tags": ["test", "vector-store", "provenance"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/test_workspace.py:TestResolveInput",
+      "type": "class",
+      "name": "TestResolveInput",
+      "filePath": "tests/test_workspace.py",
+      "lineRange": [26, 58],
+      "summary": "Tests resolve_input containment: defaults to inbox root/subpath, allows the inbox root and subfolders, rejects outside paths and ../ traversal, and honors enforce=False to allow escapes.",
+      "tags": ["test", "workspace", "security"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/test_workspace.py:TestResolveOutput",
+      "type": "class",
+      "name": "TestResolveOutput",
+      "filePath": "tests/test_workspace.py",
+      "lineRange": [61, 99],
+      "summary": "Tests resolve_output_dir/resolve_output_file: creates the default subpath dir and a file's parent, rejects out-of-outbox dirs before creating them, rejects out-of-outbox files, and honors enforce=False.",
+      "tags": ["test", "workspace", "security"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:tests/test_search_offline.py",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_structural.py",
+      "target": "file:src/sdd_pipeline/structural.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_structural.py",
+      "target": "file:src/sdd_pipeline/chunking.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_template_taxonomy.py",
+      "target": "file:src/sdd_pipeline/template_taxonomy.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_tui.py",
+      "target": "file:src/sdd_pipeline/tui.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_vector_store.py",
+      "target": "file:src/sdd_pipeline/vector_store.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_vocabulary.py",
+      "target": "file:src/sdd_pipeline/vocabulary.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_workspace.py",
+      "target": "file:src/sdd_pipeline/workspace.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_structural.py",
+      "target": "class:tests/test_structural.py:TestBuildStructuralModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_structural.py",
+      "target": "class:tests/test_structural.py:TestPreambleSynthesis",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_structural.py",
+      "target": "class:tests/test_structural.py:TestSemanticSerialization",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_vector_store.py",
+      "target": "class:tests/test_vector_store.py:TestSearchResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_vector_store.py",
+      "target": "class:tests/test_vector_store.py:TestSearch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_vector_store.py",
+      "target": "class:tests/test_vector_store.py:TestProvenance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_workspace.py",
+      "target": "class:tests/test_workspace.py:TestResolveInput",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_workspace.py",
+      "target": "class:tests/test_workspace.py:TestResolveOutput",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    }
+  ]
+}

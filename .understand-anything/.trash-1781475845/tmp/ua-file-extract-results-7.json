@@ -1,0 +1,588 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 6,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "docs/guides/confluence-storage-format-gitlab-markdown.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 45,
+      "nonEmptyLines": 34,
+      "sections": [
+        {
+          "heading": "Confluence Storage Format GitLab Markdown",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Summary",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "Key Facts",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Decisions and Constraints",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "Open Questions",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "Contradictions",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "Detail",
+          "level": 2,
+          "line": 40
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "docs/guides/convert-html-gitlab-markdown-linux.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 36,
+      "nonEmptyLines": 26,
+      "sections": [
+        {
+          "heading": "Convert HTML GitLab Markdown Linux",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Summary",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Key Facts",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "Decisions and Constraints",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Open Questions",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Contradictions",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Detail",
+          "level": 2,
+          "line": 31
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "docs/guides/convert-html-gitlab-markdown-windows.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 34,
+      "nonEmptyLines": 25,
+      "sections": [
+        {
+          "heading": "Convert HTML GitLab Markdown Windows",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Summary",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Key Facts",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "Decisions and Constraints",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Open Questions",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Contradictions",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Detail",
+          "level": 2,
+          "line": 31
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "docs/guides/index.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 48,
+      "nonEmptyLines": 43,
+      "sections": [
+        {
+          "heading": "Wiki Index",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Learning KB (docs/learn/)",
+          "level": 2,
+          "line": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "docs/guides/log.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 38,
+      "nonEmptyLines": 37,
+      "sections": [
+        {
+          "heading": "Wiki Log",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "2026-06-06 | ingest | docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md → docs/guides/confluence-storage-format-gitlab-markdown.md",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "2026-06-06 | ingest | docs/inbox/Convert.Linux.Readme.md → docs/guides/convert-html-gitlab-markdown-linux.md",
+          "level": 2,
+          "line": 4
+        },
+        {
+          "heading": "2026-06-06 | ingest | docs/inbox/Convert.Windows.Readme.md → docs/guides/convert-html-gitlab-markdown-windows.md",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline (architecture survey) → learn/walkthroughs/02-architecture-map.md",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "2026-06-10 | ingest | pyproject.toml → learn/bridge/01-project-anatomy-and-tooling.md",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/models.py → learn/bridge/02-dataclasses-vs-csharp-records.md",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/embeddings.py + vector_store.py → learn/bridge/03-protocols-typing-and-unions.md",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/retrieval.py + template_taxonomy.py → learn/bridge/04-iteration-comprehensions-generators.md",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/pipeline.py + config.py + dump.py → learn/bridge/05-modules-imports-and-lazy-patterns.md",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/config.py + cli.py → learn/bridge/06-pydantic-settings-and-typer.md",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "2026-06-10 | ingest | tests/conftest.py + tests/test_pipeline.py → learn/bridge/07-pytest-for-xunit-developers.md",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/models.py + config.py → learn/tours/01-models-and-config.md",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/ast_parser.py + structural.py → learn/tours/02-ast-parser-and-structural.md",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/enrichment.py → learn/tours/03-enrichment.md",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/vocabulary.py + pipeline.py → learn/tours/04-vocabulary-and-two-pass-scan.md",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/{header_norm,template_taxonomy,corpus_taxonomy,doc_router}.py → learn/tours/05-taxonomy-modules.md",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/{extract_structural,extract_prose,direction,reconcile}.py → learn/tours/06-inventory-extraction-modules.md",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/chunking.py → learn/tours/07-chunking.md",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/embeddings.py + vector_store.py → learn/tours/08-embeddings-and-vector-store.md",
+          "level": 2,
+          "line": 21
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/retrieval.py + pipeline.py → learn/tours/09-retrieval-and-hybrid-search.md",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/pipeline.py + cli.py → learn/tours/10-pipeline-orchestrator-and-cli.md",
+          "level": 2,
+          "line": 23
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/tools/eval/corpus/sad-retailnexus-oms.md + dump.py artifacts → learn/walkthroughs/01-life-of-a-document.md",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "2026-06-10 | ingest | tests/ + src/tools/scripts/eval_retrieval.py → learn/walkthroughs/03-test-suite-tour.md",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "2026-06-10 | ingest | dump.py artifacts (build/dump/retailnexus, build/dump/impala) → learn/exercises/01-trace-a-document.md",
+          "level": 2,
+          "line": 26
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/enrichment.py → learn/exercises/02-add-a-section-keyword.md",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/header_norm.py → learn/exercises/03-parametrize-header-norm.md",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/config.py → learn/exercises/04-add-a-config-field.md",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/enrichment.py → learn/exercises/05-extend-an-entity-pattern.md",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/cli.py → learn/exercises/06-add-a-cli-flag.md",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/tools/scripts/eval_retrieval.py + src/tools/eval/queries.yaml → learn/exercises/07-tune-hybrid-search-and-measure.md",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "2026-06-10 | ingest | src/sdd_pipeline/pipeline.py + models.py → learn/exercises/08-use-the-library-from-scratch.md",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "2026-06-10 | ingest | learn/ (all pages) → learn/README.md",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "2026-06-11 | feature | src/sdd_pipeline/quality.py + cli.py lint command → learn/tours/11-quality-linter.md (also: tour 10 + index \"seven\"→\"eight\" typer commands)",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "2026-06-12 | ingest | Confluence-conversion research artifacts (rules-draft + 25 critique fixes + catalog/exporthtml/tooling JSONs) → docs/confluence-conversion-rules.md (also: superseded banner on docs/guides/confluence-storage-format-gitlab-markdown.md)",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "2026-06-12 | feature | docs/confluence-conversion-rules.md (rendered-HTML scope) implemented in src/sdd_pipeline/html_to_gitlab_md.py v3.0 + new confluence_pf_filter.py (4-stage pipeline, PFI contract, --toc flip)",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "2026-06-14 | refactor | converter moved into src/sdd_pipeline/convert/ subpackage (new base.py shared layer; html_to_gitlab_md + confluence_pf_filter relocated); convert tests → tests/convert/; CLI/docs repointed; byte-identical output verified (docx path prepared, deferred)",
+          "level": 2,
+          "line": 38
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 37
+      }
+    },
+    {
+      "path": "docs/guides/pipeline-101.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 613,
+      "nonEmptyLines": 460,
+      "sections": [
+        {
+          "heading": "Pipeline 101 — an operator's step-by-step guide",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Quick reference",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "Section 0 — Setup & mental model",
+          "level": 2,
+          "line": 50
+        },
+        {
+          "heading": "One-time setup",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "The seven stages",
+          "level": 3,
+          "line": 65
+        },
+        {
+          "heading": "Dev vs production defaults",
+          "level": 3,
+          "line": 90
+        },
+        {
+          "heading": "Section 1 — Add a new document (ending on chunk results)",
+          "level": 2,
+          "line": 104
+        },
+        {
+          "heading": "Concept",
+          "level": 3,
+          "line": 110
+        },
+        {
+          "heading": "Steps",
+          "level": 3,
+          "line": 118
+        },
+        {
+          "heading": "When you're ready to embed",
+          "level": 3,
+          "line": 184
+        },
+        {
+          "heading": "Section 2 — Update an onboarded document, avoiding a full re-index",
+          "level": 2,
+          "line": 204
+        },
+        {
+          "heading": "Concept — read this first",
+          "level": 3,
+          "line": 209
+        },
+        {
+          "heading": "Procedure A — content-only edit (same headings)",
+          "level": 3,
+          "line": 229
+        },
+        {
+          "heading": "Procedure B — structural change (headings added/removed/reordered)",
+          "level": 3,
+          "line": 242
+        },
+        {
+          "heading": "Procedure C — a batch of changed files",
+          "level": 3,
+          "line": 268
+        },
+        {
+          "heading": "What a full re-index *is* still required for",
+          "level": 3,
+          "line": 282
+        },
+        {
+          "heading": "Section 3 — Vocabulary & taxonomy for a new (single) document",
+          "level": 2,
+          "line": 293
+        },
+        {
+          "heading": "3a. Entities",
+          "level": 3,
+          "line": 299
+        },
+        {
+          "heading": "3b. Taxonomy — section types",
+          "level": 3,
+          "line": 318
+        },
+        {
+          "heading": "3c. Taxonomy — table fields (optional)",
+          "level": 3,
+          "line": 350
+        },
+        {
+          "heading": "Section 4 — Vocabulary & taxonomy for a connected set of documents",
+          "level": 2,
+          "line": 365
+        },
+        {
+          "heading": "Concept — the two-pass cross-corpus scan",
+          "level": 3,
+          "line": 370
+        },
+        {
+          "heading": "4a. Build and review the vocabulary",
+          "level": 3,
+          "line": 385
+        },
+        {
+          "heading": "4b. Index (or export) with the shared vocabulary",
+          "level": 3,
+          "line": 401
+        },
+        {
+          "heading": "4c. Cross-corpus field taxonomy",
+          "level": 3,
+          "line": 416
+        },
+        {
+          "heading": "Section 5 — Evaluating the quality of the generated semantics",
+          "level": 2,
+          "line": 433
+        },
+        {
+          "heading": "Lens 1 — source residue (`lint`)",
+          "level": 3,
+          "line": 437
+        },
+        {
+          "heading": "Lens 2 — chunk hygiene (the binding gate)",
+          "level": 3,
+          "line": 454
+        },
+        {
+          "heading": "Lens 3 — retrieval quality (does it actually surface?)",
+          "level": 3,
+          "line": 488
+        },
+        {
+          "heading": "Section 6 — Troubleshooting loop: doc added, something's wrong",
+          "level": 2,
+          "line": 522
+        },
+        {
+          "heading": "Symptom: `index` aborts with `ChunkQualityError`",
+          "level": 3,
+          "line": 527
+        },
+        {
+          "heading": "Symptom: too many tiny, context-free chunks",
+          "level": 3,
+          "line": 539
+        },
+        {
+          "heading": "Symptom: wrong section types, or missing entities",
+          "level": 3,
+          "line": 551
+        },
+        {
+          "heading": "Symptom: the doc is indexed but search won't surface it",
+          "level": 3,
+          "line": 559
+        },
+        {
+          "heading": "Symptom: stale or duplicate results after editing a doc",
+          "level": 3,
+          "line": 571
+        },
+        {
+          "heading": "Cheat-sheet: the full loop",
+          "level": 2,
+          "line": 578
+        },
+        {
+          "heading": "Where to go deeper",
+          "level": 3,
+          "line": 608
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 37
+      }
+    }
+  ]
+}

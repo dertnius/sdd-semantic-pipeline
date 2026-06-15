@@ -1,0 +1,170 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "docs/learn/walkthroughs/01-life-of-a-document.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 284,
+      "nonEmptyLines": 236,
+      "sections": [
+        {
+          "heading": "Life of a document — `sad-retailnexus-oms.md`, end to end",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Setup: dump the intermediate artifacts",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Stage 2 — markdown → pandoc AST (`ast_parser.py::generate_ast`)",
+          "level": 2,
+          "line": 51
+        },
+        {
+          "heading": "Stages 3–4 — AST → section tree (`structural.py::build_structural_model`)",
+          "level": 2,
+          "line": 97
+        },
+        {
+          "heading": "Stage 3.5 + 5 — inventory + enrichment (the artifact discrepancy)",
+          "level": 2,
+          "line": 130
+        },
+        {
+          "heading": "Stage 6 — chunks: `content` vs `embed_text` (the money shot)",
+          "level": 2,
+          "line": 186
+        },
+        {
+          "heading": "Stage 7 — index and search",
+          "level": 2,
+          "line": 225
+        },
+        {
+          "heading": "The contrast case, and your turn",
+          "level": 2,
+          "line": 269
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "docs/learn/walkthroughs/02-architecture-map.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 109,
+      "nonEmptyLines": 91,
+      "sections": [
+        {
+          "heading": "Architecture map — the whole system on one page",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "The one-sentence version",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "Module dependency graph",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "The layering rule (≈ onion architecture)",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "Data model — what flows through the arrows",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "The two flows, and what's deferred",
+          "level": 2,
+          "line": 93
+        },
+        {
+          "heading": "Suggested code-reading order (complexity-ranked)",
+          "level": 2,
+          "line": 99
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "docs/learn/walkthroughs/03-test-suite-tour.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 115,
+      "nonEmptyLines": 92,
+      "sections": [
+        {
+          "heading": "Test-suite tour — the tests are the documentation",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "The 1:1 convention — tests as a navigation system",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "`conftest.py` — why most tests need no pandoc and no model",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Marker tiers (defined in [`pyproject.toml`](../../../pyproject.toml), `[tool.pytest.ini_options] markers`)",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "The e2e tier — what the big tests prove beyond units",
+          "level": 2,
+          "line": 49
+        },
+        {
+          "heading": "The third tier — retrieval *quality*, not correctness",
+          "level": 2,
+          "line": 65
+        },
+        {
+          "heading": "Where would a new test go? A decision guide",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 90
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    }
+  ]
+}

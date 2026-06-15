@@ -1,0 +1,19 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "docs/guides/confluence-storage-format-gitlab-markdown.md", "language": "markdown", "sizeLines": 45, "fileCategory": "docs"},
+    {"path": "docs/guides/convert-html-gitlab-markdown-linux.md", "language": "markdown", "sizeLines": 36, "fileCategory": "docs"},
+    {"path": "docs/guides/convert-html-gitlab-markdown-windows.md", "language": "markdown", "sizeLines": 34, "fileCategory": "docs"},
+    {"path": "docs/guides/index.md", "language": "markdown", "sizeLines": 48, "fileCategory": "docs"},
+    {"path": "docs/guides/log.md", "language": "markdown", "sizeLines": 38, "fileCategory": "docs"},
+    {"path": "docs/guides/pipeline-101.md", "language": "markdown", "sizeLines": 613, "fileCategory": "docs"}
+  ],
+  "batchImportData": {
+    "docs/guides/confluence-storage-format-gitlab-markdown.md": [],
+    "docs/guides/convert-html-gitlab-markdown-linux.md": [],
+    "docs/guides/convert-html-gitlab-markdown-windows.md": [],
+    "docs/guides/index.md": [],
+    "docs/guides/log.md": [],
+    "docs/guides/pipeline-101.md": []
+  }
+}

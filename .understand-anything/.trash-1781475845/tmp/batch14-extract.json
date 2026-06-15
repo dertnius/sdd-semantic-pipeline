@@ -1,0 +1,10 @@
+{
+  "batchImportData": {
+    "src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md": [],
+    "src/tools/eval/corpus/airflow-aip107.md": [],
+    "src/tools/eval/corpus/impala-vscode.md": [],
+    "src/tools/eval/corpus/sad-retailnexus-oms.md": [],
+    "src/tools/eval/corpus/scripting-on-dtk.md": []
+  },
+  "neighborMap": {}
+}

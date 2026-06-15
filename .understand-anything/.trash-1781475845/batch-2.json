@@ -1,0 +1,356 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/sdd_pipeline/ast_parser.py",
+      "type": "file",
+      "name": "ast_parser.py",
+      "filePath": "src/sdd_pipeline/ast_parser.py",
+      "summary": "Thin subprocess wrapper around pandoc that converts Markdown files into pandoc JSON ASTs; the only module in flow A that invokes pandoc.",
+      "tags": ["utility", "ast", "pandoc", "subprocess", "parser"],
+      "complexity": "moderate",
+      "languageNotes": "Pandoc subprocess decoding is pinned to UTF-8 to avoid Windows cp1252 crashes on non-ASCII content."
+    },
+    {
+      "id": "function:src/sdd_pipeline/ast_parser.py:generate_ast",
+      "type": "function",
+      "name": "generate_ast",
+      "filePath": "src/sdd_pipeline/ast_parser.py",
+      "lineRange": [14, 46],
+      "summary": "Runs pandoc as a subprocess to convert a single Markdown file to a parsed pandoc JSON AST dict.",
+      "tags": ["pandoc", "subprocess", "ast", "serialization"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/ast_parser.py:generate_ast_batch",
+      "type": "function",
+      "name": "generate_ast_batch",
+      "filePath": "src/sdd_pipeline/ast_parser.py",
+      "lineRange": [49, 75],
+      "summary": "Batch-converts multiple Markdown files to pandoc ASTs, optionally writing each as a JSON artifact to an output directory.",
+      "tags": ["pandoc", "batch", "ast", "io"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/ast_parser.py:pandoc_version",
+      "type": "function",
+      "name": "pandoc_version",
+      "filePath": "src/sdd_pipeline/ast_parser.py",
+      "lineRange": [78, 87],
+      "summary": "Returns the installed pandoc version string by invoking the binary, used for environment checks.",
+      "tags": ["pandoc", "subprocess", "version-check"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "type": "file",
+      "name": "corpus_taxonomy.py",
+      "filePath": "src/sdd_pipeline/corpus_taxonomy.py",
+      "summary": "Builds a cross-document field taxonomy and vocabulary by parsing pipe tables across a corpus and gating fields by minimum document frequency.",
+      "tags": ["taxonomy", "corpus", "data-pipeline", "serialization"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/corpus_taxonomy.py:build_corpus_taxonomy",
+      "type": "function",
+      "name": "build_corpus_taxonomy",
+      "filePath": "src/sdd_pipeline/corpus_taxonomy.py",
+      "lineRange": [37, 84],
+      "summary": "Parses every document in a directory, extracts pipe-table fields per section, and gates them to fields shared by at least min_docs documents.",
+      "tags": ["taxonomy", "corpus", "aggregation", "data-pipeline"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/sdd_pipeline/direction.py",
+      "type": "file",
+      "name": "direction.py",
+      "filePath": "src/sdd_pipeline/direction.py",
+      "summary": "Loads and resolves per-field directional metadata (e.g. depends_on / exposes) from a YAML config, normalising field names via header normalisation.",
+      "tags": ["configuration", "direction", "yaml", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/direction.py:load_field_directions",
+      "type": "function",
+      "name": "load_field_directions",
+      "filePath": "src/sdd_pipeline/direction.py",
+      "lineRange": [23, 46],
+      "summary": "Reads a YAML field-direction config and returns a mapping of normalised field names to their direction labels.",
+      "tags": ["configuration", "yaml", "loader", "direction"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/sdd_pipeline/doc_router.py",
+      "type": "file",
+      "name": "doc_router.py",
+      "filePath": "src/sdd_pipeline/doc_router.py",
+      "summary": "Routes a document to a taxonomy by fingerprinting its heading keys against known doc types (e.g. SAD) above a match threshold.",
+      "tags": ["router", "taxonomy", "classification", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/doc_router.py:detect_doc_type",
+      "type": "function",
+      "name": "detect_doc_type",
+      "filePath": "src/sdd_pipeline/doc_router.py",
+      "lineRange": [44, 49],
+      "summary": "Classifies a document type by comparing its normalised heading fingerprint against known doc-type signatures above a threshold.",
+      "tags": ["classification", "router", "heuristic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/doc_router.py:load_taxonomy",
+      "type": "function",
+      "name": "load_taxonomy",
+      "filePath": "src/sdd_pipeline/doc_router.py",
+      "lineRange": [52, 59],
+      "summary": "Loads a taxonomy JSON file from disk, returning an empty taxonomy with a warning when the file is missing.",
+      "tags": ["loader", "taxonomy", "json", "io"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/doc_router.py:taxonomy_for",
+      "type": "function",
+      "name": "taxonomy_for",
+      "filePath": "src/sdd_pipeline/doc_router.py",
+      "lineRange": [62, 67],
+      "summary": "Returns the matching taxonomy for a document by routing on its detected doc type, else an empty taxonomy.",
+      "tags": ["router", "taxonomy", "dispatch"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/sdd_pipeline/extract_structural.py",
+      "type": "file",
+      "name": "extract_structural.py",
+      "filePath": "src/sdd_pipeline/extract_structural.py",
+      "summary": "Extracts structured entity records from a document's pipe tables, keyed by section, distinguishing wide tables from key-value tables.",
+      "tags": ["extraction", "inventory", "data-model", "table-parsing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/extract_structural.py:_records_from_table",
+      "type": "function",
+      "name": "_records_from_table",
+      "filePath": "src/sdd_pipeline/extract_structural.py",
+      "lineRange": [26, 50],
+      "summary": "Parses a pipe table into EntityRecords, emitting one record per cell for wide tables or a field/value pair for key-value tables while skipping placeholders.",
+      "tags": ["extraction", "table-parsing", "data-model", "validation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/sdd_pipeline/header_norm.py",
+      "type": "file",
+      "name": "header_norm.py",
+      "filePath": "src/sdd_pipeline/header_norm.py",
+      "summary": "Normalises heading and field labels to a canonical lowercase singular form so variant spellings collapse to one taxonomy key.",
+      "tags": ["utility", "normalization", "text-processing"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/header_norm.py:normalise_header",
+      "type": "function",
+      "name": "normalise_header",
+      "filePath": "src/sdd_pipeline/header_norm.py",
+      "lineRange": [37, 49],
+      "summary": "Lowercases, strips parenthetical/whitespace noise, and singularises each token of a header to produce a stable canonical key.",
+      "tags": ["normalization", "text-processing", "utility"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/sdd_pipeline/structural.py",
+      "type": "file",
+      "name": "structural.py",
+      "filePath": "src/sdd_pipeline/structural.py",
+      "summary": "Converts a pandoc JSON AST into a DocumentModel section tree using panflute, serialising inlines, lists, and tables and synthesising a root section for preamble content.",
+      "tags": ["ast", "structural", "serialization", "data-model", "panflute"],
+      "complexity": "complex",
+      "languageNotes": "Deterministic panflute traversal; content before the first heading is attached to a synthesized title-derived root so a page never yields zero chunks."
+    },
+    {
+      "id": "function:src/sdd_pipeline/structural.py:_extract_metadata",
+      "type": "function",
+      "name": "_extract_metadata",
+      "filePath": "src/sdd_pipeline/structural.py",
+      "lineRange": [46, 76],
+      "summary": "Reads frontmatter/meta keys from the pandoc document into a DocumentMetadata record, parsing labels and singular author key.",
+      "tags": ["metadata", "extraction", "data-model"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/structural.py:_serialize_inline_list",
+      "type": "function",
+      "name": "_serialize_inline_list",
+      "filePath": "src/sdd_pipeline/structural.py",
+      "lineRange": [95, 123],
+      "summary": "Recursively serialises a list of panflute inline elements (text, emphasis, code, links) into a plain-text string with link hints.",
+      "tags": ["serialization", "panflute", "text-processing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/structural.py:_serialize_list",
+      "type": "function",
+      "name": "_serialize_list",
+      "filePath": "src/sdd_pipeline/structural.py",
+      "lineRange": [131, 183],
+      "summary": "Serialises ordered/bullet lists into indented Markdown-style text, recursing into nested lists and handling embedded blocks.",
+      "tags": ["serialization", "panflute", "lists"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/sdd_pipeline/structural.py:_serialize_table",
+      "type": "function",
+      "name": "_serialize_table",
+      "filePath": "src/sdd_pipeline/structural.py",
+      "lineRange": [186, 220],
+      "summary": "Serialises a panflute table into a pipe-delimited text block, normalising cell line breaks and padding rows to a consistent column count.",
+      "tags": ["serialization", "panflute", "table-parsing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/structural.py:_elem_to_content_block",
+      "type": "function",
+      "name": "_elem_to_content_block",
+      "filePath": "src/sdd_pipeline/structural.py",
+      "lineRange": [223, 299],
+      "summary": "Dispatches a panflute block element to the correct serialiser and wraps the result in a typed ContentBlock with a stable hash id.",
+      "tags": ["serialization", "panflute", "data-model", "dispatch"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/sdd_pipeline/structural.py:build_structural_model",
+      "type": "function",
+      "name": "build_structural_model",
+      "filePath": "src/sdd_pipeline/structural.py",
+      "lineRange": [305, 398],
+      "summary": "Top-level entry that walks the pandoc AST building a nested Section tree and DocumentModel, synthesising a root section for heading-less preamble content.",
+      "tags": ["ast", "structural", "data-model", "entry-point"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/sdd_pipeline/template_taxonomy.py",
+      "type": "file",
+      "name": "template_taxonomy.py",
+      "filePath": "src/sdd_pipeline/template_taxonomy.py",
+      "summary": "Extracts a canonical field taxonomy from a single template Markdown file by parsing its pipe tables and section headings, with a CLI entry point.",
+      "tags": ["taxonomy", "table-parsing", "extraction", "entry-point"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/template_taxonomy.py:parse_pipe_table",
+      "type": "function",
+      "name": "parse_pipe_table",
+      "filePath": "src/sdd_pipeline/template_taxonomy.py",
+      "lineRange": [52, 70],
+      "summary": "Parses a Markdown pipe table into header and body rows, splitting cells, unescaping pipes, and discarding separator lines.",
+      "tags": ["table-parsing", "utility", "text-processing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/template_taxonomy.py:fields_and_orientation",
+      "type": "function",
+      "name": "fields_and_orientation",
+      "filePath": "src/sdd_pipeline/template_taxonomy.py",
+      "lineRange": [79, 97],
+      "summary": "Determines a table's orientation (wide vs key-value) and returns the deduplicated, normalised field names it defines.",
+      "tags": ["table-parsing", "taxonomy", "heuristic"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/template_taxonomy.py:extract_taxonomy",
+      "type": "function",
+      "name": "extract_taxonomy",
+      "filePath": "src/sdd_pipeline/template_taxonomy.py",
+      "lineRange": [120, 146],
+      "summary": "Parses a template Markdown file into a structural model and walks its sections to build a per-section field taxonomy.",
+      "tags": ["taxonomy", "extraction", "table-parsing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/template_taxonomy.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src/sdd_pipeline/template_taxonomy.py",
+      "lineRange": [158, 169],
+      "summary": "CLI entry point that extracts a taxonomy from a template path and writes the canonical JSON to an output file.",
+      "tags": ["cli", "entry-point", "io"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:src/sdd_pipeline/ast_parser.py", "target": "function:src/sdd_pipeline/ast_parser.py:generate_ast", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/ast_parser.py", "target": "function:src/sdd_pipeline/ast_parser.py:generate_ast_batch", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/ast_parser.py", "target": "function:src/sdd_pipeline/ast_parser.py:pandoc_version", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/ast_parser.py", "target": "function:src/sdd_pipeline/ast_parser.py:generate_ast", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/ast_parser.py", "target": "function:src/sdd_pipeline/ast_parser.py:generate_ast_batch", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/ast_parser.py", "target": "function:src/sdd_pipeline/ast_parser.py:pandoc_version", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/ast_parser.py:generate_ast_batch", "target": "function:src/sdd_pipeline/ast_parser.py:generate_ast", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/corpus_taxonomy.py", "target": "file:src/sdd_pipeline/ast_parser.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/corpus_taxonomy.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/corpus_taxonomy.py", "target": "file:src/sdd_pipeline/structural.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/corpus_taxonomy.py", "target": "file:src/sdd_pipeline/template_taxonomy.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/corpus_taxonomy.py", "target": "function:src/sdd_pipeline/corpus_taxonomy.py:build_corpus_taxonomy", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/corpus_taxonomy.py", "target": "function:src/sdd_pipeline/corpus_taxonomy.py:build_corpus_taxonomy", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/corpus_taxonomy.py:build_corpus_taxonomy", "target": "function:src/sdd_pipeline/ast_parser.py:generate_ast", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/corpus_taxonomy.py:build_corpus_taxonomy", "target": "function:src/sdd_pipeline/structural.py:build_structural_model", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/corpus_taxonomy.py:build_corpus_taxonomy", "target": "function:src/sdd_pipeline/template_taxonomy.py:parse_pipe_table", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/corpus_taxonomy.py:build_corpus_taxonomy", "target": "function:src/sdd_pipeline/template_taxonomy.py:fields_and_orientation", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/direction.py", "target": "file:src/sdd_pipeline/header_norm.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/direction.py", "target": "function:src/sdd_pipeline/direction.py:load_field_directions", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/direction.py", "target": "function:src/sdd_pipeline/direction.py:load_field_directions", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/direction.py:load_field_directions", "target": "function:src/sdd_pipeline/header_norm.py:normalise_header", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/doc_router.py", "target": "file:src/sdd_pipeline/header_norm.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/doc_router.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/doc_router.py", "target": "file:src/sdd_pipeline/template_taxonomy.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/doc_router.py", "target": "function:src/sdd_pipeline/doc_router.py:detect_doc_type", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/doc_router.py", "target": "function:src/sdd_pipeline/doc_router.py:load_taxonomy", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/doc_router.py", "target": "function:src/sdd_pipeline/doc_router.py:taxonomy_for", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/doc_router.py", "target": "function:src/sdd_pipeline/doc_router.py:detect_doc_type", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/doc_router.py", "target": "function:src/sdd_pipeline/doc_router.py:load_taxonomy", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/doc_router.py", "target": "function:src/sdd_pipeline/doc_router.py:taxonomy_for", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/doc_router.py:detect_doc_type", "target": "function:src/sdd_pipeline/header_norm.py:normalise_header", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/doc_router.py:taxonomy_for", "target": "function:src/sdd_pipeline/doc_router.py:detect_doc_type", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/extract_structural.py", "target": "file:src/sdd_pipeline/header_norm.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/extract_structural.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/extract_structural.py", "target": "file:src/sdd_pipeline/template_taxonomy.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/extract_structural.py", "target": "function:src/sdd_pipeline/extract_structural.py:_records_from_table", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "function:src/sdd_pipeline/extract_structural.py:_records_from_table", "target": "function:src/sdd_pipeline/template_taxonomy.py:parse_pipe_table", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/extract_structural.py:_records_from_table", "target": "function:src/sdd_pipeline/header_norm.py:normalise_header", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/header_norm.py", "target": "function:src/sdd_pipeline/header_norm.py:normalise_header", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/header_norm.py", "target": "function:src/sdd_pipeline/header_norm.py:normalise_header", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/structural.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/structural.py", "target": "function:src/sdd_pipeline/structural.py:_extract_metadata", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/structural.py", "target": "function:src/sdd_pipeline/structural.py:_serialize_inline_list", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/structural.py", "target": "function:src/sdd_pipeline/structural.py:_serialize_list", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/structural.py", "target": "function:src/sdd_pipeline/structural.py:_serialize_table", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/structural.py", "target": "function:src/sdd_pipeline/structural.py:_elem_to_content_block", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/structural.py", "target": "function:src/sdd_pipeline/structural.py:build_structural_model", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/structural.py", "target": "function:src/sdd_pipeline/structural.py:build_structural_model", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/structural.py:build_structural_model", "target": "function:src/sdd_pipeline/structural.py:_extract_metadata", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/structural.py:build_structural_model", "target": "function:src/sdd_pipeline/structural.py:_elem_to_content_block", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/structural.py:_elem_to_content_block", "target": "function:src/sdd_pipeline/structural.py:_serialize_list", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/structural.py:_elem_to_content_block", "target": "function:src/sdd_pipeline/structural.py:_serialize_table", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/structural.py:_serialize_inline_list", "target": "function:src/sdd_pipeline/structural.py:_serialize_inline_list", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/template_taxonomy.py", "target": "file:src/sdd_pipeline/ast_parser.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/template_taxonomy.py", "target": "file:src/sdd_pipeline/header_norm.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/template_taxonomy.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/template_taxonomy.py", "target": "file:src/sdd_pipeline/structural.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/template_taxonomy.py", "target": "function:src/sdd_pipeline/template_taxonomy.py:parse_pipe_table", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/template_taxonomy.py", "target": "function:src/sdd_pipeline/template_taxonomy.py:fields_and_orientation", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/template_taxonomy.py", "target": "function:src/sdd_pipeline/template_taxonomy.py:extract_taxonomy", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/template_taxonomy.py", "target": "function:src/sdd_pipeline/template_taxonomy.py:main", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/template_taxonomy.py", "target": "function:src/sdd_pipeline/template_taxonomy.py:parse_pipe_table", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/template_taxonomy.py", "target": "function:src/sdd_pipeline/template_taxonomy.py:fields_and_orientation", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/template_taxonomy.py", "target": "function:src/sdd_pipeline/template_taxonomy.py:extract_taxonomy", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/template_taxonomy.py:extract_taxonomy", "target": "function:src/sdd_pipeline/ast_parser.py:generate_ast", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/template_taxonomy.py:extract_taxonomy", "target": "function:src/sdd_pipeline/structural.py:build_structural_model", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/template_taxonomy.py:extract_taxonomy", "target": "function:src/sdd_pipeline/template_taxonomy.py:parse_pipe_table", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/template_taxonomy.py:extract_taxonomy", "target": "function:src/sdd_pipeline/template_taxonomy.py:fields_and_orientation", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/template_taxonomy.py:main", "target": "function:src/sdd_pipeline/template_taxonomy.py:extract_taxonomy", "type": "calls", "direction": "forward", "weight": 0.8}
+  ]
+}

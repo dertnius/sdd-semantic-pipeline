@@ -1,0 +1,78 @@
+{
+  "nodes": [
+    {
+      "id": "config:config/entity-vocab.json",
+      "type": "config",
+      "name": "entity-vocab.json",
+      "filePath": "config/entity-vocab.json",
+      "summary": "Committed seed cross-corpus entity vocabulary (a JSON array of project domain terms like KPO, XCom, triggerer) loaded by vocabulary.py and merged into the two-pass corpus scan so these terms are recognised as entities across all documents.",
+      "tags": ["configuration", "vocabulary", "entity-recognition", "seed-data"],
+      "complexity": "simple",
+      "languageNotes": "A flat JSON string array (not an object); load_vocabulary sorts and dedupes it on read."
+    },
+    {
+      "id": "config:config/field_directions.yaml",
+      "type": "config",
+      "name": "field_directions.yaml",
+      "filePath": "config/field_directions.yaml",
+      "summary": "Dependency-direction map that routes a document table's field name (after header_norm normalisation) to either Section.exposes or Section.depends_on during enrichment; loaded by direction.load_field_directions and seeded from the eval-corpus field vocabulary.",
+      "tags": ["configuration", "enrichment", "dependency-direction", "yaml", "seed-data"],
+      "complexity": "simple",
+      "languageNotes": "Two top-level keys (exposes / depends_on), each a list of natural-language field names; matching is name-based, never inferred from column position."
+    },
+    {
+      "id": "config:config/taxonomy.json",
+      "type": "config",
+      "name": "taxonomy.json",
+      "filePath": "config/taxonomy.json",
+      "summary": "Committed SAD-template taxonomy mapping each known section heading (definitions, quality attribute, solution components, stakeholder) to its canonical field list and table orientation (wide vs key_value); loaded by doc_router.load_taxonomy to drive structural inventory extraction.",
+      "tags": ["configuration", "taxonomy", "schema-definition", "document-routing", "seed-data"],
+      "complexity": "simple",
+      "languageNotes": "Canonical JSON keyed by normalised section heading; each entry carries fields[] and an orientation discriminator consumed by the inventory extractors."
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:config/entity-vocab.json",
+      "target": "file:src/sdd_pipeline/vocabulary.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:config/entity-vocab.json",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:config/field_directions.yaml",
+      "target": "file:src/sdd_pipeline/direction.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:config/field_directions.yaml",
+      "target": "file:src/sdd_pipeline/enrichment.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:config/taxonomy.json",
+      "target": "file:src/sdd_pipeline/doc_router.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:config/taxonomy.json",
+      "target": "file:src/sdd_pipeline/corpus_taxonomy.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

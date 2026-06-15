@@ -1,0 +1,4830 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/sdd_pipeline/convert/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 30,
+      "nonEmptyLines": 25,
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/sdd_pipeline/convert/base.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 298,
+      "nonEmptyLines": 243,
+      "functions": [
+        {
+          "name": "resolve_pandoc",
+          "startLine": 68,
+          "endLine": 78,
+          "params": [
+            "pandoc_path"
+          ]
+        },
+        {
+          "name": "_run_pandoc",
+          "startLine": 81,
+          "endLine": 90,
+          "params": [
+            "pandoc_path",
+            "input_text",
+            "args"
+          ]
+        },
+        {
+          "name": "_apply_outside_fences",
+          "startLine": 96,
+          "endLine": 135,
+          "params": [
+            "md",
+            "fn"
+          ]
+        },
+        {
+          "name": "_dump_frontmatter",
+          "startLine": 138,
+          "endLine": 161,
+          "params": [
+            "fm",
+            "notes"
+          ]
+        },
+        {
+          "name": "_infer_title",
+          "startLine": 164,
+          "endLine": 169,
+          "params": [
+            "md",
+            "path"
+          ]
+        },
+        {
+          "name": "postprocess",
+          "startLine": 172,
+          "endLine": 242,
+          "params": [
+            "md",
+            "title",
+            "author",
+            "source_path",
+            "add_frontmatter",
+            "add_toc",
+            "space",
+            "source_url",
+            "labels",
+            "date",
+            "page_id",
+            "notes"
+          ]
+        },
+        {
+          "name": "_count_tables",
+          "startLine": 245,
+          "endLine": 256,
+          "params": [
+            "md"
+          ]
+        },
+        {
+          "name": "_count_urls",
+          "startLine": 259,
+          "endLine": 269,
+          "params": [
+            "md"
+          ]
+        },
+        {
+          "name": "stats",
+          "startLine": 272,
+          "endLine": 298,
+          "params": [
+            "md"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ConversionError",
+          "startLine": 25,
+          "endLine": 26,
+          "methods": [],
+          "properties": []
+        },
+        {
+          "name": "ConversionNotes",
+          "startLine": 30,
+          "endLine": 65,
+          "methods": [
+            "warn",
+            "error",
+            "bump",
+            "add_lang",
+            "to_dict"
+          ],
+          "properties": [
+            "warnings",
+            "errors",
+            "macro_counts",
+            "languages",
+            "metadata"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ConversionError",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "ConversionNotes",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "resolve_pandoc",
+          "line": 68,
+          "isDefault": false
+        },
+        {
+          "name": "_run_pandoc",
+          "line": 81,
+          "isDefault": false
+        },
+        {
+          "name": "_apply_outside_fences",
+          "line": 96,
+          "isDefault": false
+        },
+        {
+          "name": "_dump_frontmatter",
+          "line": 138,
+          "isDefault": false
+        },
+        {
+          "name": "_infer_title",
+          "line": 164,
+          "isDefault": false
+        },
+        {
+          "name": "postprocess",
+          "line": 172,
+          "isDefault": false
+        },
+        {
+          "name": "_count_tables",
+          "line": 245,
+          "isDefault": false
+        },
+        {
+          "name": "_count_urls",
+          "line": 259,
+          "isDefault": false
+        },
+        {
+          "name": "stats",
+          "line": 272,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "warn",
+          "callee": "self.warnings.append",
+          "lineNumber": 46
+        },
+        {
+          "caller": "error",
+          "callee": "self.errors.append",
+          "lineNumber": 49
+        },
+        {
+          "caller": "bump",
+          "callee": "self.macro_counts.get",
+          "lineNumber": 52
+        },
+        {
+          "caller": "add_lang",
+          "callee": "self.languages.append",
+          "lineNumber": 56
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 60
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 61
+        },
+        {
+          "caller": "to_dict",
+          "callee": "dict",
+          "lineNumber": 62
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 63
+        },
+        {
+          "caller": "to_dict",
+          "callee": "dict",
+          "lineNumber": 64
+        },
+        {
+          "caller": "resolve_pandoc",
+          "callee": "shutil.which",
+          "lineNumber": 70
+        },
+        {
+          "caller": "resolve_pandoc",
+          "callee": "ConversionError",
+          "lineNumber": 72
+        },
+        {
+          "caller": "_run_pandoc",
+          "callee": "subprocess.run",
+          "lineNumber": 83
+        },
+        {
+          "caller": "_run_pandoc",
+          "callee": "input_text.encode",
+          "lineNumber": 85
+        },
+        {
+          "caller": "_run_pandoc",
+          "callee": "ConversionError",
+          "lineNumber": 89
+        },
+        {
+          "caller": "_run_pandoc",
+          "callee": "result.stderr.decode",
+          "lineNumber": 89
+        },
+        {
+          "caller": "_run_pandoc",
+          "callee": "result.stdout.decode",
+          "lineNumber": 90
+        },
+        {
+          "caller": "flush_prose",
+          "callee": "segments.append",
+          "lineNumber": 112
+        },
+        {
+          "caller": "flush_prose",
+          "callee": "fn",
+          "lineNumber": 112
+        },
+        {
+          "caller": "flush_prose",
+          "callee": "\"\\n\".join",
+          "lineNumber": 112
+        },
+        {
+          "caller": "flush_prose",
+          "callee": "prose.clear",
+          "lineNumber": 113
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "md.split",
+          "lineNumber": 115
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "line.lstrip",
+          "lineNumber": 116
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "re.match",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "flush_prose",
+          "lineNumber": 120
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "m.group",
+          "lineNumber": 121
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "code.append",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "prose.append",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "code.append",
+          "lineNumber": 126
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "re.match",
+          "lineNumber": 127
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "m.group",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "len",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "m.group",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "len",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "segments.append",
+          "lineNumber": 129
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "\"\\n\".join",
+          "lineNumber": 129
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "code.clear",
+          "lineNumber": 130
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "segments.append",
+          "lineNumber": 133
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "\"\\n\".join",
+          "lineNumber": 133
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "flush_prose",
+          "lineNumber": 134
+        },
+        {
+          "caller": "_apply_outside_fences",
+          "callee": "\"\\n\".join",
+          "lineNumber": 135
+        },
+        {
+          "caller": "dump",
+          "callee": "yaml.safe_dump",
+          "lineNumber": 148
+        },
+        {
+          "caller": "dump",
+          "callee": "cast(str, text).strip",
+          "lineNumber": 149
+        },
+        {
+          "caller": "dump",
+          "callee": "cast",
+          "lineNumber": 149
+        },
+        {
+          "caller": "_dump_frontmatter",
+          "callee": "dump",
+          "lineNumber": 151
+        },
+        {
+          "caller": "_dump_frontmatter",
+          "callee": "yaml.safe_load",
+          "lineNumber": 153
+        },
+        {
+          "caller": "_dump_frontmatter",
+          "callee": "re.sub",
+          "lineNumber": 156
+        },
+        {
+          "caller": "_dump_frontmatter",
+          "callee": "isinstance",
+          "lineNumber": 156
+        },
+        {
+          "caller": "_dump_frontmatter",
+          "callee": "fm.items",
+          "lineNumber": 156
+        },
+        {
+          "caller": "_dump_frontmatter",
+          "callee": "dump",
+          "lineNumber": 158
+        },
+        {
+          "caller": "_dump_frontmatter",
+          "callee": "notes.warn",
+          "lineNumber": 160
+        },
+        {
+          "caller": "_infer_title",
+          "callee": "re.search",
+          "lineNumber": 166
+        },
+        {
+          "caller": "_infer_title",
+          "callee": "m.group(1).strip",
+          "lineNumber": 168
+        },
+        {
+          "caller": "_infer_title",
+          "callee": "m.group",
+          "lineNumber": 168
+        },
+        {
+          "caller": "_infer_title",
+          "callee": "path.stem.replace(\"_\", \" \").replace(\"-\", \" \").title",
+          "lineNumber": 169
+        },
+        {
+          "caller": "_infer_title",
+          "callee": "path.stem.replace(\"_\", \" \").replace",
+          "lineNumber": 169
+        },
+        {
+          "caller": "_infer_title",
+          "callee": "path.stem.replace",
+          "lineNumber": 169
+        },
+        {
+          "caller": "postprocess",
+          "callee": "md.replace",
+          "lineNumber": 189
+        },
+        {
+          "caller": "postprocess",
+          "callee": "re.sub",
+          "lineNumber": 192
+        },
+        {
+          "caller": "_prose_fixes",
+          "callee": "re.sub",
+          "lineNumber": 196
+        },
+        {
+          "caller": "_prose_fixes",
+          "callee": "re.sub",
+          "lineNumber": 197
+        },
+        {
+          "caller": "_prose_fixes",
+          "callee": "re.sub",
+          "lineNumber": 199
+        },
+        {
+          "caller": "_prose_fixes",
+          "callee": "re.sub",
+          "lineNumber": 201
+        },
+        {
+          "caller": "_prose_fixes",
+          "callee": "re.sub",
+          "lineNumber": 203
+        },
+        {
+          "caller": "_prose_fixes",
+          "callee": "\"\\n\".join",
+          "lineNumber": 205
+        },
+        {
+          "caller": "_prose_fixes",
+          "callee": "line.rstrip",
+          "lineNumber": 205
+        },
+        {
+          "caller": "_prose_fixes",
+          "callee": "text.split",
+          "lineNumber": 205
+        },
+        {
+          "caller": "postprocess",
+          "callee": "_apply_outside_fences",
+          "lineNumber": 211
+        },
+        {
+          "caller": "postprocess",
+          "callee": "md.rstrip",
+          "lineNumber": 214
+        },
+        {
+          "caller": "postprocess",
+          "callee": "_infer_title",
+          "lineNumber": 220
+        },
+        {
+          "caller": "postprocess",
+          "callee": "list",
+          "lineNumber": 228
+        },
+        {
+          "caller": "postprocess",
+          "callee": "header_parts.append",
+          "lineNumber": 234
+        },
+        {
+          "caller": "postprocess",
+          "callee": "_dump_frontmatter",
+          "lineNumber": 234
+        },
+        {
+          "caller": "postprocess",
+          "callee": "header_parts.append",
+          "lineNumber": 237
+        },
+        {
+          "caller": "postprocess",
+          "callee": "\"\\n\".join",
+          "lineNumber": 240
+        },
+        {
+          "caller": "postprocess",
+          "callee": "md.lstrip",
+          "lineNumber": 240
+        },
+        {
+          "caller": "_count_tables",
+          "callee": "md.splitlines",
+          "lineNumber": 252
+        },
+        {
+          "caller": "_count_tables",
+          "callee": "line.strip",
+          "lineNumber": 253
+        },
+        {
+          "caller": "_count_tables",
+          "callee": "set",
+          "lineNumber": 254
+        },
+        {
+          "caller": "_count_tables",
+          "callee": "set",
+          "lineNumber": 254
+        },
+        {
+          "caller": "_count_urls",
+          "callee": "re.findall",
+          "lineNumber": 266
+        },
+        {
+          "caller": "_count_urls",
+          "callee": "re.findall",
+          "lineNumber": 267
+        },
+        {
+          "caller": "_count_urls",
+          "callee": "re.findall",
+          "lineNumber": 268
+        },
+        {
+          "caller": "_count_urls",
+          "callee": "len",
+          "lineNumber": 269
+        },
+        {
+          "caller": "_count_urls",
+          "callee": "len",
+          "lineNumber": 269
+        },
+        {
+          "caller": "_count_urls",
+          "callee": "len",
+          "lineNumber": 269
+        },
+        {
+          "caller": "stats",
+          "callee": "len",
+          "lineNumber": 278
+        },
+        {
+          "caller": "stats",
+          "callee": "re.findall",
+          "lineNumber": 278
+        },
+        {
+          "caller": "stats",
+          "callee": "len",
+          "lineNumber": 279
+        },
+        {
+          "caller": "stats",
+          "callee": "re.findall",
+          "lineNumber": 279
+        },
+        {
+          "caller": "stats",
+          "callee": "md.count",
+          "lineNumber": 280
+        },
+        {
+          "caller": "stats",
+          "callee": "len",
+          "lineNumber": 281
+        },
+        {
+          "caller": "stats",
+          "callee": "re.findall",
+          "lineNumber": 281
+        },
+        {
+          "caller": "stats",
+          "callee": "_count_tables",
+          "lineNumber": 282
+        },
+        {
+          "caller": "stats",
+          "callee": "_count_urls",
+          "lineNumber": 283
+        },
+        {
+          "caller": "stats",
+          "callee": "md.count",
+          "lineNumber": 286
+        },
+        {
+          "caller": "stats",
+          "callee": "len",
+          "lineNumber": 287
+        },
+        {
+          "caller": "stats",
+          "callee": "md.split",
+          "lineNumber": 287
+        },
+        {
+          "caller": "stats",
+          "callee": "len",
+          "lineNumber": 288
+        },
+        {
+          "caller": "stats",
+          "callee": "len",
+          "lineNumber": 297
+        },
+        {
+          "caller": "stats",
+          "callee": "re.findall",
+          "lineNumber": 297
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 11,
+        "functionCount": 9,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1690,
+      "nonEmptyLines": 1448,
+      "functions": [
+        {
+          "name": "_select",
+          "startLine": 117,
+          "endLine": 118,
+          "params": [
+            "el",
+            "selector"
+          ]
+        },
+        {
+          "name": "_select_one",
+          "startLine": 121,
+          "endLine": 122,
+          "params": [
+            "el",
+            "selector"
+          ]
+        },
+        {
+          "name": "_find",
+          "startLine": 125,
+          "endLine": 129,
+          "params": [
+            "el",
+            "name",
+            "class_"
+          ]
+        },
+        {
+          "name": "_find_all",
+          "startLine": 132,
+          "endLine": 136,
+          "params": [
+            "el",
+            "name",
+            "class_"
+          ]
+        },
+        {
+          "name": "_new_tag",
+          "startLine": 139,
+          "endLine": 140,
+          "params": [
+            "soup",
+            "name"
+          ]
+        },
+        {
+          "name": "detect_confluence_version",
+          "startLine": 148,
+          "endLine": 171,
+          "params": [
+            "soup"
+          ]
+        },
+        {
+          "name": "preprocess",
+          "startLine": 179,
+          "endLine": 344,
+          "params": [
+            "html",
+            "selector",
+            "keep_diagrams",
+            "notes"
+          ]
+        },
+        {
+          "name": "_harvest_page_chrome",
+          "startLine": 353,
+          "endLine": 391,
+          "params": [
+            "soup",
+            "notes"
+          ]
+        },
+        {
+          "name": "_drop_attachment_comment_sections",
+          "startLine": 394,
+          "endLine": 408,
+          "params": [
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_inline_text",
+          "startLine": 411,
+          "endLine": 430,
+          "params": [
+            "content"
+          ]
+        },
+        {
+          "name": "_find_content_root",
+          "startLine": 433,
+          "endLine": 483,
+          "params": [
+            "soup",
+            "selector",
+            "notes"
+          ]
+        },
+        {
+          "name": "_remove_ui_chrome",
+          "startLine": 486,
+          "endLine": 520,
+          "params": [
+            "content"
+          ]
+        },
+        {
+          "name": "_replace_with_adm",
+          "startLine": 545,
+          "endLine": 556,
+          "params": [
+            "soup",
+            "el",
+            "macro",
+            "title",
+            "body"
+          ]
+        },
+        {
+          "name": "_normalise_admonitions",
+          "startLine": 559,
+          "endLine": 614,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_expands",
+          "startLine": 617,
+          "endLine": 635,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_flatten_adr_cards",
+          "startLine": 638,
+          "endLine": 677,
+          "params": [
+            "soup",
+            "content"
+          ]
+        },
+        {
+          "name": "_normalise_badges",
+          "startLine": 684,
+          "endLine": 712,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_mentions",
+          "startLine": 715,
+          "endLine": 723,
+          "params": [
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_jira",
+          "startLine": 726,
+          "endLine": 764,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_profiles",
+          "startLine": 767,
+          "endLine": 778,
+          "params": [
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_emoticon_key",
+          "startLine": 820,
+          "endLine": 822,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "_normalise_emoticons",
+          "startLine": 825,
+          "endLine": 844,
+          "params": [
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_task_lists",
+          "startLine": 847,
+          "endLine": 876,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_flatten_samepage_links",
+          "startLine": 879,
+          "endLine": 900,
+          "params": [
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_layouts",
+          "startLine": 903,
+          "endLine": 920,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_flag_tables",
+          "startLine": 923,
+          "endLine": 940,
+          "params": [
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_run",
+          "startLine": 943,
+          "endLine": 948,
+          "params": [
+            "notes",
+            "label",
+            "fn"
+          ]
+        },
+        {
+          "name": "_normalise_ac_links",
+          "startLine": 957,
+          "endLine": 985,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_ac_images",
+          "startLine": 988,
+          "endLine": 1010,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_template_vars",
+          "startLine": 1013,
+          "endLine": 1018,
+          "params": [
+            "content"
+          ]
+        },
+        {
+          "name": "_drop_leftover_ac",
+          "startLine": 1021,
+          "endLine": 1038,
+          "params": [
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_caption_para",
+          "startLine": 1041,
+          "endLine": 1047,
+          "params": [
+            "soup",
+            "caption"
+          ]
+        },
+        {
+          "name": "_normalise_diagrams",
+          "startLine": 1050,
+          "endLine": 1093,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_gallery",
+          "startLine": 1096,
+          "endLine": 1118,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_viewfiles",
+          "startLine": 1121,
+          "endLine": 1137,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_embedded_images",
+          "startLine": 1140,
+          "endLine": 1158,
+          "params": [
+            "content"
+          ]
+        },
+        {
+          "name": "_as_list",
+          "startLine": 1162,
+          "endLine": 1171,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "_detect_language",
+          "startLine": 1192,
+          "endLine": 1206,
+          "params": [
+            "code_text",
+            "existing_classes"
+          ]
+        },
+        {
+          "name": "_lang_from_syntaxhighlighter",
+          "startLine": 1251,
+          "endLine": 1260,
+          "params": [
+            "pre"
+          ]
+        },
+        {
+          "name": "_rebuild_pre",
+          "startLine": 1263,
+          "endLine": 1270,
+          "params": [
+            "soup",
+            "raw_code",
+            "lang"
+          ]
+        },
+        {
+          "name": "_normalise_code_blocks",
+          "startLine": 1273,
+          "endLine": 1396,
+          "params": [
+            "soup",
+            "content",
+            "notes"
+          ]
+        },
+        {
+          "name": "_normalise_page_props",
+          "startLine": 1399,
+          "endLine": 1408,
+          "params": [
+            "soup",
+            "content"
+          ]
+        },
+        {
+          "name": "_text",
+          "startLine": 1411,
+          "endLine": 1413,
+          "params": [
+            "el",
+            "selector"
+          ]
+        },
+        {
+          "name": "convert",
+          "startLine": 1421,
+          "endLine": 1445,
+          "params": [
+            "clean_html",
+            "pandoc_path",
+            "notes"
+          ]
+        },
+        {
+          "name": "validate",
+          "startLine": 1458,
+          "endLine": 1474,
+          "params": [
+            "md",
+            "verbose"
+          ]
+        },
+        {
+          "name": "_reject_if_storage_format",
+          "startLine": 1495,
+          "endLine": 1502,
+          "params": [
+            "html",
+            "src"
+          ]
+        },
+        {
+          "name": "convert_file",
+          "startLine": 1505,
+          "endLine": 1580,
+          "params": [
+            "src",
+            "output",
+            "selector",
+            "title",
+            "author",
+            "add_frontmatter",
+            "add_toc",
+            "keep_diagrams",
+            "pandoc_path",
+            "space",
+            "source_url",
+            "labels",
+            "write"
+          ]
+        },
+        {
+          "name": "build_parser",
+          "startLine": 1588,
+          "endLine": 1615,
+          "params": []
+        },
+        {
+          "name": "main",
+          "startLine": 1618,
+          "endLine": 1686,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_select",
+          "line": 117,
+          "isDefault": false
+        },
+        {
+          "name": "_select_one",
+          "line": 121,
+          "isDefault": false
+        },
+        {
+          "name": "_find",
+          "line": 125,
+          "isDefault": false
+        },
+        {
+          "name": "_find_all",
+          "line": 132,
+          "isDefault": false
+        },
+        {
+          "name": "_new_tag",
+          "line": 139,
+          "isDefault": false
+        },
+        {
+          "name": "detect_confluence_version",
+          "line": 148,
+          "isDefault": false
+        },
+        {
+          "name": "preprocess",
+          "line": 179,
+          "isDefault": false
+        },
+        {
+          "name": "_harvest_page_chrome",
+          "line": 353,
+          "isDefault": false
+        },
+        {
+          "name": "_drop_attachment_comment_sections",
+          "line": 394,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_inline_text",
+          "line": 411,
+          "isDefault": false
+        },
+        {
+          "name": "_find_content_root",
+          "line": 433,
+          "isDefault": false
+        },
+        {
+          "name": "_remove_ui_chrome",
+          "line": 486,
+          "isDefault": false
+        },
+        {
+          "name": "_replace_with_adm",
+          "line": 545,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_admonitions",
+          "line": 559,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_expands",
+          "line": 617,
+          "isDefault": false
+        },
+        {
+          "name": "_flatten_adr_cards",
+          "line": 638,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_badges",
+          "line": 684,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_mentions",
+          "line": 715,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_jira",
+          "line": 726,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_profiles",
+          "line": 767,
+          "isDefault": false
+        },
+        {
+          "name": "_emoticon_key",
+          "line": 820,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_emoticons",
+          "line": 825,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_task_lists",
+          "line": 847,
+          "isDefault": false
+        },
+        {
+          "name": "_flatten_samepage_links",
+          "line": 879,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_layouts",
+          "line": 903,
+          "isDefault": false
+        },
+        {
+          "name": "_flag_tables",
+          "line": 923,
+          "isDefault": false
+        },
+        {
+          "name": "_run",
+          "line": 943,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_ac_links",
+          "line": 957,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_ac_images",
+          "line": 988,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_template_vars",
+          "line": 1013,
+          "isDefault": false
+        },
+        {
+          "name": "_drop_leftover_ac",
+          "line": 1021,
+          "isDefault": false
+        },
+        {
+          "name": "_caption_para",
+          "line": 1041,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_diagrams",
+          "line": 1050,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_gallery",
+          "line": 1096,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_viewfiles",
+          "line": 1121,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_embedded_images",
+          "line": 1140,
+          "isDefault": false
+        },
+        {
+          "name": "_as_list",
+          "line": 1162,
+          "isDefault": false
+        },
+        {
+          "name": "_detect_language",
+          "line": 1192,
+          "isDefault": false
+        },
+        {
+          "name": "_lang_from_syntaxhighlighter",
+          "line": 1251,
+          "isDefault": false
+        },
+        {
+          "name": "_rebuild_pre",
+          "line": 1263,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_code_blocks",
+          "line": 1273,
+          "isDefault": false
+        },
+        {
+          "name": "_normalise_page_props",
+          "line": 1399,
+          "isDefault": false
+        },
+        {
+          "name": "_text",
+          "line": 1411,
+          "isDefault": false
+        },
+        {
+          "name": "convert",
+          "line": 1421,
+          "isDefault": false
+        },
+        {
+          "name": "validate",
+          "line": 1458,
+          "isDefault": false
+        },
+        {
+          "name": "_reject_if_storage_format",
+          "line": 1495,
+          "isDefault": false
+        },
+        {
+          "name": "convert_file",
+          "line": 1505,
+          "isDefault": false
+        },
+        {
+          "name": "build_parser",
+          "line": 1588,
+          "isDefault": false
+        },
+        {
+          "name": "main",
+          "line": 1618,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_select",
+          "callee": "cast",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_select",
+          "callee": "el.select",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_select_one",
+          "callee": "cast",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_select_one",
+          "callee": "el.select_one",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_find",
+          "callee": "cast",
+          "lineNumber": 129
+        },
+        {
+          "caller": "_find",
+          "callee": "el.find",
+          "lineNumber": 129
+        },
+        {
+          "caller": "_find_all",
+          "callee": "cast",
+          "lineNumber": 136
+        },
+        {
+          "caller": "_find_all",
+          "callee": "el.find_all",
+          "lineNumber": 136
+        },
+        {
+          "caller": "_new_tag",
+          "callee": "soup.new_tag",
+          "lineNumber": 140
+        },
+        {
+          "caller": "detect_confluence_version",
+          "callee": "_select_one",
+          "lineNumber": 157
+        },
+        {
+          "caller": "detect_confluence_version",
+          "callee": "_select_one",
+          "lineNumber": 158
+        },
+        {
+          "caller": "detect_confluence_version",
+          "callee": "_select_one",
+          "lineNumber": 159
+        },
+        {
+          "caller": "detect_confluence_version",
+          "callee": "_select_one",
+          "lineNumber": 165
+        },
+        {
+          "caller": "detect_confluence_version",
+          "callee": "_select_one",
+          "lineNumber": 166
+        },
+        {
+          "caller": "detect_confluence_version",
+          "callee": "_select_one",
+          "lineNumber": 167
+        },
+        {
+          "caller": "preprocess",
+          "callee": "ConversionNotes",
+          "lineNumber": 192
+        },
+        {
+          "caller": "preprocess",
+          "callee": "BeautifulSoup",
+          "lineNumber": 193
+        },
+        {
+          "caller": "preprocess",
+          "callee": "notes.metadata.setdefault",
+          "lineNumber": 198
+        },
+        {
+          "caller": "preprocess",
+          "callee": "detect_confluence_version",
+          "lineNumber": 198
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_harvest_page_chrome",
+          "lineNumber": 203
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_find_content_root",
+          "lineNumber": 206
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_drop_attachment_comment_sections",
+          "lineNumber": 210
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_select",
+          "lineNumber": 213
+        },
+        {
+          "caller": "preprocess",
+          "callee": "el.unwrap",
+          "lineNumber": 214
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_remove_ui_chrome",
+          "lineNumber": 217
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_inline_text",
+          "lineNumber": 222
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_emoticons",
+          "lineNumber": 225
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 228
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_mentions",
+          "lineNumber": 228
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 231
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_jira",
+          "lineNumber": 231
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 234
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_profiles",
+          "lineNumber": 234
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_admonitions",
+          "lineNumber": 237
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_expands",
+          "lineNumber": 240
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_flatten_samepage_links",
+          "lineNumber": 243
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_flatten_adr_cards",
+          "lineNumber": 246
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_badges",
+          "lineNumber": 249
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_task_lists",
+          "lineNumber": 252
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 256
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_gallery",
+          "lineNumber": 256
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 257
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_viewfiles",
+          "lineNumber": 257
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 258
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_embedded_images",
+          "lineNumber": 258
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_diagrams",
+          "lineNumber": 262
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_code_blocks",
+          "lineNumber": 265
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 268
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_layouts",
+          "lineNumber": 268
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 271
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_flag_tables",
+          "lineNumber": 271
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_page_props",
+          "lineNumber": 274
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_select",
+          "lineNumber": 277
+        },
+        {
+          "caller": "preprocess",
+          "callee": "toc.decompose",
+          "lineNumber": 278
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_select",
+          "lineNumber": 281
+        },
+        {
+          "caller": "preprocess",
+          "callee": "el.unwrap",
+          "lineNumber": 282
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_select",
+          "lineNumber": 285
+        },
+        {
+          "caller": "preprocess",
+          "callee": "span.decompose",
+          "lineNumber": 286
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_select",
+          "lineNumber": 289
+        },
+        {
+          "caller": "preprocess",
+          "callee": "span.unwrap",
+          "lineNumber": 290
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 295
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_ac_links",
+          "lineNumber": 295
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 296
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_ac_images",
+          "lineNumber": 296
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 297
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_normalise_template_vars",
+          "lineNumber": 297
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_run",
+          "lineNumber": 298
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_drop_leftover_ac",
+          "lineNumber": 298
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_find_all",
+          "lineNumber": 306
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_find_all",
+          "lineNumber": 306
+        },
+        {
+          "caller": "preprocess",
+          "callee": "wrapper.find_parent",
+          "lineNumber": 307
+        },
+        {
+          "caller": "preprocess",
+          "callee": "set",
+          "lineNumber": 309
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_as_list",
+          "lineNumber": 309
+        },
+        {
+          "caller": "preprocess",
+          "callee": "wrapper.get",
+          "lineNumber": 309
+        },
+        {
+          "caller": "preprocess",
+          "callee": "wrapper.unwrap",
+          "lineNumber": 311
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_find_all",
+          "lineNumber": 322
+        },
+        {
+          "caller": "preprocess",
+          "callee": "bool",
+          "lineNumber": 323
+        },
+        {
+          "caller": "preprocess",
+          "callee": "set",
+          "lineNumber": 323
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_as_list",
+          "lineNumber": 323
+        },
+        {
+          "caller": "preprocess",
+          "callee": "tag.get",
+          "lineNumber": 323
+        },
+        {
+          "caller": "preprocess",
+          "callee": "list",
+          "lineNumber": 324
+        },
+        {
+          "caller": "preprocess",
+          "callee": "tag.attrs.keys",
+          "lineNumber": 324
+        },
+        {
+          "caller": "preprocess",
+          "callee": "_as_list",
+          "lineNumber": 333
+        },
+        {
+          "caller": "preprocess",
+          "callee": "tag.get",
+          "lineNumber": 333
+        },
+        {
+          "caller": "preprocess",
+          "callee": "c.startswith",
+          "lineNumber": 333
+        },
+        {
+          "caller": "preprocess",
+          "callee": "cast",
+          "lineNumber": 335
+        },
+        {
+          "caller": "preprocess",
+          "callee": "content.decode_contents",
+          "lineNumber": 342
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "_select_one",
+          "lineNumber": 363
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "_select_one",
+          "lineNumber": 363
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "title_el.get_text",
+          "lineNumber": 365
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "raw.partition",
+          "lineNumber": 367
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "space.strip",
+          "lineNumber": 368
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "meta.setdefault",
+          "lineNumber": 369
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "space.strip",
+          "lineNumber": 369
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "title.strip",
+          "lineNumber": 370
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "meta.setdefault",
+          "lineNumber": 371
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "title.strip",
+          "lineNumber": 371
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "meta.setdefault",
+          "lineNumber": 373
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "_select_one",
+          "lineNumber": 375
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "_select_one",
+          "lineNumber": 377
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "_select_one",
+          "lineNumber": 377
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "author_el.get_text",
+          "lineNumber": 379
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "meta.setdefault",
+          "lineNumber": 381
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "re.search",
+          "lineNumber": 382
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "pm.get_text",
+          "lineNumber": 382
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "meta.setdefault",
+          "lineNumber": 384
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "m.group(1).strip",
+          "lineNumber": 384
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "m.group",
+          "lineNumber": 384
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "_find_all",
+          "lineNumber": 386
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "str",
+          "lineNumber": 387
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "el.get",
+          "lineNumber": 387
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "el.get",
+          "lineNumber": 387
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "re.search",
+          "lineNumber": 388
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "meta.setdefault",
+          "lineNumber": 390
+        },
+        {
+          "caller": "_harvest_page_chrome",
+          "callee": "m.group",
+          "lineNumber": 390
+        },
+        {
+          "caller": "_drop_attachment_comment_sections",
+          "callee": "_select",
+          "lineNumber": 402
+        },
+        {
+          "caller": "_drop_attachment_comment_sections",
+          "callee": "_select_one",
+          "lineNumber": 403
+        },
+        {
+          "caller": "_drop_attachment_comment_sections",
+          "callee": "el.decompose",
+          "lineNumber": 404
+        },
+        {
+          "caller": "_drop_attachment_comment_sections",
+          "callee": "notes.bump",
+          "lineNumber": 405
+        },
+        {
+          "caller": "_drop_attachment_comment_sections",
+          "callee": "_select_one",
+          "lineNumber": 406
+        },
+        {
+          "caller": "_drop_attachment_comment_sections",
+          "callee": "el.decompose",
+          "lineNumber": 407
+        },
+        {
+          "caller": "_drop_attachment_comment_sections",
+          "callee": "notes.bump",
+          "lineNumber": 408
+        },
+        {
+          "caller": "_normalise_inline_text",
+          "callee": "_find_all",
+          "lineNumber": 421
+        },
+        {
+          "caller": "_normalise_inline_text",
+          "callee": "str",
+          "lineNumber": 422
+        },
+        {
+          "caller": "_normalise_inline_text",
+          "callee": "span.get",
+          "lineNumber": 422
+        },
+        {
+          "caller": "_normalise_inline_text",
+          "callee": "_find_all",
+          "lineNumber": 426
+        },
+        {
+          "caller": "_normalise_inline_text",
+          "callee": "el.unwrap",
+          "lineNumber": 427
+        },
+        {
+          "caller": "_normalise_inline_text",
+          "callee": "_find_all",
+          "lineNumber": 428
+        },
+        {
+          "caller": "_normalise_inline_text",
+          "callee": "str(t.get(\"datetime\") or \"\").strip",
+          "lineNumber": 429
+        },
+        {
+          "caller": "_normalise_inline_text",
+          "callee": "str",
+          "lineNumber": 429
+        },
+        {
+          "caller": "_normalise_inline_text",
+          "callee": "t.get",
+          "lineNumber": 429
+        },
+        {
+          "caller": "_normalise_inline_text",
+          "callee": "t.replace_with",
+          "lineNumber": 430
+        },
+        {
+          "caller": "_normalise_inline_text",
+          "callee": "t.get_text",
+          "lineNumber": 430
+        },
+        {
+          "caller": "_find_content_root",
+          "callee": "_select_one",
+          "lineNumber": 473
+        },
+        {
+          "caller": "_find_content_root",
+          "callee": "notes.warn",
+          "lineNumber": 479
+        },
+        {
+          "caller": "_find_content_root",
+          "callee": "cast",
+          "lineNumber": 483
+        },
+        {
+          "caller": "_remove_ui_chrome",
+          "callee": "_select",
+          "lineNumber": 519
+        },
+        {
+          "caller": "_remove_ui_chrome",
+          "callee": "el.decompose",
+          "lineNumber": 520
+        },
+        {
+          "caller": "_replace_with_adm",
+          "callee": "_new_tag",
+          "lineNumber": 549
+        },
+        {
+          "caller": "_replace_with_adm",
+          "callee": "cast",
+          "lineNumber": 550
+        },
+        {
+          "caller": "_replace_with_adm",
+          "callee": "list",
+          "lineNumber": 554
+        },
+        {
+          "caller": "_replace_with_adm",
+          "callee": "div.append",
+          "lineNumber": 555
+        },
+        {
+          "caller": "_replace_with_adm",
+          "callee": "child.extract",
+          "lineNumber": 555
+        },
+        {
+          "caller": "_replace_with_adm",
+          "callee": "el.replace_with",
+          "lineNumber": 556
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_ADMONITION_TYPES.items",
+          "lineNumber": 565
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_select",
+          "lineNumber": 566
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_as_list",
+          "lineNumber": 570
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "el.get",
+          "lineNumber": 570
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_select_one",
+          "lineNumber": 573
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "title_el.get_text",
+          "lineNumber": 575
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "title_el.decompose",
+          "lineNumber": 576
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_select",
+          "lineNumber": 577
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "icon.decompose",
+          "lineNumber": 578
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_select_one",
+          "lineNumber": 579
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_replace_with_adm",
+          "lineNumber": 580
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "notes.bump",
+          "lineNumber": 581
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_select",
+          "lineNumber": 584
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_as_list",
+          "lineNumber": 585
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "el.get",
+          "lineNumber": 585
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_select_one",
+          "lineNumber": 588
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "header_el.get_text",
+          "lineNumber": 589
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "header_el.decompose",
+          "lineNumber": 591
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_select_one",
+          "lineNumber": 592
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_replace_with_adm",
+          "lineNumber": 593
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "notes.bump",
+          "lineNumber": 594
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_select",
+          "lineNumber": 603
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_find",
+          "lineNumber": 604
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_as_list",
+          "lineNumber": 607
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "table.get",
+          "lineNumber": 607
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_find_all",
+          "lineNumber": 611
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "_replace_with_adm",
+          "lineNumber": 613
+        },
+        {
+          "caller": "_normalise_admonitions",
+          "callee": "notes.bump",
+          "lineNumber": 614
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "_select",
+          "lineNumber": 621
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "_select_one",
+          "lineNumber": 622
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "_select_one",
+          "lineNumber": 622
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "label_el.get_text",
+          "lineNumber": 623
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "_new_tag",
+          "lineNumber": 625
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "cast",
+          "lineNumber": 626
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "_select_one",
+          "lineNumber": 629
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "list",
+          "lineNumber": 630
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "div.append",
+          "lineNumber": 631
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "child.extract",
+          "lineNumber": 631
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "_select",
+          "lineNumber": 632
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "ctl.decompose",
+          "lineNumber": 633
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "exp.replace_with",
+          "lineNumber": 634
+        },
+        {
+          "caller": "_normalise_expands",
+          "callee": "notes.bump",
+          "lineNumber": 635
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_select",
+          "lineNumber": 640
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_find",
+          "lineNumber": 641
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_text",
+          "lineNumber": 645
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_text",
+          "lineNumber": 646
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_text",
+          "lineNumber": 647
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_new_tag",
+          "lineNumber": 649
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "f\"{adr_id} — {adr_title}\".strip",
+          "lineNumber": 650
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "new_nodes.append",
+          "lineNumber": 651
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_new_tag",
+          "lineNumber": 654
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "new_nodes.append",
+          "lineNumber": 656
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_find",
+          "lineNumber": 658
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_find_all",
+          "lineNumber": 660
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_find",
+          "lineNumber": 661
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "lbl_el.get_text",
+          "lineNumber": 663
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "lbl_el.decompose",
+          "lineNumber": 664
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_find_all",
+          "lineNumber": 665
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_new_tag",
+          "lineNumber": 666
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "p.insert",
+          "lineNumber": 668
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "new_nodes.append",
+          "lineNumber": 669
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "card.insert_before",
+          "lineNumber": 672
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "card.decompose",
+          "lineNumber": 673
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "_select",
+          "lineNumber": 676
+        },
+        {
+          "caller": "_flatten_adr_cards",
+          "callee": "el.decompose",
+          "lineNumber": 677
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "_select",
+          "lineNumber": 692
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "\" \".join",
+          "lineNumber": 693
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "_as_list",
+          "lineNumber": 693
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "el.get",
+          "lineNumber": 693
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "_new_tag",
+          "lineNumber": 695
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "el.get_text",
+          "lineNumber": 696
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "el.replace_with",
+          "lineNumber": 697
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "_select",
+          "lineNumber": 699
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "_as_list",
+          "lineNumber": 701
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "el.get",
+          "lineNumber": 701
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "re.match",
+          "lineNumber": 702
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "m.group",
+          "lineNumber": 703
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "m.group",
+          "lineNumber": 704
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "_new_tag",
+          "lineNumber": 706
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "cast",
+          "lineNumber": 707
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "el.get_text",
+          "lineNumber": 710
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "el.replace_with",
+          "lineNumber": 711
+        },
+        {
+          "caller": "_normalise_badges",
+          "callee": "notes.bump",
+          "lineNumber": 712
+        },
+        {
+          "caller": "_normalise_mentions",
+          "callee": "_select",
+          "lineNumber": 721
+        },
+        {
+          "caller": "_normalise_mentions",
+          "callee": "a.replace_with",
+          "lineNumber": 722
+        },
+        {
+          "caller": "_normalise_mentions",
+          "callee": "a.get_text",
+          "lineNumber": 722
+        },
+        {
+          "caller": "_normalise_mentions",
+          "callee": "notes.bump",
+          "lineNumber": 723
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "_select",
+          "lineNumber": 732
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "span.find_parent",
+          "lineNumber": 733
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "_select_one",
+          "lineNumber": 735
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "_select_one",
+          "lineNumber": 735
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "_find",
+          "lineNumber": 737
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "span.replace_with",
+          "lineNumber": 739
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "inner_table.extract",
+          "lineNumber": 739
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "span.decompose",
+          "lineNumber": 741
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "notes.bump",
+          "lineNumber": 742
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "re.sub",
+          "lineNumber": 744
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "str",
+          "lineNumber": 744
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "key_a.get",
+          "lineNumber": 744
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "key_a.get_text",
+          "lineNumber": 745
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "_select_one",
+          "lineNumber": 746
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "summary_el.get_text",
+          "lineNumber": 747
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "_select_one",
+          "lineNumber": 748
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "status_el.get_text",
+          "lineNumber": 749
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "_as_list",
+          "lineNumber": 750
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "span.get",
+          "lineNumber": 750
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "_new_tag",
+          "lineNumber": 752
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "bits.append",
+          "lineNumber": 756
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "parts.append",
+          "lineNumber": 759
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "\" \".join",
+          "lineNumber": 759
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "span.replace_with",
+          "lineNumber": 760
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "notes.bump",
+          "lineNumber": 761
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "_select",
+          "lineNumber": 763
+        },
+        {
+          "caller": "_normalise_jira",
+          "callee": "el.decompose",
+          "lineNumber": 764
+        },
+        {
+          "caller": "_normalise_profiles",
+          "callee": "_select",
+          "lineNumber": 769
+        },
+        {
+          "caller": "_normalise_profiles",
+          "callee": "_select_one",
+          "lineNumber": 770
+        },
+        {
+          "caller": "_normalise_profiles",
+          "callee": "re.sub(r\"^User icon:\\s*\", \"\", str(img.get(\"alt\") or \"\")).strip",
+          "lineNumber": 773
+        },
+        {
+          "caller": "_normalise_profiles",
+          "callee": "re.sub",
+          "lineNumber": 773
+        },
+        {
+          "caller": "_normalise_profiles",
+          "callee": "str",
+          "lineNumber": 773
+        },
+        {
+          "caller": "_normalise_profiles",
+          "callee": "img.get",
+          "lineNumber": 773
+        },
+        {
+          "caller": "_normalise_profiles",
+          "callee": "_select_one",
+          "lineNumber": 775
+        },
+        {
+          "caller": "_normalise_profiles",
+          "callee": "link.get_text",
+          "lineNumber": 776
+        },
+        {
+          "caller": "_normalise_profiles",
+          "callee": "el.get_text",
+          "lineNumber": 776
+        },
+        {
+          "caller": "_normalise_profiles",
+          "callee": "el.replace_with",
+          "lineNumber": 777
+        },
+        {
+          "caller": "_normalise_profiles",
+          "callee": "notes.bump",
+          "lineNumber": 778
+        },
+        {
+          "caller": "_emoticon_key",
+          "callee": "raw.strip().strip(\"()\").strip().lower",
+          "lineNumber": 822
+        },
+        {
+          "caller": "_emoticon_key",
+          "callee": "raw.strip().strip(\"()\").strip",
+          "lineNumber": 822
+        },
+        {
+          "caller": "_emoticon_key",
+          "callee": "raw.strip().strip",
+          "lineNumber": 822
+        },
+        {
+          "caller": "_emoticon_key",
+          "callee": "raw.strip",
+          "lineNumber": 822
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "_find_all",
+          "lineNumber": 831
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "any",
+          "lineNumber": 832
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "_as_list",
+          "lineNumber": 832
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "img.get",
+          "lineNumber": 832
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "str(img.get(\"data-emoticon-name\") or img.get(\"alt\") or \"\").strip",
+          "lineNumber": 834
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "str",
+          "lineNumber": 834
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "img.get",
+          "lineNumber": 834
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "img.get",
+          "lineNumber": 834
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "_emoticon_key",
+          "lineNumber": 835
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "img.replace_with",
+          "lineNumber": 836
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "_EMOTICON_WORDS.get",
+          "lineNumber": 836
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "notes.bump",
+          "lineNumber": 837
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "_find_all",
+          "lineNumber": 840
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "str",
+          "lineNumber": 841
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "em.get",
+          "lineNumber": 841
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "em.get",
+          "lineNumber": 841
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "_emoticon_key",
+          "lineNumber": 842
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "em.replace_with",
+          "lineNumber": 843
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "_EMOTICON_WORDS.get",
+          "lineNumber": 843
+        },
+        {
+          "caller": "_normalise_emoticons",
+          "callee": "notes.bump",
+          "lineNumber": 844
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "_select",
+          "lineNumber": 857
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "_find_all",
+          "lineNumber": 858
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "_as_list",
+          "lineNumber": 860
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "li.get",
+          "lineNumber": 860
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "li.insert",
+          "lineNumber": 862
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "_new_tag",
+          "lineNumber": 862
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "notes.bump",
+          "lineNumber": 863
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "_find_all",
+          "lineNumber": 866
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "_find",
+          "lineNumber": 867
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "_find",
+          "lineNumber": 868
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "status.get_text(strip=True).lower",
+          "lineNumber": 869
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "status.get_text",
+          "lineNumber": 869
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "(body or task).get_text",
+          "lineNumber": 870
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "_new_tag",
+          "lineNumber": 871
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "task.replace_with",
+          "lineNumber": 873
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "notes.bump",
+          "lineNumber": 874
+        },
+        {
+          "caller": "_normalise_task_lists",
+          "callee": "_find_all",
+          "lineNumber": 875
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "_find_all",
+          "lineNumber": 888
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "str",
+          "lineNumber": 889
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "a.get",
+          "lineNumber": 889
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "href.startswith",
+          "lineNumber": 890
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "a.get_text",
+          "lineNumber": 892
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "_find_all",
+          "lineNumber": 892
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "a.unwrap",
+          "lineNumber": 893
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "a.decompose",
+          "lineNumber": 895
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "notes.bump",
+          "lineNumber": 896
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "_find_all",
+          "lineNumber": 897
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "el.get",
+          "lineNumber": 898
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "el.get_text",
+          "lineNumber": 898
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "_find_all",
+          "lineNumber": 898
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "el.decompose",
+          "lineNumber": 899
+        },
+        {
+          "caller": "_flatten_samepage_links",
+          "callee": "notes.bump",
+          "lineNumber": 900
+        },
+        {
+          "caller": "_normalise_layouts",
+          "callee": "_select",
+          "lineNumber": 910
+        },
+        {
+          "caller": "_normalise_layouts",
+          "callee": "inner.unwrap",
+          "lineNumber": 911
+        },
+        {
+          "caller": "_normalise_layouts",
+          "callee": "_select",
+          "lineNumber": 912
+        },
+        {
+          "caller": "_normalise_layouts",
+          "callee": "cast",
+          "lineNumber": 914
+        },
+        {
+          "caller": "_normalise_layouts",
+          "callee": "notes.bump",
+          "lineNumber": 915
+        },
+        {
+          "caller": "_normalise_layouts",
+          "callee": "_select",
+          "lineNumber": 916
+        },
+        {
+          "caller": "_normalise_layouts",
+          "callee": "cast",
+          "lineNumber": 918
+        },
+        {
+          "caller": "_normalise_layouts",
+          "callee": "_select",
+          "lineNumber": 919
+        },
+        {
+          "caller": "_normalise_layouts",
+          "callee": "outer.unwrap",
+          "lineNumber": 920
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "_find_all",
+          "lineNumber": 930
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "table.find_parent",
+          "lineNumber": 931
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "notes.warn",
+          "lineNumber": 932
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "notes.bump",
+          "lineNumber": 933
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "table.unwrap",
+          "lineNumber": 934
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "_find_all",
+          "lineNumber": 936
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "_find_all",
+          "lineNumber": 937
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "_find_all",
+          "lineNumber": 937
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "any",
+          "lineNumber": 938
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "c.get",
+          "lineNumber": 938
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "c.get",
+          "lineNumber": 938
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "notes.warn",
+          "lineNumber": 939
+        },
+        {
+          "caller": "_flag_tables",
+          "callee": "notes.bump",
+          "lineNumber": 940
+        },
+        {
+          "caller": "_run",
+          "callee": "fn",
+          "lineNumber": 946
+        },
+        {
+          "caller": "_run",
+          "callee": "notes.error",
+          "lineNumber": 948
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "_find_all",
+          "lineNumber": 959
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "_find",
+          "lineNumber": 960
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "_find",
+          "lineNumber": 960
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "body_el.get_text",
+          "lineNumber": 961
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "_find",
+          "lineNumber": 962
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "_find",
+          "lineNumber": 963
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "link.get",
+          "lineNumber": 964
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "str",
+          "lineNumber": 967
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "page.get",
+          "lineNumber": 967
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "str",
+          "lineNumber": 968
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "page.get",
+          "lineNumber": 968
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "_new_tag",
+          "lineNumber": 969
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "link.replace_with",
+          "lineNumber": 972
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "Comment",
+          "lineNumber": 972
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "notes.warn",
+          "lineNumber": 973
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "str",
+          "lineNumber": 975
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "attach.get",
+          "lineNumber": 975
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "_new_tag",
+          "lineNumber": 976
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "link.replace_with",
+          "lineNumber": 978
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "notes.warn",
+          "lineNumber": 979
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "_new_tag",
+          "lineNumber": 981
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "str",
+          "lineNumber": 982
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "link.replace_with",
+          "lineNumber": 983
+        },
+        {
+          "caller": "_normalise_ac_links",
+          "callee": "link.unwrap",
+          "lineNumber": 985
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "_find_all",
+          "lineNumber": 990
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "_find",
+          "lineNumber": 991
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "_find",
+          "lineNumber": 992
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "str",
+          "lineNumber": 994
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "attach.get",
+          "lineNumber": 994
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "str",
+          "lineNumber": 996
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "img_el.get",
+          "lineNumber": 996
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "notes.warn",
+          "lineNumber": 997
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "str",
+          "lineNumber": 999
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "url.get",
+          "lineNumber": 999
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "str",
+          "lineNumber": 1000
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "img_el.get",
+          "lineNumber": 1000
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "img_el.decompose",
+          "lineNumber": 1002
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "img_el.get",
+          "lineNumber": 1005
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "str",
+          "lineNumber": 1006
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "img_el.get",
+          "lineNumber": 1006
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "img_el.get",
+          "lineNumber": 1008
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "str",
+          "lineNumber": 1009
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "img_el.get",
+          "lineNumber": 1009
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "img_el.replace_with",
+          "lineNumber": 1010
+        },
+        {
+          "caller": "_normalise_ac_images",
+          "callee": "_new_tag",
+          "lineNumber": 1010
+        },
+        {
+          "caller": "_normalise_template_vars",
+          "callee": "_find_all",
+          "lineNumber": 1015
+        },
+        {
+          "caller": "_normalise_template_vars",
+          "callee": "var.replace_with",
+          "lineNumber": 1016
+        },
+        {
+          "caller": "_normalise_template_vars",
+          "callee": "var.get",
+          "lineNumber": 1016
+        },
+        {
+          "caller": "_normalise_template_vars",
+          "callee": "_find_all",
+          "lineNumber": 1017
+        },
+        {
+          "caller": "_normalise_template_vars",
+          "callee": "ph.replace_with",
+          "lineNumber": 1018
+        },
+        {
+          "caller": "_normalise_template_vars",
+          "callee": "ph.get_text",
+          "lineNumber": 1018
+        },
+        {
+          "caller": "_drop_leftover_ac",
+          "callee": "set",
+          "lineNumber": 1024
+        },
+        {
+          "caller": "_drop_leftover_ac",
+          "callee": "_find_all",
+          "lineNumber": 1025
+        },
+        {
+          "caller": "_drop_leftover_ac",
+          "callee": "name.startswith",
+          "lineNumber": 1027
+        },
+        {
+          "caller": "_drop_leftover_ac",
+          "callee": "notes.warn",
+          "lineNumber": 1032
+        },
+        {
+          "caller": "_drop_leftover_ac",
+          "callee": "seen.add",
+          "lineNumber": 1033
+        },
+        {
+          "caller": "_drop_leftover_ac",
+          "callee": "notes.bump",
+          "lineNumber": 1034
+        },
+        {
+          "caller": "_drop_leftover_ac",
+          "callee": "tag.unwrap",
+          "lineNumber": 1036
+        },
+        {
+          "caller": "_drop_leftover_ac",
+          "callee": "tag.decompose",
+          "lineNumber": 1038
+        },
+        {
+          "caller": "_caption_para",
+          "callee": "_new_tag",
+          "lineNumber": 1043
+        },
+        {
+          "caller": "_caption_para",
+          "callee": "_new_tag",
+          "lineNumber": 1044
+        },
+        {
+          "caller": "_caption_para",
+          "callee": "p.append",
+          "lineNumber": 1046
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "_find_all",
+          "lineNumber": 1061
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "str(img.get(\"src\") or \"\").startswith",
+          "lineNumber": 1062
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "str",
+          "lineNumber": 1062
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "img.get",
+          "lineNumber": 1062
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "str(img.get(\"alt\") or \"\").strip",
+          "lineNumber": 1063
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "str",
+          "lineNumber": 1063
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "img.get",
+          "lineNumber": 1063
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "img.replace_with",
+          "lineNumber": 1065
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "img.decompose",
+          "lineNumber": 1067
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "notes.bump",
+          "lineNumber": 1068
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "_select",
+          "lineNumber": 1070
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "_find",
+          "lineNumber": 1073
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "cap_el.get_text",
+          "lineNumber": 1074
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "_find",
+          "lineNumber": 1075
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "_find",
+          "lineNumber": 1078
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "str((inner_img.get(\"alt\") if inner_img else \"\") or \"\").strip",
+          "lineNumber": 1079
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "str",
+          "lineNumber": 1079
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "inner_img.get",
+          "lineNumber": 1079
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "wrap.replace_with",
+          "lineNumber": 1081
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "_caption_para",
+          "lineNumber": 1081
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "wrap.decompose",
+          "lineNumber": 1083
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "notes.bump",
+          "lineNumber": 1084
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "cap_el.replace_with",
+          "lineNumber": 1088
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "_caption_para",
+          "lineNumber": 1088
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "wrap.unwrap",
+          "lineNumber": 1089
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "_find_all",
+          "lineNumber": 1091
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "svg.decompose",
+          "lineNumber": 1092
+        },
+        {
+          "caller": "_normalise_diagrams",
+          "callee": "notes.bump",
+          "lineNumber": 1093
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "_select",
+          "lineNumber": 1102
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "_select",
+          "lineNumber": 1104
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "str(\r\n                img.get(\"data-linked-resource-default-alias\") or img.get(\"alt\") or \"\"\r\n            ).strip",
+          "lineNumber": 1105
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "str",
+          "lineNumber": 1105
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "img.get",
+          "lineNumber": 1106
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "img.get",
+          "lineNumber": 1106
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "Path",
+          "lineNumber": 1109
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "str",
+          "lineNumber": 1109
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "img.get",
+          "lineNumber": 1109
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "names.append",
+          "lineNumber": 1111
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "len",
+          "lineNumber": 1113
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "', '.join",
+          "lineNumber": 1113
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "table.replace_with",
+          "lineNumber": 1117
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "_caption_para",
+          "lineNumber": 1117
+        },
+        {
+          "caller": "_normalise_gallery",
+          "callee": "notes.bump",
+          "lineNumber": 1118
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "_select",
+          "lineNumber": 1124
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "str(a.get(\"data-linked-resource-default-alias\") or \"\").strip",
+          "lineNumber": 1126
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "str",
+          "lineNumber": 1126
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "a.get",
+          "lineNumber": 1126
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "a.get_text",
+          "lineNumber": 1127
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "str(a.get(\"data-nice-type\") or \"\").strip",
+          "lineNumber": 1130
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "str",
+          "lineNumber": 1130
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "a.get",
+          "lineNumber": 1130
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "_new_tag",
+          "lineNumber": 1131
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "str",
+          "lineNumber": 1131
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "a.get",
+          "lineNumber": 1131
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "parts.append",
+          "lineNumber": 1135
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "a.replace_with",
+          "lineNumber": 1136
+        },
+        {
+          "caller": "_normalise_viewfiles",
+          "callee": "notes.bump",
+          "lineNumber": 1137
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "_select",
+          "lineNumber": 1145
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "str(img.get(\"data-linked-resource-default-alias\") or \"\").strip",
+          "lineNumber": 1146
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "str",
+          "lineNumber": 1146
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "img.get",
+          "lineNumber": 1146
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "str(img.get(\"alt\") or \"\").strip",
+          "lineNumber": 1147
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "str",
+          "lineNumber": 1147
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "img.get",
+          "lineNumber": 1147
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "_select",
+          "lineNumber": 1149
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "wrap.unwrap",
+          "lineNumber": 1150
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "_find_all",
+          "lineNumber": 1151
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "isinstance",
+          "lineNumber": 1152
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "c.strip",
+          "lineNumber": 1152
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "len",
+          "lineNumber": 1154
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "getattr",
+          "lineNumber": 1155
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "str",
+          "lineNumber": 1156
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "a.get",
+          "lineNumber": 1156
+        },
+        {
+          "caller": "_normalise_embedded_images",
+          "callee": "a.unwrap",
+          "lineNumber": 1158
+        },
+        {
+          "caller": "_as_list",
+          "callee": "isinstance",
+          "lineNumber": 1166
+        },
+        {
+          "caller": "_as_list",
+          "callee": "isinstance",
+          "lineNumber": 1168
+        },
+        {
+          "caller": "_as_list",
+          "callee": "cast",
+          "lineNumber": 1169
+        },
+        {
+          "caller": "_as_list",
+          "callee": "str",
+          "lineNumber": 1170
+        },
+        {
+          "caller": "_as_list",
+          "callee": "str",
+          "lineNumber": 1171
+        },
+        {
+          "caller": "_detect_language",
+          "callee": "cls.lower().replace(\"language-\", \"\").replace(\"sourceCode\", \"\").strip",
+          "lineNumber": 1196
+        },
+        {
+          "caller": "_detect_language",
+          "callee": "cls.lower().replace(\"language-\", \"\").replace",
+          "lineNumber": 1196
+        },
+        {
+          "caller": "_detect_language",
+          "callee": "cls.lower().replace",
+          "lineNumber": 1196
+        },
+        {
+          "caller": "_detect_language",
+          "callee": "cls.lower",
+          "lineNumber": 1196
+        },
+        {
+          "caller": "_detect_language",
+          "callee": "code_text.strip",
+          "lineNumber": 1201
+        },
+        {
+          "caller": "_detect_language",
+          "callee": "re.search",
+          "lineNumber": 1203
+        },
+        {
+          "caller": "_lang_from_syntaxhighlighter",
+          "callee": "str",
+          "lineNumber": 1253
+        },
+        {
+          "caller": "_lang_from_syntaxhighlighter",
+          "callee": "pre.get",
+          "lineNumber": 1253
+        },
+        {
+          "caller": "_lang_from_syntaxhighlighter",
+          "callee": "re.search",
+          "lineNumber": 1254
+        },
+        {
+          "caller": "_lang_from_syntaxhighlighter",
+          "callee": "m.group(1).strip().lower",
+          "lineNumber": 1255
+        },
+        {
+          "caller": "_lang_from_syntaxhighlighter",
+          "callee": "m.group(1).strip",
+          "lineNumber": 1255
+        },
+        {
+          "caller": "_lang_from_syntaxhighlighter",
+          "callee": "m.group",
+          "lineNumber": 1255
+        },
+        {
+          "caller": "_lang_from_syntaxhighlighter",
+          "callee": "_detect_language",
+          "lineNumber": 1257
+        },
+        {
+          "caller": "_lang_from_syntaxhighlighter",
+          "callee": "pre.get_text",
+          "lineNumber": 1257
+        },
+        {
+          "caller": "_lang_from_syntaxhighlighter",
+          "callee": "_BRUSH_MAP.get",
+          "lineNumber": 1260
+        },
+        {
+          "caller": "_rebuild_pre",
+          "callee": "_new_tag",
+          "lineNumber": 1265
+        },
+        {
+          "caller": "_rebuild_pre",
+          "callee": "_new_tag",
+          "lineNumber": 1267
+        },
+        {
+          "caller": "_rebuild_pre",
+          "callee": "new_pre.append",
+          "lineNumber": 1269
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_select",
+          "lineNumber": 1283
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_select_one",
+          "lineNumber": 1284
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_find",
+          "lineNumber": 1284
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "pre.get_text",
+          "lineNumber": 1287
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_lang_from_syntaxhighlighter",
+          "lineNumber": 1288
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_detect_language",
+          "lineNumber": 1294
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_select_one",
+          "lineNumber": 1298
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "title_el.get_text",
+          "lineNumber": 1299
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_new_tag",
+          "lineNumber": 1300
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_new_tag",
+          "lineNumber": 1301
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "title_el.get_text",
+          "lineNumber": 1302
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "p.append",
+          "lineNumber": 1303
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "nodes.append",
+          "lineNumber": 1304
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "nodes.append",
+          "lineNumber": 1305
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_rebuild_pre",
+          "lineNumber": 1305
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "wrapper.replace_with",
+          "lineNumber": 1306
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "notes.add_lang",
+          "lineNumber": 1307
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "notes.bump",
+          "lineNumber": 1308
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_select",
+          "lineNumber": 1311
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_find",
+          "lineNumber": 1312
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_select_one",
+          "lineNumber": 1316
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "title_el.get_text",
+          "lineNumber": 1317
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_new_tag",
+          "lineNumber": 1318
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_new_tag",
+          "lineNumber": 1319
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "title_el.get_text",
+          "lineNumber": 1320
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "p.append",
+          "lineNumber": 1321
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "nodes.append",
+          "lineNumber": 1322
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "nodes.append",
+          "lineNumber": 1323
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_rebuild_pre",
+          "lineNumber": 1323
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "pre.get_text",
+          "lineNumber": 1323
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "wrapper.replace_with",
+          "lineNumber": 1324
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "notes.bump",
+          "lineNumber": 1325
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_select",
+          "lineNumber": 1328
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_find",
+          "lineNumber": 1329
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "label_el.get_text(strip=True).lower",
+          "lineNumber": 1332
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "label_el.get_text",
+          "lineNumber": 1332
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "re.sub(r\"[^a-z0-9 ]\", \" \", raw).split",
+          "lineNumber": 1334
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "re.sub",
+          "lineNumber": 1334
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "range",
+          "lineNumber": 1336
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "len",
+          "lineNumber": 1336
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "\"_\".join",
+          "lineNumber": 1337
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_CLASS_MAP.get",
+          "lineNumber": 1342
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "label_el.decompose",
+          "lineNumber": 1343
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_find",
+          "lineNumber": 1345
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "pre.get_text",
+          "lineNumber": 1347
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_as_list",
+          "lineNumber": 1349
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "pre.get",
+          "lineNumber": 1349
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_find",
+          "lineNumber": 1350
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_as_list",
+          "lineNumber": 1352
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "inner_code.get",
+          "lineNumber": 1352
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_detect_language",
+          "lineNumber": 1353
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "block.replace_with",
+          "lineNumber": 1354
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_rebuild_pre",
+          "lineNumber": 1354
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "notes.add_lang",
+          "lineNumber": 1355
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "notes.bump",
+          "lineNumber": 1356
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_select",
+          "lineNumber": 1359
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_lang_from_syntaxhighlighter",
+          "lineNumber": 1360
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "pre.replace_with",
+          "lineNumber": 1361
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_rebuild_pre",
+          "lineNumber": 1361
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "pre.get_text",
+          "lineNumber": 1361
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "notes.add_lang",
+          "lineNumber": 1362
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "notes.bump",
+          "lineNumber": 1363
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_find_all",
+          "lineNumber": 1369
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_find",
+          "lineNumber": 1370
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "any",
+          "lineNumber": 1372
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_as_list",
+          "lineNumber": 1372
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "code.get",
+          "lineNumber": 1372
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "code.get_text",
+          "lineNumber": 1375
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_as_list",
+          "lineNumber": 1377
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "code.get",
+          "lineNumber": 1377
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "cls.lower().removeprefix(\"language-\").strip",
+          "lineNumber": 1378
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "cls.lower().removeprefix",
+          "lineNumber": 1378
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "cls.lower",
+          "lineNumber": 1378
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "cast",
+          "lineNumber": 1384
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "code.get",
+          "lineNumber": 1385
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "pre.get_text",
+          "lineNumber": 1389
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "_new_tag",
+          "lineNumber": 1391
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "pre.clear",
+          "lineNumber": 1393
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "pre.append",
+          "lineNumber": 1394
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "notes.add_lang",
+          "lineNumber": 1395
+        },
+        {
+          "caller": "_normalise_code_blocks",
+          "callee": "notes.bump",
+          "lineNumber": 1396
+        },
+        {
+          "caller": "_normalise_page_props",
+          "callee": "_select",
+          "lineNumber": 1401
+        },
+        {
+          "caller": "_normalise_page_props",
+          "callee": "_find",
+          "lineNumber": 1402
+        },
+        {
+          "caller": "_normalise_page_props",
+          "callee": "_new_tag",
+          "lineNumber": 1404
+        },
+        {
+          "caller": "_normalise_page_props",
+          "callee": "title_el.get_text",
+          "lineNumber": 1405
+        },
+        {
+          "caller": "_normalise_page_props",
+          "callee": "pp.insert_before",
+          "lineNumber": 1406
+        },
+        {
+          "caller": "_normalise_page_props",
+          "callee": "title_el.decompose",
+          "lineNumber": 1407
+        },
+        {
+          "caller": "_normalise_page_props",
+          "callee": "pp.unwrap",
+          "lineNumber": 1408
+        },
+        {
+          "caller": "_text",
+          "callee": "_select_one",
+          "lineNumber": 1412
+        },
+        {
+          "caller": "_text",
+          "callee": "found.get_text",
+          "lineNumber": 1413
+        },
+        {
+          "caller": "convert",
+          "callee": "ConversionNotes",
+          "lineNumber": 1434
+        },
+        {
+          "caller": "convert",
+          "callee": "_run_pandoc",
+          "lineNumber": 1435
+        },
+        {
+          "caller": "convert",
+          "callee": "apply_confluence_filter",
+          "lineNumber": 1440
+        },
+        {
+          "caller": "convert",
+          "callee": "_run_pandoc",
+          "lineNumber": 1441
+        },
+        {
+          "caller": "validate",
+          "callee": "bool",
+          "lineNumber": 1465
+        },
+        {
+          "caller": "validate",
+          "callee": "re.search",
+          "lineNumber": 1465
+        },
+        {
+          "caller": "validate",
+          "callee": "re.search",
+          "lineNumber": 1466
+        },
+        {
+          "caller": "validate",
+          "callee": "all",
+          "lineNumber": 1469
+        },
+        {
+          "caller": "validate",
+          "callee": "checks.values",
+          "lineNumber": 1469
+        },
+        {
+          "caller": "validate",
+          "callee": "checks.items",
+          "lineNumber": 1471
+        },
+        {
+          "caller": "validate",
+          "callee": "print",
+          "lineNumber": 1472
+        },
+        {
+          "caller": "_reject_if_storage_format",
+          "callee": "_STORAGE_FORMAT_SNIFF.search",
+          "lineNumber": 1497
+        },
+        {
+          "caller": "_reject_if_storage_format",
+          "callee": "ConversionError",
+          "lineNumber": 1498
+        },
+        {
+          "caller": "convert_file",
+          "callee": "Path",
+          "lineNumber": 1541
+        },
+        {
+          "caller": "convert_file",
+          "callee": "src.exists",
+          "lineNumber": 1542
+        },
+        {
+          "caller": "convert_file",
+          "callee": "ConversionError",
+          "lineNumber": 1543
+        },
+        {
+          "caller": "convert_file",
+          "callee": "Path",
+          "lineNumber": 1545
+        },
+        {
+          "caller": "convert_file",
+          "callee": "src.with_suffix",
+          "lineNumber": 1545
+        },
+        {
+          "caller": "convert_file",
+          "callee": "resolve_pandoc",
+          "lineNumber": 1546
+        },
+        {
+          "caller": "convert_file",
+          "callee": "ConversionNotes",
+          "lineNumber": 1548
+        },
+        {
+          "caller": "convert_file",
+          "callee": "src.read_text",
+          "lineNumber": 1549
+        },
+        {
+          "caller": "convert_file",
+          "callee": "_reject_if_storage_format",
+          "lineNumber": 1550
+        },
+        {
+          "caller": "convert_file",
+          "callee": "preprocess",
+          "lineNumber": 1551
+        },
+        {
+          "caller": "convert_file",
+          "callee": "convert",
+          "lineNumber": 1552
+        },
+        {
+          "caller": "convert_file",
+          "callee": "meta.get",
+          "lineNumber": 1555
+        },
+        {
+          "caller": "convert_file",
+          "callee": "re.search",
+          "lineNumber": 1557
+        },
+        {
+          "caller": "convert_file",
+          "callee": "m.group",
+          "lineNumber": 1559
+        },
+        {
+          "caller": "convert_file",
+          "callee": "postprocess",
+          "lineNumber": 1561
+        },
+        {
+          "caller": "convert_file",
+          "callee": "meta.get",
+          "lineNumber": 1563
+        },
+        {
+          "caller": "convert_file",
+          "callee": "meta.get",
+          "lineNumber": 1564
+        },
+        {
+          "caller": "convert_file",
+          "callee": "meta.get",
+          "lineNumber": 1568
+        },
+        {
+          "caller": "convert_file",
+          "callee": "meta.get",
+          "lineNumber": 1571
+        },
+        {
+          "caller": "convert_file",
+          "callee": "out_path.parent.mkdir",
+          "lineNumber": 1577
+        },
+        {
+          "caller": "convert_file",
+          "callee": "out_path.write_text",
+          "lineNumber": 1578
+        },
+        {
+          "caller": "convert_file",
+          "callee": "stats",
+          "lineNumber": 1580
+        },
+        {
+          "caller": "convert_file",
+          "callee": "notes.to_dict",
+          "lineNumber": 1580
+        },
+        {
+          "caller": "build_parser",
+          "callee": "argparse.ArgumentParser",
+          "lineNumber": 1589
+        },
+        {
+          "caller": "build_parser",
+          "callee": "p.add_argument",
+          "lineNumber": 1595
+        },
+        {
+          "caller": "build_parser",
+          "callee": "p.add_argument",
+          "lineNumber": 1596
+        },
+        {
+          "caller": "build_parser",
+          "callee": "p.add_argument",
+          "lineNumber": 1597
+        },
+        {
+          "caller": "build_parser",
+          "callee": "p.add_argument",
+          "lineNumber": 1598
+        },
+        {
+          "caller": "build_parser",
+          "callee": "p.add_argument",
+          "lineNumber": 1599
+        },
+        {
+          "caller": "build_parser",
+          "callee": "p.add_argument",
+          "lineNumber": 1600
+        },
+        {
+          "caller": "build_parser",
+          "callee": "p.add_argument",
+          "lineNumber": 1601
+        },
+        {
+          "caller": "build_parser",
+          "callee": "p.add_argument",
+          "lineNumber": 1606
+        },
+        {
+          "caller": "build_parser",
+          "callee": "p.add_argument",
+          "lineNumber": 1607
+        },
+        {
+          "caller": "build_parser",
+          "callee": "p.add_argument",
+          "lineNumber": 1613
+        },
+        {
+          "caller": "build_parser",
+          "callee": "p.add_argument",
+          "lineNumber": 1614
+        },
+        {
+          "caller": "main",
+          "callee": "build_parser().parse_args",
+          "lineNumber": 1619
+        },
+        {
+          "caller": "main",
+          "callee": "build_parser",
+          "lineNumber": 1619
+        },
+        {
+          "caller": "main",
+          "callee": "args.input.resolve",
+          "lineNumber": 1620
+        },
+        {
+          "caller": "main",
+          "callee": "src.with_suffix",
+          "lineNumber": 1621
+        },
+        {
+          "caller": "main",
+          "callee": "resolve_pandoc",
+          "lineNumber": 1625
+        },
+        {
+          "caller": "main",
+          "callee": "sys.exit",
+          "lineNumber": 1627
+        },
+        {
+          "caller": "main",
+          "callee": "src.exists",
+          "lineNumber": 1629
+        },
+        {
+          "caller": "main",
+          "callee": "sys.exit",
+          "lineNumber": 1630
+        },
+        {
+          "caller": "main",
+          "callee": "detect_confluence_version",
+          "lineNumber": 1635
+        },
+        {
+          "caller": "main",
+          "callee": "BeautifulSoup",
+          "lineNumber": 1635
+        },
+        {
+          "caller": "main",
+          "callee": "src.read_text",
+          "lineNumber": 1635
+        },
+        {
+          "caller": "main",
+          "callee": "version_labels.get",
+          "lineNumber": 1636
+        },
+        {
+          "caller": "main",
+          "callee": "version_labels.get",
+          "lineNumber": 1639
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1641
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1642
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1643
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1644
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1645
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1647
+        },
+        {
+          "caller": "main",
+          "callee": "convert_file",
+          "lineNumber": 1649
+        },
+        {
+          "caller": "main",
+          "callee": "sys.exit",
+          "lineNumber": 1661
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1664
+        },
+        {
+          "caller": "main",
+          "callee": "validate",
+          "lineNumber": 1665
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1666
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1667
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1668
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1675
+        },
+        {
+          "caller": "main",
+          "callee": "len",
+          "lineNumber": 1676
+        },
+        {
+          "caller": "main",
+          "callee": "len",
+          "lineNumber": 1677
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1681
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1683
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 1684
+        },
+        {
+          "caller": "main",
+          "callee": "sys.exit",
+          "lineNumber": 1686
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 49,
+        "functionCount": 49,
+        "classCount": 0
+      }
+    }
+  ]
+}

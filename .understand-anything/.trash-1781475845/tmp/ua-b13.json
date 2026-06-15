@@ -1,0 +1,10 @@
+{
+  "batchImportData": {
+    "src/tools/eval/README.md": [],
+    "src/tools/eval/RETRIEVAL_LOG.md": [],
+    "src/tools/eval/e2e_queries.yaml": [],
+    "src/tools/eval/e2e_sources.yaml": [],
+    "src/tools/eval/queries.yaml": []
+  },
+  "neighborMap": {}
+}

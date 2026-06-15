@@ -1,0 +1,12 @@
+{
+  "batchImportData": {
+    "tests/test_search_offline.py": [],
+    "tests/test_structural.py": [],
+    "tests/test_template_taxonomy.py": [],
+    "tests/test_tui.py": [],
+    "tests/test_vector_store.py": [],
+    "tests/test_vocabulary.py": [],
+    "tests/test_workspace.py": []
+  },
+  "neighborMap": {}
+}

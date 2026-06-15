@@ -1,0 +1,127 @@
+{
+  "nodes": [
+    {
+      "id": "config:.env.example",
+      "type": "config",
+      "name": ".env.example",
+      "filePath": ".env.example",
+      "summary": "Template of runtime environment variables (PIPELINE_* prefix) documenting the pandoc format, embedding model/provider, chunk size, vector-store backend, Chroma persist dir, and collection name used to configure PipelineConfig.",
+      "tags": ["configuration", "environment", "settings", "template"],
+      "complexity": "simple",
+      "languageNotes": "Loaded via pydantic-settings as PipelineConfig; every key uses the PIPELINE_ prefix except ANONYMIZED_TELEMETRY (Chroma)."
+    },
+    {
+      "id": "document:CLAUDE.md",
+      "type": "document",
+      "name": "CLAUDE.md",
+      "filePath": "CLAUDE.md",
+      "summary": "Project guidance for Claude Code covering commands, the two-flow architecture (indexing/search pipeline and HTML→GitLab-MD converter), module boundaries, known pitfalls, configuration, embedding providers, and vector-store backends.",
+      "tags": ["documentation", "architecture", "guidelines", "configuration"],
+      "complexity": "complex",
+      "languageNotes": "Authoritative architecture reference with per-module role tables and guardrails enforcing module separation."
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Primary project documentation: quick start, workspace contract, full CLI reference (index/search/convert/export/scan/lint/check), pipeline stages, embedding providers, vector-store backends, environment setup, and Python API examples.",
+      "tags": ["documentation", "entry-point", "overview", "cli-reference"],
+      "complexity": "complex"
+    },
+    {
+      "id": "config:devfile.yaml",
+      "type": "config",
+      "name": "devfile.yaml",
+      "filePath": "devfile.yaml",
+      "summary": "Eclipse Che / OpenShift Dev Spaces devfile defining the remote development container, components, and named run-task commands for building and exercising the pipeline.",
+      "tags": ["configuration", "devcontainer", "infrastructure", "remote-dev"],
+      "complexity": "moderate",
+      "languageNotes": "Devfile v2 schema: components provision the workspace container; commands surface as Command Palette run tasks."
+    },
+    {
+      "id": "config:environment.yml",
+      "type": "config",
+      "name": "environment.yml",
+      "filePath": "environment.yml",
+      "summary": "Conda/micromamba environment specification pinning the Python version, channels, and dependencies needed to run the pipeline (including pandoc) on Windows.",
+      "tags": ["configuration", "environment", "dependencies", "conda"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:pyproject.toml",
+      "type": "config",
+      "name": "pyproject.toml",
+      "filePath": "pyproject.toml",
+      "summary": "Python package definition and tooling config: dependencies, optional extras (dev/chroma/azure/tui), the sdd-pipeline console script entry point, plus pytest, coverage, ruff, and mypy settings.",
+      "tags": ["configuration", "build-system", "packaging", "tooling"],
+      "complexity": "moderate",
+      "languageNotes": "setuptools build backend; pytest sets pythonpath=src so imports resolve without install; ruff line-length 100 / py311 target; coverage gate fail_under=70."
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:pyproject.toml",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:.env.example",
+      "target": "file:src/sdd_pipeline/config.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:.env.example",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:environment.yml",
+      "target": "config:pyproject.toml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:devfile.yaml",
+      "target": "config:pyproject.toml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:CLAUDE.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:CLAUDE.md",
+      "target": "config:pyproject.toml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

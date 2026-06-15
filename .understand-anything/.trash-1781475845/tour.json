@@ -1,0 +1,93 @@
+[
+  {
+    "order": 1,
+    "title": "Project Overview",
+    "description": "Start with the README to learn what sdd-pipeline is: a semantic-search pipeline that turns Confluence-exported Software Design Documents into a vector-search index, plus a second, independent flow that converts Confluence HTML into GitLab Markdown. The README lays out the quick-start, the CLI reference (index/search/convert/export/scan/lint/check), and the seven pipeline stages — giving you the roadmap this tour will follow stage by stage.",
+    "nodeIds": ["document:README.md", "document:docs/learn/walkthroughs/02-architecture-map.md"]
+  },
+  {
+    "order": 2,
+    "title": "The CLI Front Door",
+    "description": "cli.py is the project's entry point — the Typer app exposed as the `sdd-pipeline` console script (wired in pyproject.toml). It defines every user-facing command (index, search, convert, export, scan, lint, check, tui) and dispatches each to the pipeline or converter layers. Reading it first shows you, from the outside in, every capability the codebase offers before you dive into how each is implemented.",
+    "nodeIds": ["file:src/sdd_pipeline/cli.py", "config:pyproject.toml"],
+    "languageLesson": "Typer builds a CLI from type-annotated Python functions: each command is a decorated function whose parameters become flags/arguments, and the console-script entry point in pyproject.toml (`sdd-pipeline = sdd_pipeline.cli:app`) is how `pip install` exposes it on PATH."
+  },
+  {
+    "order": 3,
+    "title": "Data Contracts",
+    "description": "models.py is the most depended-upon module in the project (highest fan-in). It holds pure data contracts with no service logic: the structural types (ContentBlock, Section, DocumentModel) that flow through the pipeline, the central SemanticChunk record with its embed-text/metadata serializers, and the SectionType enum. Every later stage speaks this vocabulary, so understanding these shapes makes the rest of the tour click into place.",
+    "nodeIds": ["file:src/sdd_pipeline/models.py"],
+    "languageLesson": "Python dataclasses give you typed, immutable-friendly record types with auto-generated constructors — similar to C# records. Keeping them dependency-free (no service logic) makes them safe to import everywhere without circular dependencies."
+  },
+  {
+    "order": 4,
+    "title": "Configuration",
+    "description": "config.py defines PipelineConfig, the pydantic-settings model that loads every tunable (embedding model, vector-store backend, chunk budgets, hybrid-search knobs, robustness gates) from PIPELINE_-prefixed environment variables or a .env file. Committed seed files like taxonomy.json supply the SAD-template section-to-field mappings that the enrichment stage relies on. Together they are the configuration substrate both flows share.",
+    "nodeIds": ["config:src/sdd_pipeline/config.py", "config:config/taxonomy.json"],
+    "languageLesson": "pydantic-settings validates and coerces env vars into a typed config object at startup, so misconfiguration fails fast and loud rather than surfacing as a confusing runtime error deep in the pipeline."
+  },
+  {
+    "order": 5,
+    "title": "The Orchestrator",
+    "description": "pipeline.py is the hub of Flow A: SemanticPipeline wires the seven stages together, lazily constructing the embedder and vector store on first use (so unit tests can inject mocks), enforcing the chunk-quality gate, and verifying index provenance. Its imports fan out to every stage module — this is the natural reading order the rest of the indexing tour follows. Building on the CLI from Step 2, this is where a command like `index` actually executes.",
+    "nodeIds": ["file:src/sdd_pipeline/pipeline.py", "file:src/sdd_pipeline/__init__.py"],
+    "languageLesson": "Lazy attribute construction (building the embedder/store only on first access) keeps expensive side effects out of object creation, which is what lets the test suite swap in lightweight fakes without ever loading a real model."
+  },
+  {
+    "order": 6,
+    "title": "Stages 1-2: Pandoc AST and Structural Model",
+    "description": "The first two indexing stages turn raw markdown into a structured tree. ast_parser.py is the only module that invokes pandoc — a thin subprocess wrapper producing a pandoc JSON AST. structural.py then walks that AST with panflute into a DocumentModel section tree (from Step 3), synthesizing a root section for any preamble content so a heading-less page never yields zero chunks. Both are deterministic and unit-testable by design.",
+    "nodeIds": ["file:src/sdd_pipeline/ast_parser.py", "file:src/sdd_pipeline/structural.py"]
+  },
+  {
+    "order": 7,
+    "title": "Stage 3: Semantic Enrichment",
+    "description": "enrichment.py is a rule-based stage (high fan-in) that classifies each section's SectionType, extracts entities and tags, applies inventory/direction-driven field writes from the taxonomy, and can scan a whole corpus to discover a cross-document entity vocabulary. This is where the deterministic 'meaning' is attached to the structural tree — the tags and entities that later sharpen search filtering and embed-text quality.",
+    "nodeIds": ["file:src/sdd_pipeline/enrichment.py", "file:src/sdd_pipeline/vocabulary.py"]
+  },
+  {
+    "order": 8,
+    "title": "Stage 4: Chunking",
+    "description": "chunking.py converts the enriched DocumentModel into a list of SemanticChunks — the units that get embedded. It handles prose/definition merging, embed-budget-aware text splitting, and per-chunk entity scoping so a term mentioned once doesn't bleed across sibling chunks. The embed-text format (structural context prepended to content) defined here is what gives the vectors their quality.",
+    "nodeIds": ["file:src/sdd_pipeline/chunking.py"],
+    "languageLesson": "The recursive section walk uses nested closures (emit/flush) to buffer prose as it descends the tree — a common Python pattern for accumulating state across a traversal without threading it through every call signature."
+  },
+  {
+    "order": 9,
+    "title": "The Quality Gate",
+    "description": "quality.py is stdlib-only and serves two roles: check_markdown is a report-only linter over raw source markdown (the `lint` command), while check_chunk is the binding hygiene gate wired into the pipeline. The gate is a structural-absence check — after de-fencing, prose must contain no markup shape — so poisoned chunks block the file while merely oversized ones only warn. It is the project's guarantee that embedding-harmful residue never reaches the index.",
+    "nodeIds": ["file:src/sdd_pipeline/quality.py"]
+  },
+  {
+    "order": 10,
+    "title": "Stages 5-6: Embeddings and Vector Store",
+    "description": "embeddings.py is the only module that loads an embedding backend, offering a local sentence-transformers embedder and an Azure OpenAI one behind a shared EmbedderProtocol. vector_store.py is the only module touching a vector-store backend, with pluggable in-memory (langchain-core) and Chroma implementations behind VectorStoreProtocol. Both use the protocol-plus-factory pattern so the pipeline and tests depend only on the interface, never a concrete backend.",
+    "nodeIds": ["file:src/sdd_pipeline/embeddings.py", "file:src/sdd_pipeline/vector_store.py"],
+    "languageLesson": "Python's Protocol enables structural typing (duck typing with static checks): make_embedder/make_vector_store return whichever concrete implementation the config selects, and callers stay decoupled from the choice — the same dependency-inversion idea as a C# interface, but without explicit `implements`."
+  },
+  {
+    "order": 11,
+    "title": "Stage 7: Retrieval and Hybrid Search",
+    "description": "retrieval.py adds the lexical half of search: a pure-Python BM25 index fused with the dense vector ranking via Reciprocal Rank Fusion (RRF). This complements semantic similarity with a deterministic keyword signal, so exact-term queries aren't lost in vector space. Combined with the vector store from Step 10, this completes the index-to-answer path that the `search --hybrid` command drives.",
+    "nodeIds": ["file:src/sdd_pipeline/retrieval.py"]
+  },
+  {
+    "order": 12,
+    "title": "Flow B: HTML to GitLab Markdown Converter",
+    "description": "The convert/ subpackage is a second, fully independent flow that turns Confluence HTML exports into GitLab Markdown — importing it never pulls in Flow A. base.py holds the engine-agnostic shared layer (pandoc invocation, fence-aware post-processing, YAML frontmatter); html_to_gitlab_md.py is the BeautifulSoup pre-clean and conversion path; confluence_pf_filter.py is the in-process panflute filter that rewrites admonitions, expands, and tables. This is the upstream that produces clean markdown for Flow A to index.",
+    "nodeIds": ["file:src/sdd_pipeline/convert/html_to_gitlab_md.py", "file:src/sdd_pipeline/convert/confluence_pf_filter.py", "file:src/sdd_pipeline/convert/base.py", "file:src/sdd_pipeline/convert/__init__.py"]
+  },
+  {
+    "order": 13,
+    "title": "The Search TUI",
+    "description": "tui.py is a thin Textual presentation layer over SemanticPipeline that keeps the embedder and index warm across queries — a live query box, section/space filters, a hybrid toggle, and a result/preview pane. It imports Textual only when the command runs, so core flows never depend on it, and runs the blocking search on a worker thread to keep the UI responsive. It is the interactive face of everything built in Steps 5-11.",
+    "nodeIds": ["file:src/sdd_pipeline/tui.py"]
+  },
+  {
+    "order": 14,
+    "title": "Tests and the Model-Free Contract",
+    "description": "conftest.py anchors the test strategy: it provides workspace isolation, sample markdown/AST/DocumentModel/chunk fixtures, and a deterministic, model-free hashing_embedder that exercises the real index-to-search path without downloading a 1.3 GB model or needing pandoc. This is how the fast unit lane validates the search contract (filters narrow, output is stable, hybrid runs) while the slow end-to-end tests cover true semantic relevance. The pipeline-101 guide ties the whole design back together.",
+    "nodeIds": ["file:tests/conftest.py", "document:docs/guides/pipeline-101.md"],
+    "languageLesson": "pytest fixtures are dependency-injected by name: a test simply lists `hashing_embedder` as a parameter and pytest supplies it. This is what lets the suite swap a deterministic fake for a real ML model so the fast lane stays offline and reproducible."
+  }
+]
