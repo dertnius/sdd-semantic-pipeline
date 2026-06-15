@@ -58,3 +58,49 @@ def test_build_prose_inventory_keys_by_section():
     inv = build_prose_inventory(doc)
     assert "ov" in inv
     assert any(r.text == "PAYMENT_SVC" for r in inv["ov"])
+
+
+def test_backtick_does_not_span_newline():
+    # A stray / unbalanced backtick must not let one match swallow a newline
+    # (and with it a whole code block) — that was the raw_entities pollution.
+    recs = extract_prose("s", "Open `start\nmiddle\nend` close")
+    assert all("\n" not in r.text for r in recs)
+
+
+def test_top_level_code_block_not_mined():
+    # A top-level CODE block is excluded from prose mining; the paragraph beside
+    # it is still mined.
+    sec = Section(
+        level=1,
+        title="X",
+        section_id="x",
+        breadcrumb=["X"],
+        blocks=[
+            ContentBlock("p", ContentType.PARAGRAPH, "The PAYMENT_SVC is core."),
+            ContentBlock("c", ContentType.CODE, "```python\nDocumentModel.run(SECRET_KEY)\n```"),
+        ],
+    )
+    doc = DocumentModel(doc_id="d", metadata=DocumentMetadata(title="t"), root_sections=[sec])
+    texts = {r.text for r in build_prose_inventory(doc).get("x", [])}
+    assert "PAYMENT_SVC" in texts
+    assert "DocumentModel" not in texts and "SECRET_KEY" not in texts
+
+
+def test_nested_code_in_list_not_mined():
+    # structural.py folds code nested in a list item into the LIST block text,
+    # fences and all. That code must not be prose-mined, but a prose `inline`
+    # token in the same block must be.
+    list_text = (
+        "1. Call `InlineThing` like so:\n   ```python\n   NestedClass.run(DEEP_CONST)\n   ```"
+    )
+    sec = Section(
+        level=1,
+        title="Usage",
+        section_id="u",
+        breadcrumb=["Usage"],
+        blocks=[ContentBlock("b", ContentType.LIST, list_text)],
+    )
+    doc = DocumentModel(doc_id="d", metadata=DocumentMetadata(title="t"), root_sections=[sec])
+    texts = {r.text for r in build_prose_inventory(doc).get("u", [])}
+    assert "InlineThing" in texts
+    assert "NestedClass" not in texts and "DEEP_CONST" not in texts

@@ -21,13 +21,23 @@ from __future__ import annotations
 
 import re
 
-from .models import DocumentModel, EntityInventory, EntityRecord, EntitySource, Section
+from .models import ContentType, DocumentModel, EntityInventory, EntityRecord, EntitySource, Section
 
 _ALLCAPS = re.compile(r"\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*\b")
-_BACKTICK = re.compile(r"`([^`]+)`")
+# Inline code, single-line only: forbidding a newline keeps one match from
+# swallowing a multi-line fenced block (and copes with an unclosed fence).
+_BACKTICK = re.compile(r"`([^`\n]+)`")
 _PASCAL = re.compile(r"\b[A-Z][a-z]+(?:[A-Z][a-z0-9]+)+\b")  # multi-word PascalCase
 _KEBAB = re.compile(r"\b[a-z][a-z0-9]*(?:-[a-z0-9]+)+\b")  # multi-word kebab-case
 _PATH = re.compile(r"\b\w+(?:/\w+){2,}\b")  # a/b/c style paths
+
+# Block types that are never prose-mined. Tables are already covered by the
+# structural inventory (one record per cell); code must not be mined as prose.
+_NON_PROSE = frozenset({ContentType.CODE, ContentType.TABLE})
+# Fenced code blocks (``` or ~~~). Blanked before mining so code nested inside a
+# list/blockquote block — which structural.py folds into the prose text — is not
+# harvested. Inline `code` is deliberately left intact (the backtick signal).
+_FENCED = re.compile(r"```[\s\S]*?```|~~~[\s\S]*?~~~")
 
 # ALLCAPS tokens that are markers, not entities.
 _ALLCAPS_STOP = frozenset(
@@ -81,7 +91,10 @@ def extract_prose(section_id: str, text: str) -> list[EntityRecord]:
 
 
 def _section_text(section: Section) -> str:
-    return "\n".join(b.text for b in section.blocks)
+    """Prose-only text for one section: code/table blocks dropped, fenced code
+    (incl. code nested in list/blockquote blocks) blanked. Inline ``code`` stays."""
+    text = "\n".join(b.text for b in section.blocks if b.content_type not in _NON_PROSE)
+    return _FENCED.sub(" ", text)
 
 
 def build_prose_inventory(doc: DocumentModel) -> EntityInventory:

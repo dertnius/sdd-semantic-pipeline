@@ -154,7 +154,18 @@ def _section_to_chunks(
                     tags=list(section.tags),
                     depends_on=list(section.depends_on),
                     exposes=list(section.exposes),
-                    metadata={k: list(v) for k, v in section.metadata.items()},
+                    # Scope the audit-only raw_entities bucket to this chunk's own
+                    # text (mirrors the entity re-scoping above), so the section's
+                    # full mention list is not smeared onto every chunk. Named
+                    # inventory fields stay section-level (a table applies whole).
+                    metadata={
+                        k: (
+                            [v for v in vals if v in sub_text]
+                            if k == "raw_entities"
+                            else list(vals)
+                        )
+                        for k, vals in section.metadata.items()
+                    },
                     space=space,
                     labels=list(labels),
                     title=title,
