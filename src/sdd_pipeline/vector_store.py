@@ -23,16 +23,24 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-from .models import ContentType, SectionType, SemanticChunk
+from .models import EMBED_FORMAT_VERSION, ContentType, Genre, SectionType, SemanticChunk
 
 if TYPE_CHECKING:
     from .config import PipelineConfig
 
 logger = logging.getLogger(__name__)
 
-# Provenance keys recorded with the index so a search cannot be run with an
-# embedder that differs from the one that built the index.
-PROVENANCE_KEYS = ("embedding_provider", "embedding_model", "embedding_dimension")
+# Provenance keys recorded with the index. The embedding_* triple lets search
+# refuse a configured embedder that differs from the one that built the index
+# (incompatible vector spaces); embed_format_version lets it *warn* when the
+# embed-text composition has changed since the index was built (the embedder is
+# identical, but the stored vectors encode an older to_embed_text layout).
+PROVENANCE_KEYS = (
+    "embedding_provider",
+    "embedding_model",
+    "embedding_dimension",
+    "embed_format_version",
+)
 
 # ── Result type ──────────────────────────────────────────────────────────────
 
@@ -76,6 +84,7 @@ class VectorStoreProtocol(Protocol):
         content_type: ContentType | None = None,
         space: str | None = None,
         doc_id: str | None = None,
+        genre: Genre | None = None,
     ) -> list[SearchResult]: ...
 
     def get_corpus(
@@ -84,6 +93,7 @@ class VectorStoreProtocol(Protocol):
         content_type: ContentType | None = None,
         space: str | None = None,
         doc_id: str | None = None,
+        genre: Genre | None = None,
     ) -> list[SearchResult]: ...
 
     def delete_document(self, doc_id: str) -> int: ...
@@ -183,6 +193,7 @@ class ChromaVectorStore:
                 "embedding_provider": provider,
                 "embedding_model": model,
                 "embedding_dimension": int(dimension),
+                "embed_format_version": int(EMBED_FORMAT_VERSION),
             }
         )
         try:
@@ -205,6 +216,7 @@ class ChromaVectorStore:
         content_type: ContentType | None = None,
         space: str | None = None,
         doc_id: str | None = None,
+        genre: Genre | None = None,
     ) -> dict | None:
         """Build a ChromaDB ``where`` filter; conditions are ANDed together."""
         conditions: list[dict] = []
@@ -216,6 +228,8 @@ class ChromaVectorStore:
             conditions.append({"space": {"$eq": space}})
         if doc_id:
             conditions.append({"doc_id": {"$eq": doc_id}})
+        if genre:
+            conditions.append({"genre": {"$eq": genre.value}})
 
         if len(conditions) == 0:
             return None
@@ -229,6 +243,7 @@ class ChromaVectorStore:
         content_type: ContentType | None = None,
         space: str | None = None,
         doc_id: str | None = None,
+        genre: Genre | None = None,
     ) -> list[SearchResult]:
         """
         Return every stored chunk (optionally filtered) for lexical indexing.
@@ -236,7 +251,7 @@ class ChromaVectorStore:
         Distances are not meaningful here (set to 0.0); callers use the
         ``content``/``metadata`` to build a BM25 index.
         """
-        where = self._build_where(section_type, content_type, space, doc_id)
+        where = self._build_where(section_type, content_type, space, doc_id, genre)
         results = self._collection.get(where=where, include=["documents", "metadatas"])
         ids = results["ids"] or []
         docs = results["documents"] or []
@@ -254,13 +269,14 @@ class ChromaVectorStore:
         content_type: ContentType | None = None,
         space: str | None = None,
         doc_id: str | None = None,
+        genre: Genre | None = None,
     ) -> list[SearchResult]:
         """
         Return the *n_results* most similar chunks to *query_embedding*.
 
         All filter arguments are ANDed together when multiple are given.
         """
-        where = self._build_where(section_type, content_type, space, doc_id)
+        where = self._build_where(section_type, content_type, space, doc_id, genre)
 
         results = self._collection.query(
             # Chroma's stub wants ndarray/Sequence; list[list[float]] is valid at runtime.
@@ -404,6 +420,7 @@ class MemoryVectorStore:
             "embedding_provider": provider,
             "embedding_model": model,
             "embedding_dimension": int(dimension),
+            "embed_format_version": int(EMBED_FORMAT_VERSION),
         }
         try:
             self._persist_dir.mkdir(parents=True, exist_ok=True)
@@ -429,6 +446,7 @@ class MemoryVectorStore:
         content_type: ContentType | None = None,
         space: str | None = None,
         doc_id: str | None = None,
+        genre: Genre | None = None,
     ) -> dict[str, str]:
         """Metadata equality conditions; ANDed together when multiple are given."""
         conditions: dict[str, str] = {}
@@ -440,6 +458,8 @@ class MemoryVectorStore:
             conditions["space"] = space
         if doc_id:
             conditions["doc_id"] = doc_id
+        if genre:
+            conditions["genre"] = genre.value
         return conditions
 
     @staticmethod
@@ -455,6 +475,7 @@ class MemoryVectorStore:
         content_type: ContentType | None = None,
         space: str | None = None,
         doc_id: str | None = None,
+        genre: Genre | None = None,
     ) -> list[SearchResult]:
         """
         Return every stored chunk (optionally filtered) for lexical indexing.
@@ -462,7 +483,7 @@ class MemoryVectorStore:
         Distances are not meaningful here (set to 0.0); callers use the
         ``content``/``metadata`` to build a BM25 index.
         """
-        conditions = self._build_conditions(section_type, content_type, space, doc_id)
+        conditions = self._build_conditions(section_type, content_type, space, doc_id, genre)
         out: list[SearchResult] = []
         for item in self._store.store.values():
             meta = item.get("metadata") or {}
@@ -479,13 +500,14 @@ class MemoryVectorStore:
         content_type: ContentType | None = None,
         space: str | None = None,
         doc_id: str | None = None,
+        genre: Genre | None = None,
     ) -> list[SearchResult]:
         """
         Return the *n_results* most similar chunks to *query_embedding*.
 
         All filter arguments are ANDed together when multiple are given.
         """
-        conditions = self._build_conditions(section_type, content_type, space, doc_id)
+        conditions = self._build_conditions(section_type, content_type, space, doc_id, genre)
         hits = self._store.similarity_search_with_score_by_vector(
             embedding=query_embedding,
             k=n_results,

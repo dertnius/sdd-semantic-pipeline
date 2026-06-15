@@ -3,7 +3,136 @@
 from __future__ import annotations
 
 from sdd_pipeline.chunking import _split_text, chunk_document
-from sdd_pipeline.models import ContentType, DocumentModel, SectionType
+from sdd_pipeline.enrichment import extract_keyphrases
+from sdd_pipeline.models import (
+    ContentBlock,
+    ContentType,
+    DocumentMetadata,
+    DocumentModel,
+    Genre,
+    Section,
+    SectionType,
+)
+
+
+def test_faq_genre_pairs_question_with_answer():
+    faq = Section(
+        level=1,
+        title="FAQ",
+        section_id="f",
+        breadcrumb=["FAQ"],
+        genre=Genre.FAQ,
+        blocks=[
+            ContentBlock(
+                block_id="b1",
+                content_type=ContentType.PARAGRAPH,
+                text="How do I reset my password?",
+            ),
+            ContentBlock(
+                block_id="b2",
+                content_type=ContentType.PARAGRAPH,
+                text="Open settings and click reset.",
+            ),
+            ContentBlock(
+                block_id="b3", content_type=ContentType.PARAGRAPH, text="Where are logs stored?"
+            ),
+            ContentBlock(
+                block_id="b4", content_type=ContentType.PARAGRAPH, text="Under the logs directory."
+            ),
+        ],
+    )
+    doc = DocumentModel(doc_id="d", metadata=DocumentMetadata(title="T"), root_sections=[faq])
+    chunks = chunk_document(doc)
+    assert len(chunks) == 2  # two Q&A pairs, each co-embedded
+    assert "reset my password?" in chunks[0].content and "Open settings" in chunks[0].content
+    assert "logs stored?" in chunks[1].content and "logs directory" in chunks[1].content
+
+
+def test_leadin_label_coalesces_into_following_block():
+    sec = Section(
+        level=1,
+        title="Ops",
+        section_id="s",
+        breadcrumb=["Ops"],
+        blocks=[
+            ContentBlock(
+                block_id="b1", content_type=ContentType.PARAGRAPH, text="Release checklist:"
+            ),
+            ContentBlock(
+                block_id="b2", content_type=ContentType.LIST, text="- bump version\n- tag release"
+            ),
+        ],
+    )
+    doc = DocumentModel(doc_id="d", metadata=DocumentMetadata(title="T"), root_sections=[sec])
+    chunks = chunk_document(doc)  # default: no merge
+    assert len(chunks) == 1  # lead-in folded into the list chunk, not standalone
+    assert "Release checklist:" in chunks[0].content and "bump version" in chunks[0].content
+    assert chunks[0].content_type == ContentType.LIST
+
+
+def test_bare_filename_leadin_coalesces_into_code():
+    sec = Section(
+        level=1,
+        title="Config",
+        section_id="s",
+        breadcrumb=["Config"],
+        blocks=[
+            ContentBlock(
+                block_id="b1", content_type=ContentType.PARAGRAPH, text="application.yaml"
+            ),
+            ContentBlock(
+                block_id="b2",
+                content_type=ContentType.CODE,
+                language="yaml",
+                text="```yaml\nport: 8080\n```",
+            ),
+        ],
+    )
+    doc = DocumentModel(doc_id="d", metadata=DocumentMetadata(title="T"), root_sections=[sec])
+    chunks = chunk_document(doc)
+    assert len(chunks) == 1
+    assert "application.yaml" in chunks[0].content and "port: 8080" in chunks[0].content
+
+
+def test_trailing_leadin_emitted_alone():
+    sec = Section(
+        level=1,
+        title="Ops",
+        section_id="s",
+        breadcrumb=["Ops"],
+        blocks=[ContentBlock(block_id="b1", content_type=ContentType.PARAGRAPH, text="See below:")],
+    )
+    doc = DocumentModel(doc_id="d", metadata=DocumentMetadata(title="T"), root_sections=[sec])
+    chunks = chunk_document(doc)
+    assert len(chunks) == 1 and "See below:" in chunks[0].content
+
+
+def test_keyphrase_fn_only_enriches_prose_genre_chunks():
+    body = "The migration strategy reduces downtime. Our migration strategy matters greatly."
+    prose = Section(
+        level=1,
+        title="History",
+        section_id="p",
+        breadcrumb=["History"],
+        genre=Genre.NARRATIVE,
+        blocks=[ContentBlock(block_id="b1", content_type=ContentType.PARAGRAPH, text=body)],
+    )
+    technical = Section(
+        level=1,
+        title="API",
+        section_id="t",
+        breadcrumb=["API"],
+        genre=Genre.GENERAL,
+        blocks=[ContentBlock(block_id="b2", content_type=ContentType.PARAGRAPH, text=body)],
+    )
+    doc = DocumentModel(
+        doc_id="d", metadata=DocumentMetadata(title="T"), root_sections=[prose, technical]
+    )
+    chunks = chunk_document(doc, keyphrase_fn=extract_keyphrases)
+    prose_chunk = next(c for c in chunks if c.breadcrumb == ["History"])
+    tech_chunk = next(c for c in chunks if c.breadcrumb == ["API"])
+    assert any("migration strategy" in e for e in prose_chunk.entities)
+    assert not any("migration strategy" in e for e in tech_chunk.entities)
 
 
 class TestSplitText:
@@ -41,6 +170,66 @@ class TestSplitText:
         assert len(result) >= 2
         for chunk in result:
             assert len(chunk) <= 200
+
+    def test_overlap_carries_trailing_sentence(self):
+        # Three sentences, split tight so each becomes its own piece; with overlap=1
+        # each piece after the first should start with the previous piece's last sentence.
+        text = "First sentence here. Second sentence here. Third sentence here."
+        pieces = _split_text(text, 25, ContentType.PARAGRAPH, None, overlap_sentences=1)
+        assert len(pieces) > 1
+        assert "First sentence here." in pieces[1]
+
+    def test_no_overlap_by_default(self):
+        text = "First sentence here. Second sentence here. Third sentence here."
+        pieces = _split_text(text, 25, ContentType.PARAGRAPH, None)
+        # Disjoint: the first sentence appears in exactly one piece.
+        assert sum("First sentence here." in p for p in pieces) == 1
+
+    def test_tables_never_overlap(self):
+        text = "Row one cell. Row two cell. Row three cell."
+        pieces = _split_text(text, 20, ContentType.TABLE, None, overlap_sentences=2)
+        assert sum("Row one cell." in p for p in pieces) == 1
+
+    def test_list_splits_on_item_boundaries(self):
+        # Items with sentence punctuation must split between items, never mid-item.
+        items = [f"- Item {i}. It has detail." for i in range(8)]
+        text = "\n".join(items)
+        pieces = _split_text(text, 60, ContentType.LIST, None)
+        assert len(pieces) > 1
+        for p in pieces:
+            for line in p.split("\n"):
+                assert line in items  # each line is a whole original item
+
+
+class TestSplitCode:
+    def _fenced(self, lines: list[str], lang: str = "python") -> str:
+        return f"```{lang}\n" + "\n".join(lines) + "\n```"
+
+    def test_short_code_unchanged(self):
+        code = self._fenced(["x = 1", "y = 2"])
+        assert _split_text(code, 1000, ContentType.CODE, "python") == [code]
+
+    def test_oversized_code_splits_on_line_boundaries_and_refences(self):
+        lines = [f"line_{i} = compute({i})" for i in range(40)]
+        code = self._fenced(lines, "python")
+        pieces = _split_text(code, 200, ContentType.CODE, "python")
+        assert len(pieces) > 1
+        for p in pieces:
+            # Every piece is a balanced, re-fenced block carrying the language.
+            assert p.startswith("```python\n")
+            assert p.endswith("\n```")
+            assert p.count("```") == 2  # exactly one opening + one closing fence
+            # No identifier was severed: each inner line is one of the originals.
+            inner = p[len("```python\n") : -len("\n```")]
+            for ln in inner.split("\n"):
+                assert ln in lines
+
+    def test_single_overlong_code_line_hard_cut(self):
+        code = self._fenced(["a" * 600], "python")
+        pieces = _split_text(code, 200, ContentType.CODE, "python")
+        assert len(pieces) >= 2
+        for p in pieces:
+            assert p.startswith("```python\n") and p.endswith("\n```")
 
 
 class TestChunkDocument:
@@ -286,11 +475,16 @@ class TestMergeProse:
         assert "To use VSCode" in first.content
         assert "Install VSCode" in first.content
 
-    def test_default_does_not_merge(self):
+    def test_default_coalesces_leadin_only(self):
         doc = self._mixed_doc()
         chunks = chunk_document(doc)  # merge_prose defaults False
-        # One chunk per block: 2 prose + 1 code + 1 prose = 4.
-        assert len(chunks) == 4
+        # Default doesn't pack general prose, but the lead-in label
+        # ("To use VSCode … development:") folds into the list that follows it:
+        # (b1+b2), b3 code, b4 prose = 3 chunks.
+        assert len(chunks) == 3
+        assert any("To use VSCode" in c.content and "Install VSCode" in c.content for c in chunks)
+        assert any(c.content_type == ContentType.CODE for c in chunks)
+        assert any(c.content == "Then set breakpoints." for c in chunks)
 
     def test_code_block_stays_separate_and_keeps_language(self):
         chunks = chunk_document(self._mixed_doc(), merge_prose=True)

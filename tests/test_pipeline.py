@@ -43,6 +43,48 @@ def _mock_store() -> MagicMock:
     return store
 
 
+def _prose_doc() -> DocumentModel:
+    section = Section(
+        level=1,
+        title="History",
+        section_id="s",
+        breadcrumb=["History"],
+        blocks=[
+            ContentBlock(
+                block_id="b",
+                content_type=ContentType.PARAGRAPH,
+                text="A narrative about the project goals and its history over the years.",
+            )
+        ],
+    )
+    return DocumentModel(
+        doc_id="d", metadata=DocumentMetadata(title="History"), root_sections=[section]
+    )
+
+
+class TestMergeStrategyRouting:
+    def _pipeline(self, tmp_path, **cfg_kwargs) -> SemanticPipeline:
+        cfg = PipelineConfig(chroma_persist_dir=str(tmp_path), **cfg_kwargs)
+        return SemanticPipeline(
+            config=cfg, embedding_model=_mock_embedder(), vector_store=_mock_store()
+        )
+
+    def test_profile_off_returns_config_flags(self, tmp_path: Path):
+        p = self._pipeline(tmp_path, doc_profile_enabled=False, chunk_merge_prose=True)
+        assert p._resolve_merge_strategy(_prose_doc()) == (True, False)
+
+    def test_prose_profile_routes_to_merge_prose(self, tmp_path: Path):
+        p = self._pipeline(tmp_path, doc_profile_enabled=True)
+        doc = _prose_doc()
+        assert p._resolve_merge_strategy(doc) == (True, False)
+        assert doc.metadata.extra["profile"] == "prose"
+
+    def test_explicit_merge_flag_respected_when_profile_on(self, tmp_path: Path):
+        # User opted into definitions; the profile must not override it on a prose doc.
+        p = self._pipeline(tmp_path, doc_profile_enabled=True, chunk_merge_definitions=True)
+        assert p._resolve_merge_strategy(_prose_doc()) == (False, True)
+
+
 def _make_pipeline(tmp_path: Path, **config_overrides) -> SemanticPipeline:
     config = PipelineConfig(
         chroma_persist_dir=str(tmp_path / "chroma"),
@@ -426,6 +468,20 @@ class TestSearch:
         }
         pipeline.search("q")  # matches config → no raise
         pipeline._store.search.assert_called_once()
+
+    def test_search_warns_on_embed_format_mismatch(self, tmp_path: Path, caplog):
+        # Same embedder, but the index was built with an older embed-text layout:
+        # warn (results are sub-optimal until re-index), never raise.
+        pipeline = _make_pipeline(tmp_path)
+        pipeline._store.get_provenance.return_value = {
+            "embedding_provider": "local",
+            "embedding_model": "all-MiniLM-L6-v2",
+            "embed_format_version": 0,
+        }
+        with caplog.at_level("WARNING"):
+            pipeline.search("q")  # must not raise
+        pipeline._store.search.assert_called_once()
+        assert "embed-format" in caplog.text
 
     def test_hybrid_fuses_lexical_signal(self, tmp_path: Path):
         from sdd_pipeline.vector_store import SearchResult

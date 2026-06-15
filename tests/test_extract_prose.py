@@ -46,6 +46,18 @@ def test_runs_without_spacy_model():
     assert isinstance(extract_prose("s", "plain text with ACME_CORP"), list)
 
 
+def test_named_entities_inert_without_spacy():
+    from sdd_pipeline.extract_prose import _named_entities
+
+    # No spaCy model installed → empty, never raises (mirrors _noun_chunks).
+    assert _named_entities("Ada Lovelace works at Acme in London on 2024-01-01.") == []
+
+
+def test_enable_ner_false_emits_no_ner_records():
+    recs = extract_prose("s", "Ada Lovelace works at Acme.", enable_ner=False)
+    assert all(not r.field.startswith("ner:") for r in recs)
+
+
 def test_build_prose_inventory_keys_by_section():
     sec = Section(
         level=1,

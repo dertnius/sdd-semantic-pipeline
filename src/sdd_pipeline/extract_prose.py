@@ -46,6 +46,17 @@ _ALLCAPS_STOP = frozenset(
 _MIN_ALLCAPS_LEN = 3
 
 
+# spaCy NER labels we surface, mapped to a compact metadata field kind. These land
+# in ``metadata["ner:<kind>"]`` (a filterable/display facet) and are deliberately
+# EXCLUDED from the embed vector (see SemanticChunk.to_embed_text), because a
+# model-derived signal in the vector would make embeddings depend on whether spaCy
+# is installed — breaking reproducibility (the provenance check cannot detect that).
+_NER_LABELS = {"PERSON": "person", "ORG": "org", "GPE": "place", "LOC": "place", "DATE": "date"}
+# Confidence for NER records: above the 0.6 enrichment threshold so they route to a
+# named ``ner:<kind>`` metadata field, but below table cells (1.0) and ALLCAPS (0.9).
+_NER_CONFIDENCE = 0.7
+
+
 def _noun_chunks(text: str) -> list[str]:
     """Multi-word noun chunks via spaCy, or [] when spaCy/model is unavailable."""
     try:  # optional; never required
@@ -62,17 +73,45 @@ def _noun_chunks(text: str) -> list[str]:
         return []
 
 
-def extract_prose(section_id: str, text: str) -> list[EntityRecord]:
-    """Mine entity records from one block of prose text."""
+def _named_entities(text: str) -> list[tuple[str, str]]:
+    """``(entity_text, kind)`` pairs via spaCy NER, or [] when spaCy is unavailable.
+
+    Guarded exactly like :func:`_noun_chunks`: never required, inert when spaCy or
+    the model is absent, so the pipeline stays model-free by default.
+    """
+    try:  # optional; never required
+        import spacy  # type: ignore[import-not-found]
+    except ImportError:
+        return []
+
+    try:
+        nlp = spacy.load("en_core_web_sm")
+        out: list[tuple[str, str]] = []
+        for ent in nlp(text).ents:
+            kind = _NER_LABELS.get(ent.label_)
+            if kind:
+                out.append((ent.text, kind))
+        return out
+    except Exception:
+        return []
+
+
+def extract_prose(section_id: str, text: str, *, enable_ner: bool = True) -> list[EntityRecord]:
+    """Mine entity records from one block of prose text.
+
+    When *enable_ner* is set and spaCy is installed, named entities
+    (person/org/place/date) are emitted under a ``ner:<kind>`` field; they reach
+    metadata/display but never the embed vector.
+    """
     out: list[EntityRecord] = []
     seen: set[str] = set()
 
-    def add(value: str, source: EntitySource, confidence: float) -> None:
+    def add(value: str, source: EntitySource, confidence: float, field: str = "") -> None:
         value = value.strip()
         key = value.lower()
         if value and key not in seen:
             seen.add(key)
-            out.append(EntityRecord(value, "", source, confidence, section_id))
+            out.append(EntityRecord(value, field, source, confidence, section_id))
 
     for tok in _ALLCAPS.findall(text):
         if len(tok) >= _MIN_ALLCAPS_LEN and tok not in _ALLCAPS_STOP:
@@ -87,6 +126,9 @@ def extract_prose(section_id: str, text: str) -> list[EntityRecord]:
         add(tok, "prose", 0.6)
     for tok in _noun_chunks(text):
         add(tok, "noun_chunk", 0.5)
+    if enable_ner:
+        for value, kind in _named_entities(text):
+            add(value, "noun_chunk", _NER_CONFIDENCE, field=f"ner:{kind}")
     return out
 
 
@@ -97,11 +139,11 @@ def _section_text(section: Section) -> str:
     return _FENCED.sub(" ", text)
 
 
-def build_prose_inventory(doc: DocumentModel) -> EntityInventory:
+def build_prose_inventory(doc: DocumentModel, *, enable_ner: bool = True) -> EntityInventory:
     """Prose entity records for every section in *doc*, keyed by section_id."""
     inventory: EntityInventory = {}
     for section in doc.iter_sections():
-        records = extract_prose(section.section_id, _section_text(section))
+        records = extract_prose(section.section_id, _section_text(section), enable_ner=enable_ner)
         if records:
             inventory[section.section_id] = records
     return inventory

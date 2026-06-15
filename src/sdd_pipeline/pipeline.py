@@ -15,8 +15,21 @@ from .ast_parser import generate_ast
 from .chunking import chunk_document
 from .config import PipelineConfig
 from .embeddings import EmbedderProtocol, embedder_identity, make_embedder
-from .enrichment import enrich_document, extract_entities, scan_corpus
-from .models import ContentType, DocumentModel, SectionType, SemanticChunk
+from .enrichment import (
+    classify_document,
+    enrich_document,
+    extract_entities,
+    extract_keyphrases,
+    scan_corpus,
+)
+from .models import (
+    EMBED_FORMAT_VERSION,
+    ContentType,
+    DocumentModel,
+    Genre,
+    SectionType,
+    SemanticChunk,
+)
 from .quality import ChunkQualityReport, check_chunk
 from .structural import build_structural_model
 from .vector_store import SearchResult, VectorStoreProtocol, make_vector_store
@@ -99,7 +112,8 @@ class SemanticPipeline:
         from .extract_structural import build_structural_inventory
 
         merged: dict[str, list] = {}
-        for inv in (build_structural_inventory(doc), build_prose_inventory(doc)):
+        prose_inv = build_prose_inventory(doc, enable_ner=self.config.prose_ner)
+        for inv in (build_structural_inventory(doc), prose_inv):
             for section_id, records in inv.items():
                 merged.setdefault(section_id, []).extend(records)
         return merged
@@ -115,16 +129,48 @@ class SemanticPipeline:
         ``config.inventory_enrichment`` is disabled (legacy enrichment only)."""
         inventory = self._build_inventory(doc) if self.config.inventory_enrichment else None
         doc = enrich_document(doc, entity_terms=entity_terms, inventory=inventory)
+        merge_prose, merge_definitions = self._resolve_merge_strategy(doc)
+        keyphrase_fn = extract_keyphrases if self.config.prose_keyphrases else None
         chunks = chunk_document(
             doc,
             self.config.max_chunk_chars,
-            merge_prose=self.config.chunk_merge_prose,
+            merge_prose=merge_prose,
             entity_fn=lambda t: extract_entities(t, entity_terms),
-            merge_definitions=self.config.chunk_merge_definitions,
+            merge_definitions=merge_definitions,
             embed_char_budget=self.config.embed_char_budget,
+            keyphrase_fn=keyphrase_fn,
+            overlap_sentences=self.config.chunk_overlap_sentences,
         )
         logger.info("→ %d chunks", len(chunks))
         return chunks
+
+    def _resolve_merge_strategy(self, doc: DocumentModel) -> tuple[bool, bool]:
+        """Pick ``(merge_prose, merge_definitions)`` for *doc*.
+
+        Returns the configured flags verbatim unless ``config.doc_profile_enabled``
+        is on *and* the user set neither merge flag — in which case the document
+        profile chooses a default (technical→definitions, prose→prose, mixed→none).
+        The profile is recorded on ``doc.metadata.extra['profile']`` either way.
+        Advisory only: an explicit merge flag is always respected.
+        """
+        mp = self.config.chunk_merge_prose
+        md = self.config.chunk_merge_definitions
+        if not self.config.doc_profile_enabled:
+            return mp, md
+
+        profile = classify_document(
+            doc,
+            code_ratio_threshold=self.config.doc_profile_code_ratio,
+            table_ratio_threshold=self.config.doc_profile_table_ratio,
+        )
+        doc.metadata.extra["profile"] = profile
+        if mp or md:  # user opted in explicitly → respect it
+            return mp, md
+        if profile == "technical":
+            return False, True
+        if profile == "prose":
+            return True, False
+        return False, False  # mixed → today's default (no merge)
 
     def process_file(self, md_path: Path) -> list[SemanticChunk]:
         """
@@ -294,6 +340,18 @@ class SemanticPipeline:
                 f"provider={sp!r} model={sm!r}, but search is configured with "
                 f"provider={provider!r} model={model!r}. Re-index or switch --provider/--model."
             )
+        # The embedder matches but the embed-text layout may have moved on since the
+        # index was built. That is not a hard incompatibility (same vector space), so
+        # it warns rather than raises — the results are merely sub-optimal until a
+        # re-index. Absent on legacy indexes (None) → skip, like the checks above.
+        stored_fmt = stored.get("embed_format_version")
+        if stored_fmt is not None and stored_fmt != EMBED_FORMAT_VERSION:
+            logger.warning(
+                "Index embed-format v%s != current v%s: stored document vectors encode an "
+                "older to_embed_text layout than your queries. Re-index for best results.",
+                stored_fmt,
+                EMBED_FORMAT_VERSION,
+            )
 
     def search(
         self,
@@ -303,6 +361,7 @@ class SemanticPipeline:
         content_type: ContentType | None = None,
         space: str | None = None,
         hybrid: bool | None = None,
+        genre: Genre | None = None,
     ) -> list[SearchResult]:
         """
         Return the *n_results* chunks most relevant to *query*.
@@ -312,8 +371,8 @@ class SemanticPipeline:
         Rank Fusion, so passages that literally contain the query terms are not
         out-ranked by topically-near but less specific passages.
 
-        Optional filters narrow results by section type, content type, or
-        Confluence space key.
+        Optional filters narrow results by section type, content type, Confluence
+        space key, or prose ``genre`` (glossary/faq/howto/policy/narrative).
         """
         self._verify_provenance()
         use_hybrid = self.config.hybrid_search if hybrid is None else hybrid
@@ -326,6 +385,7 @@ class SemanticPipeline:
                 section_type=section_type,
                 content_type=content_type,
                 space=space,
+                genre=genre,
             )
 
         return self._hybrid_search(
@@ -335,6 +395,7 @@ class SemanticPipeline:
             section_type=section_type,
             content_type=content_type,
             space=space,
+            genre=genre,
         )
 
     def _hybrid_search(
@@ -345,6 +406,7 @@ class SemanticPipeline:
         section_type: SectionType | None,
         content_type: ContentType | None,
         space: str | None,
+        genre: Genre | None = None,
     ) -> list[SearchResult]:
         """Fuse dense and BM25 rankings with Reciprocal Rank Fusion."""
         from .retrieval import BM25Index, reciprocal_rank_fusion
@@ -358,6 +420,7 @@ class SemanticPipeline:
             section_type=section_type,
             content_type=content_type,
             space=space,
+            genre=genre,
         )
 
         # Lexical candidates over the same (filtered) corpus. The breadcrumb is
@@ -366,6 +429,7 @@ class SemanticPipeline:
             section_type=section_type,
             content_type=content_type,
             space=space,
+            genre=genre,
         )
         index = BM25Index(
             [(c.chunk_id, f"{c.metadata.get('breadcrumb', '')} {c.content}") for c in corpus]

@@ -12,7 +12,15 @@ import re
 from collections.abc import Iterable
 
 from .direction import Direction, load_field_directions, resolve_direction
-from .models import DocumentModel, EntityInventory, EntityRecord, Section, SectionType
+from .models import (
+    ContentType,
+    DocumentModel,
+    EntityInventory,
+    EntityRecord,
+    Genre,
+    Section,
+    SectionType,
+)
 from .reconcile import reconcile
 
 # ── Section-type classification rules ────────────────────────────────────────
@@ -204,6 +212,14 @@ _PROTOCOL_PATTERN = re.compile(
     r"JWT|OAuth2?|OIDC|SAML|mTLS|TLS|SSL|HTTPS?)\b"
 )
 
+# HTTP API endpoints: an uppercase method followed by a leading-slash path
+# (``GET /v1/users``, ``POST /api/orders/{id}``). The method + leading slash make
+# this tight enough not to fire on ordinary prose, so it is safe in the always-on
+# extractor; the endpoint becomes a first-class keyword for API docs.
+_ENDPOINT_PATTERN = re.compile(
+    r"\b(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+(/[A-Za-z0-9_/{}.:\-]*)"
+)
+
 # ── Extra patterns for corpus-wide vocabulary discovery ───────────────────────
 # These broaden recall and are used ONLY by scan_corpus() (vocabulary discovery),
 # never by extract_entities() (precise per-section tagging).
@@ -217,6 +233,11 @@ _ALLCAPS_PATTERN = re.compile(r"\b([A-Z][A-Z0-9]{2,})\b")
 # config keys, and CLI tokens that don't follow PascalCase conventions:
 #   `settlement-engine`, `kube-system`, `x_forwarded_for`
 _BACKTICK_PATTERN = re.compile(r"`([A-Za-z][A-Za-z0-9_./-]{2,})`")
+
+# Fenced code blocks (``` or ~~~). Blanked before the corpus scan mines a section,
+# so ALLCAPS tokens inside code don't surface as entities. Inline ``code`` (single
+# backticks) is intentionally left intact — it is a deliberate discovery signal.
+_FENCED = re.compile(r"```[\s\S]*?```|~~~[\s\S]*?~~~")
 
 # Common ALLCAPS noise excluded from vocabulary — generic English abbreviations,
 # terms already normalised by _TECH_ / _PROTOCOL_ patterns, and SQL keywords that
@@ -298,6 +319,447 @@ def classify_section_type(title: str) -> SectionType:
     return SectionType.CONTENT
 
 
+# ── Genre classification (prose shape; orthogonal to SectionType) ──────────────
+# A section's genre answers "what prose shape?" — glossary / faq / howto / policy /
+# narrative — independently of its technical SectionType. Strategy: a prose-ness
+# gate (code/table-dominant → GENERAL), then body-shape detectors in priority
+# order, with the title used only as a confirmer/promoter. On a title-vs-body
+# conflict the body wins (prose headings are often generic); a prose section that
+# matches no detector falls back to NARRATIVE.
+
+# Block types that count as prose for the prose-ness gate.
+_PROSE_BLOCK_TYPES = frozenset(
+    {ContentType.PARAGRAPH, ContentType.LIST, ContentType.BLOCKQUOTE, ContentType.DEFINITION}
+)
+_PROSE_RATIO_MIN = 0.5  # below this fraction of prose chars → GENERAL (code/table doc)
+_GLOSSARY_DEF_RATIO = 0.5  # definition blocks ≥ this fraction of prose → glossary
+_FAQ_QUESTION_MIN = 2  # this many question paragraphs → faq
+_POLICY_MODAL_MIN = 2  # this many strong obligation modals → policy
+
+# Strong obligation modals (governance prose). "should" is intentionally excluded
+# — too weak/common in ordinary explanation to signal a policy.
+_MODAL_RE = re.compile(
+    r"\b(?:must(?:\s+not)?|shall(?:\s+not)?|may\s+not|required|prohibited|mandatory|forbidden)\b",
+    re.IGNORECASE,
+)
+# Common imperative step verbs that open how-to list items.
+_IMPERATIVE_VERBS = frozenset(
+    {
+        "install",
+        "run",
+        "click",
+        "open",
+        "create",
+        "set",
+        "configure",
+        "add",
+        "remove",
+        "select",
+        "enter",
+        "navigate",
+        "choose",
+        "download",
+        "save",
+        "deploy",
+        "build",
+        "start",
+        "stop",
+        "restart",
+        "copy",
+        "paste",
+        "update",
+        "verify",
+        "check",
+        "ensure",
+        "define",
+        "call",
+        "import",
+        "export",
+        "execute",
+        "launch",
+        "type",
+        "press",
+        "go",
+        "visit",
+        "enable",
+        "disable",
+        "apply",
+        "edit",
+        "delete",
+        "push",
+        "pull",
+        "commit",
+        "clone",
+        "login",
+        "register",
+        "upload",
+        "submit",
+        "review",
+        "confirm",
+        "repeat",
+        "close",
+        "find",
+        "replace",
+    }
+)
+# An ordered-list item line ("1. text") as serialized by structural._serialize_list.
+_ORDERED_ITEM_RE = re.compile(r"^\s*\d+\.\s+(.*)$")
+
+# Title keyword → genre (leading word boundary, mirroring _SECTION_RULES).
+_GENRE_TITLE_RULES: dict[Genre, list[str]] = {
+    Genre.GLOSSARY: ["glossary", "definitions", "terminology", "terms", "nomenclature"],
+    Genre.FAQ: ["faq", "frequently asked", "q&a", "questions and answers"],
+    Genre.HOWTO: [
+        "how to",
+        "how-to",
+        "howto",
+        "tutorial",
+        "walkthrough",
+        "step-by-step",
+        "step by step",
+        "getting started",
+        "installation",
+        "setup",
+        "procedure",
+        "runbook",
+    ],
+    Genre.POLICY: [
+        "policy",
+        "policies",
+        "guideline",
+        "guidelines",
+        "compliance",
+        "code of conduct",
+        "terms of service",
+        "acceptable use",
+    ],
+}
+_GENRE_TITLE_PATTERNS: list[tuple[Genre, re.Pattern[str]]] = [
+    (g, re.compile(r"\b(" + "|".join(re.escape(k) for k in kws) + r")", re.IGNORECASE))
+    for g, kws in _GENRE_TITLE_RULES.items()
+]
+
+
+def _genre_from_title(title: str) -> Genre | None:
+    """First title-keyword genre match (confirmer/promoter), or None."""
+    for genre, pattern in _GENRE_TITLE_PATTERNS:
+        if pattern.search(title):
+            return genre
+    return None
+
+
+def _is_glossary(blocks: list, prose_chars: int) -> bool:
+    def_chars = sum(len(b.text) for b in blocks if b.content_type == ContentType.DEFINITION)
+    return prose_chars > 0 and def_chars / prose_chars >= _GLOSSARY_DEF_RATIO
+
+
+def _is_faq(blocks: list) -> bool:
+    questions = sum(
+        1
+        for b in blocks
+        if b.content_type == ContentType.PARAGRAPH and b.text.strip().endswith("?")
+    )
+    return questions >= _FAQ_QUESTION_MIN
+
+
+def _is_howto(blocks: list) -> bool:
+    """An ordered list with ≥2 items that lead with an imperative verb."""
+    for b in blocks:
+        if b.content_type != ContentType.LIST:
+            continue
+        total = imperative = 0
+        for line in b.text.splitlines():
+            m = _ORDERED_ITEM_RE.match(line)
+            if not m:
+                continue
+            total += 1
+            words = m.group(1).strip().lower().split()
+            first = words[0].strip(".,:;)") if words else ""
+            if first in _IMPERATIVE_VERBS:
+                imperative += 1
+        if total >= 2 and imperative >= 2:
+            return True
+    return False
+
+
+def classify_genre(section: Section) -> Genre:
+    """Return the prose :class:`Genre` of *section* (see module comment above).
+
+    Orthogonal to :func:`classify_section_type`; both run during enrichment.
+    """
+    blocks = section.blocks
+    title_genre = _genre_from_title(section.title)
+    if not blocks:
+        return title_genre or Genre.GENERAL
+
+    total_chars = sum(len(b.text) for b in blocks)
+    prose_chars = sum(len(b.text) for b in blocks if b.content_type in _PROSE_BLOCK_TYPES)
+    if total_chars == 0 or prose_chars / total_chars < _PROSE_RATIO_MIN:
+        # Code/table-dominant: the prose axis does not apply. A title keyword can
+        # still promote (e.g. a "Glossary" heading over a term *table*).
+        return title_genre or Genre.GENERAL
+
+    prose_text = "\n".join(b.text for b in blocks if b.content_type in _PROSE_BLOCK_TYPES)
+
+    # Body-shape detectors, first match wins (glossary → faq → howto → policy).
+    if _is_glossary(blocks, prose_chars):
+        body_genre: Genre | None = Genre.GLOSSARY
+    elif _is_faq(blocks):
+        body_genre = Genre.FAQ
+    elif _is_howto(blocks):
+        body_genre = Genre.HOWTO
+    elif len(_MODAL_RE.findall(prose_text)) >= _POLICY_MODAL_MIN:
+        body_genre = Genre.POLICY
+    else:
+        body_genre = None
+
+    # Body wins on conflict; title promotes when the body is silent; else narrative.
+    if body_genre is not None:
+        return body_genre
+    if title_genre is not None:
+        return title_genre
+    return Genre.NARRATIVE
+
+
+# ── Document profile (technical vs prose) — advisory routing signal ────────────
+# A coarse, model-free label computed on the parsed model *before* enrichment.
+# It is advisory: the orchestrator uses it to pick a default chunk merge strategy
+# when the user set none; it never overrides an explicit choice and never feeds
+# the deterministic core. Pure function — the pipeline does the surfacing/mutation.
+_PROFILE_PROSE_CODE_MAX = 0.05
+_PROFILE_PROSE_TABLE_MAX = 0.10
+
+
+def classify_document(
+    doc: DocumentModel,
+    *,
+    code_ratio_threshold: float = 0.5,
+    table_ratio_threshold: float = 0.4,
+) -> str:
+    """Return a coarse document profile: ``"technical" | "prose" | "mixed"``.
+
+    Signals: code/table char ratios across all blocks, plus the SAD-template
+    heading fingerprint (:func:`doc_router.detect_doc_type`). A doc that is
+    code/table-heavy or matches the SAD template is *technical*; one with almost
+    no code/tables is *prose*; everything else (e.g. a tour doc mixing prose and
+    code) is *mixed*.
+    """
+    from .doc_router import detect_doc_type
+
+    blocks = [b for section in doc.iter_sections() for b in section.blocks]
+    total = sum(len(b.text) for b in blocks)
+    if total == 0:
+        return "mixed"
+    code_ratio = sum(len(b.text) for b in blocks if b.content_type == ContentType.CODE) / total
+    table_ratio = sum(len(b.text) for b in blocks if b.content_type == ContentType.TABLE) / total
+
+    if (
+        detect_doc_type(doc) == "sad"
+        or code_ratio >= code_ratio_threshold
+        or table_ratio >= table_ratio_threshold
+    ):
+        return "technical"
+    if code_ratio < _PROFILE_PROSE_CODE_MAX and table_ratio < _PROFILE_PROSE_TABLE_MAX:
+        return "prose"
+    return "mixed"
+
+
+# ── Deterministic keyphrase extraction (RAKE) for prose sections ───────────────
+# RAKE scores candidate phrases using ONLY the section's own text (a stopword list
+# + word co-occurrence), so a chunk's keyphrases — and therefore its vector — are a
+# pure function of its content: reproducible, no corpus state, no model. Used to
+# put rich multi-word prose phrases into the embed `keywords:` line for non-technical
+# sections, where the casing-based entity patterns find little. Pipeline-injected
+# into chunking via the entity_fn seam, gated to prose-genre chunks.
+
+# Compact English stopword set — phrase boundaries for RAKE. Kept small and generic
+# (articles, prepositions, conjunctions, pronouns, auxiliaries) so domain nouns are
+# never dropped.
+_RAKE_STOPWORDS = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "and",
+        "or",
+        "but",
+        "nor",
+        "so",
+        "yet",
+        "for",
+        "of",
+        "to",
+        "in",
+        "on",
+        "at",
+        "by",
+        "as",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "am",
+        "it",
+        "its",
+        "this",
+        "that",
+        "these",
+        "those",
+        "with",
+        "from",
+        "into",
+        "onto",
+        "about",
+        "over",
+        "under",
+        "between",
+        "through",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "up",
+        "down",
+        "out",
+        "off",
+        "if",
+        "then",
+        "else",
+        "than",
+        "when",
+        "while",
+        "where",
+        "which",
+        "who",
+        "whom",
+        "whose",
+        "what",
+        "why",
+        "how",
+        "all",
+        "any",
+        "both",
+        "each",
+        "few",
+        "more",
+        "most",
+        "other",
+        "some",
+        "such",
+        "no",
+        "not",
+        "only",
+        "own",
+        "same",
+        "too",
+        "very",
+        "can",
+        "will",
+        "just",
+        "should",
+        "now",
+        "also",
+        "we",
+        "you",
+        "they",
+        "he",
+        "she",
+        "i",
+        "our",
+        "your",
+        "their",
+        "his",
+        "her",
+        "them",
+        "us",
+        "me",
+        "my",
+        "do",
+        "does",
+        "did",
+        "done",
+        "have",
+        "has",
+        "had",
+        "having",
+        "would",
+        "could",
+        "may",
+        "might",
+        "must",
+        "shall",
+        "there",
+        "here",
+        "because",
+        "via",
+        "per",
+        "etc",
+    }
+)
+# A word token or a run of other chars. Internal -, _, ., + are allowed only
+# *between* alphanumerics (so identifiers like ``v1.2``/``well-known`` survive),
+# but a trailing period/comma is NOT absorbed — it stays a boundary so phrases do
+# not run across sentence ends ("quarterly. access").
+_RAKE_TOKEN = re.compile(r"[A-Za-z0-9]+(?:[._+\-][A-Za-z0-9]+)*|[^A-Za-z0-9]+")
+
+
+def extract_keyphrases(text: str, *, top_n: int = 6, max_phrase_words: int = 4) -> list[str]:
+    """Return up to *top_n* RAKE keyphrases from *text* (deterministic, model-free).
+
+    Candidate phrases are runs of content words bounded by stopwords / punctuation;
+    each word scores ``degree/frequency`` (RAKE), and a phrase scores the sum of its
+    words — favouring distinctive multi-word phrases. Output is lowercased and
+    deterministically ranked (score desc, then phrase text), so identical input
+    always yields identical keyphrases (and identical vectors).
+    """
+    phrases: list[list[str]] = []
+    current: list[str] = []
+
+    def flush() -> None:
+        nonlocal current
+        if current:
+            phrases.append(current)
+            current = []
+
+    for tok in _RAKE_TOKEN.findall(text):
+        if tok[0].isalnum():
+            w = tok.lower()
+            if w in _RAKE_STOPWORDS or w.isdigit() or len(w) < 3:
+                flush()
+            else:
+                current.append(w)
+                if len(current) >= max_phrase_words:
+                    flush()
+        elif tok.strip():  # a punctuation run (not pure whitespace) ends a phrase
+            flush()
+    flush()
+
+    if not phrases:
+        return []
+
+    freq: dict[str, int] = {}
+    degree: dict[str, int] = {}
+    for ph in phrases:
+        for w in ph:
+            freq[w] = freq.get(w, 0) + 1
+            degree[w] = degree.get(w, 0) + len(ph)  # RAKE: degree sums phrase lengths
+    score = {w: degree[w] / freq[w] for w in freq}
+
+    ranked: dict[str, float] = {}
+    for ph in phrases:
+        phrase_text = " ".join(ph)
+        s = sum(score[w] for w in ph)
+        if s > ranked.get(phrase_text, -1.0):
+            ranked[phrase_text] = s
+
+    ordered = sorted(ranked.items(), key=lambda kv: (-kv[1], kv[0]))
+    return [p for p, _ in ordered[:top_n]]
+
+
 def _compile_terms(terms: Iterable[str]) -> re.Pattern[str] | None:
     """Compile a case-insensitive, word-bounded alternation of literal *terms*."""
     literals = [re.escape(t.strip()) for t in terms if t and t.strip()]
@@ -323,6 +785,8 @@ def extract_entities(text: str, extra_terms: Iterable[str] | None = None) -> lis
         found.add(match.group(1).replace(" ", ""))
     for match in _PROTOCOL_PATTERN.finditer(text):
         found.add(match.group(1))
+    for match in _ENDPOINT_PATTERN.finditer(text):
+        found.add(f"{match.group(1)} {match.group(2)}")
     if extra_terms:
         # Map each lower-cased hit back to the supplied spelling so output is
         # stable regardless of how the term is cased in the text.
@@ -332,6 +796,14 @@ def extract_entities(text: str, extra_terms: Iterable[str] | None = None) -> lis
             for match in pattern.finditer(text):
                 found.add(canonical.get(match.group(1).lower(), match.group(1)))
     return sorted(found)
+
+
+# Admonition label at the start of a blockquote line: ``> **Note**``, ``> [!TIP]``,
+# ``> WARNING:`` — optional bold/underscore emphasis or ``[!...]`` callout syntax.
+_ADMONITION_RE = re.compile(
+    r"(?im)^\s*>\s*(?:\[!\s*)?(?:\*\*|__)?\s*"
+    r"(note|warning|tip|important|caution|info|danger|attention)\b"
+)
 
 
 def extract_tags(
@@ -347,6 +819,15 @@ def extract_tags(
     # (``> ``), so allow leading whitespace / one-or-more ``>`` before it.
     for lang in re.findall(r"(?m)^[ \t]*(?:>[ \t]*)*```(\w+)", blocks_text):
         tag = f"lang:{lang.lower()}"
+        if tag not in tags:
+            tags.append(tag)
+
+    # Admonition / callout flavour, recovered from a blockquote whose first token is
+    # a known label (``> **Note**``, ``> [!WARNING]``, ``> CAUTION:`` …). Emitted as
+    # an ``admonition:<kind>`` tag so a warning/caution passage is filterable and the
+    # signal reaches the embed header — no new ContentType or model change needed.
+    for kind in {m.lower() for m in _ADMONITION_RE.findall(blocks_text)}:
+        tag = f"admonition:{kind}"
         if tag not in tags:
             tags.append(tag)
 
@@ -370,6 +851,7 @@ def enrich_section(
     runs — so existing callers that pass no inventory behave exactly as before.
     """
     section.section_type = classify_section_type(section.title)
+    section.genre = classify_genre(section)
 
     all_text = section.title + "\n" + "\n".join(b.text for b in section.blocks)
     section.entities = extract_entities(all_text, entity_terms)
@@ -497,9 +979,12 @@ def _collect_section_terms(section: Section, found: set[str]) -> None:
     """Recursive read-only walk; accumulate raw candidates into *found*.
 
     Touches no Section attribute — safe to call before :func:`enrich_document`.
+    Fenced code is blanked before mining (mirrors :func:`extract_prose._section_text`)
+    so ALLCAPS tokens inside code (a ``brush: java`` DSL's ``FILE``/``REPLACE`` …)
+    don't pollute the corpus vocabulary; inline ``code`` is left intact.
     """
     text = section.title + "\n" + "\n".join(b.text for b in section.blocks)
-    found.update(_collect_raw_terms(text))
+    found.update(_collect_raw_terms(_FENCED.sub(" ", text)))
     for sub in section.subsections:
         _collect_section_terms(sub, found)
 

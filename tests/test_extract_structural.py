@@ -46,6 +46,25 @@ def test_key_value_table_field_is_col0_value_is_col1():
     assert fields["related component"] == "payment-service, inventory-service"
 
 
+def test_field_value_header_treated_as_key_value():
+    # A generic "Field | Value" header is key-value: col0 is the field name.
+    text = "| Field | Value |\n| --- | --- |\n| Runtime | Go 1.22 |\n| Datastore | PostgreSQL |"
+    recs = extract_structural(_table_section("s", text))
+    fields = {r.field: r.text for r in recs}
+    assert fields == {"runtime": "Go 1.22", "datastore": "PostgreSQL"}
+    # Not the useless wide-table reading where every field would be "value".
+    assert "value" not in fields
+
+
+def test_two_column_wide_table_stays_wide():
+    # "Name | Role" is a real wide table (Role is not a value-header) → stays wide.
+    text = "| Name | Role |\n| --- | --- |\n| Ada | architect |"
+    recs = extract_structural(_table_section("s", text))
+    by = {(r.field, r.text) for r in recs}
+    assert ("name", "Ada") in by
+    assert ("role", "architect") in by
+
+
 def test_placeholder_and_empty_cells_skipped():
     text = (
         "|  |  |\n| --- | --- |\n"

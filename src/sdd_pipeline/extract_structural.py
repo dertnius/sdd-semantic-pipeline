@@ -22,13 +22,32 @@ from .header_norm import normalise_header
 from .models import ContentType, DocumentModel, EntityInventory, EntityRecord, Section
 from .template_taxonomy import _is_placeholder, parse_pipe_table
 
+# A 2-column table whose header is a generic ``Field | Value`` pairing is really a
+# key-value table, not a wide one — treating it as wide would emit useless records
+# named "field"/"value". The real field names live in column 0 (the body), so such
+# a table is routed through the key-value branch despite having a (generic) header.
+_KV_FIELD_HEADERS = frozenset(
+    {"field", "key", "name", "property", "parameter", "setting", "attribute", "option"}
+)
+_KV_VALUE_HEADERS = frozenset({"value", "values", "description", "detail", "details"})
+
+
+def _is_key_value_header(norm_header: list[str]) -> bool:
+    return (
+        len(norm_header) == 2
+        and norm_header[0] in _KV_FIELD_HEADERS
+        and norm_header[1] in _KV_VALUE_HEADERS
+    )
+
 
 def _records_from_table(section_id: str, text: str) -> list[EntityRecord]:
     header, rows = parse_pipe_table(text)
     norm_header = [normalise_header(h) for h in header]
     out: list[EntityRecord] = []
 
-    if any(norm_header):  # wide: columns are fields, each body cell is a value
+    # wide: columns are fields, each body cell is a value — UNLESS the header is a
+    # generic Field|Value pairing, in which case it is really key-value.
+    if any(norm_header) and not _is_key_value_header(norm_header):
         for row in rows:
             for idx, cell in enumerate(row):
                 if idx >= len(norm_header):

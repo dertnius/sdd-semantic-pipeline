@@ -22,7 +22,12 @@ from .template_taxonomy import _LEAD_NUM
 
 logger = logging.getLogger(__name__)
 
-# Top-level section headings that characterise the SAD template (normalised).
+# Top-level section headings that characterise a SAD (normalised by
+# ``normalise_header`` — lowercased + naive-singularised). The first group is the
+# formal template; the second covers *pragmatic* SADs that use numbered, topical
+# headings (Architecture / Components / Data Model / Decision Record) instead. A
+# doc still needs ``threshold`` (default 3) matches, so a lone "Architecture"
+# heading in a generic doc does not trip the SAD route.
 SAD_FINGERPRINT = frozenset(
     {
         "introduction",
@@ -30,6 +35,10 @@ SAD_FINGERPRINT = frozenset(
         "quality attribute",
         "baseline solution architecture",
         "target solution architecture",
+        "architecture",
+        "component",
+        "data model",
+        "decision record",
     }
 )
 

@@ -10,6 +10,22 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Literal
 
+# Bumped whenever the *composition* of SemanticChunk.to_embed_text changes — a new
+# header field, a reshaped body, a different keyword source, etc. It is recorded in
+# the index provenance (see vector_store.set_provenance) so a search over an index
+# built with an older format can warn that the stored document vectors and the live
+# query vectors no longer share an encoding. Bump this in the same change that
+# alters to_embed_text; it is the one line that turns a silent vector-staleness
+# regression into a visible "re-index" nudge.
+#   v1 — original format.
+#   v2 — added the prose `genre:` header token + RAKE keyphrases in `keywords:`,
+#        code-aware splitting, and the recovered DEFINITION block type.
+#   v3 — HTTP endpoints as keywords, Field|Value tables routed key-value (more
+#        metadata keywords), FAQ Q&A pairing, and optional sentence overlap.
+#   v4 — admonition:<kind> tags and list-item-aware splitting. (spaCy NER and
+#        xref/figure facets are metadata-only, so they do not change the vector.)
+EMBED_FORMAT_VERSION = 4
+
 # Languages trusted enough to embed as a `lang:` token. A source's
 # syntaxhighlighter brush is often wrong for DSLs, so unknown labels are dropped
 # from the vector (the full tag is still kept in metadata for filtering).
@@ -50,6 +66,11 @@ _EMBED_LANGS = frozenset(
 )
 
 
+# Metadata keys that are display/filter facets only and must never enter the embed
+# vector (see SemanticChunk.to_embed_text). ner:* keys are excluded by prefix there.
+_NON_EMBED_METADATA = frozenset({"raw_entities", "xref", "figure"})
+
+
 def _summarize_table_for_embed(content: str) -> str:
     """Compact a rendered pipe table for embedding.
 
@@ -78,6 +99,11 @@ class ContentType(StrEnum):
     TABLE = "table"
     LIST = "list"
     BLOCKQUOTE = "blockquote"
+    # A definition / description list (``term — definition`` pairs). Recovered from
+    # pandoc's DefinitionList (previously dropped). Prose-shaped: it packs under
+    # merge_prose and is subject to the normal markup-residue gate. Its presence
+    # also signals a glossary section to genre classification.
+    DEFINITION = "definition"
 
 
 class SectionType(StrEnum):
@@ -96,6 +122,23 @@ class SectionType(StrEnum):
     DATA_MODEL = "data_model"
     SECURITY = "security"
     CONTENT = "content"
+
+
+class Genre(StrEnum):
+    """Prose *shape* of a section — an axis orthogonal to :class:`SectionType`.
+
+    ``SectionType`` answers "what technical role?"; ``Genre`` answers "what prose
+    shape?". A section can carry both — a Security FAQ is ``section_type=security``
+    *and* ``genre=faq``. ``GENERAL`` is the null genre: code/table-dominant
+    sections (the prose axis does not apply) or prose with no recognised shape.
+    """
+
+    GENERAL = "general"
+    GLOSSARY = "glossary"
+    FAQ = "faq"
+    HOWTO = "howto"
+    POLICY = "policy"
+    NARRATIVE = "narrative"
 
 
 @dataclass
@@ -120,6 +163,7 @@ class Section:
     blocks: list[ContentBlock] = field(default_factory=list)
     subsections: list[Section] = field(default_factory=list)
     section_type: SectionType = SectionType.CONTENT
+    genre: Genre = Genre.GENERAL  # prose shape (orthogonal to section_type)
     entities: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
     depends_on: list[str] = field(default_factory=list)
@@ -185,6 +229,9 @@ class SemanticChunk:
     exposes: list[str]
     space: str
     labels: list[str]
+    # Prose shape (orthogonal to section_type). Defaulted so existing constructors
+    # need not set it; chunking copies it from the Section.
+    genre: Genre = Genre.GENERAL
     # Document-level provenance, carried onto every chunk so an exported record
     # is citable on its own (the doc_id alone is an opaque hash).
     title: str = ""
@@ -213,12 +260,25 @@ class SemanticChunk:
         elif crumb:
             parts.append(crumb)
 
+        # Prose genre is the strongest signal for non-technical chunks (where the
+        # section type is the null CONTENT). Emit it as its own header token when
+        # set, so a glossary/faq/howto/policy chunk carries that shape into the vector.
+        if self.genre != Genre.GENERAL:
+            parts.append(f"genre: {self.genre.value}")
+
         # Keywords: entities + inventory-derived structured field values, minus any
         # that just repeat a breadcrumb token and the audit-only raw_entities bucket.
         # Deduped, order-preserving (entities first).
         crumb_tokens = {b.strip().rstrip(":").lower() for b in self.breadcrumb}
+        # Display/filter-only metadata facets kept OUT of the vector: the audit-only
+        # raw_entities bucket, model-derived ner:* (spaCy — would make embeddings
+        # depend on whether spaCy is installed), and xref/figure (link targets and
+        # image captions are provenance, not semantic content).
         field_values = [
-            v for key, vals in self.metadata.items() if key != "raw_entities" for v in vals
+            v
+            for key, vals in self.metadata.items()
+            if key not in _NON_EMBED_METADATA and not key.startswith("ner:")
+            for v in vals
         ]
         seen_kw: set[str] = set()
         keywords: list[str] = []
@@ -278,6 +338,7 @@ class SemanticChunk:
             "content_type": self.content_type.value,
             "language": self.language or "",
             "section_type": self.section_type.value,
+            "genre": self.genre.value,
             "entities": json.dumps(self.entities),
             "tags": json.dumps(self.tags),
             "depends_on": json.dumps(self.depends_on),
@@ -306,6 +367,7 @@ class SemanticChunk:
             "content_type": self.content_type.value,
             "language": self.language,
             "section_type": self.section_type.value,
+            "genre": self.genre.value,
             "entities": list(self.entities),
             "tags": list(self.tags),
             "depends_on": list(self.depends_on),
