@@ -976,6 +976,57 @@ def check() -> None:
     raise typer.Exit(0 if all_ok else 1)
 
 
+@app.command()
+def report(
+    input_dir: Path = typer.Argument(
+        Path("tests/convert/examples"),
+        exists=True,
+        file_okay=False,
+        help="Directory of HTML files to run the full pipeline over.",
+    ),
+    output_dir: Path = typer.Option(
+        Path("outbox/reports"),
+        "--output",
+        "-o",
+        help="Where to write the per-file reports + index.html.",
+    ),
+    glob: str = typer.Option("*.html", "--glob", "-g", help="HTML glob (non-recursive)."),
+    pandoc_path: str | None = typer.Option(None, "--pandoc-path", help="Path to pandoc binary."),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """Run the full pipeline per HTML file and emit a self-contained HTML report.
+
+    For each HTML file it captures every stage's artifact, chunk quality,
+    information loss vs the original HTML, an SVG relationship graph, and the
+    taxonomy/vocabulary adapted for that file. Model-free (pandoc only); README.md
+    and non-.html files are skipped. Storage-format HTML is reported as rejected.
+    """
+    from .config import PipelineConfig
+    from .report import generate_reports
+
+    try:
+        reps = generate_reports(
+            input_dir, output_dir, glob=glob, config=PipelineConfig(), pandoc_path=pandoc_path
+        )
+    except Exception as exc:  # surface the failure ASCII-safely
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    ok = sum(1 for r in reps if r.status == "ok")
+    rejected = sum(1 for r in reps if r.status == "rejected")
+    errored = sum(1 for r in reps if r.status == "error")
+    if verbose:
+        for r in reps:
+            ret = f"{round(r.loss.visible_text_retention * 100, 1)}%" if r.loss else "-"
+            console.print(f"  {r.status:9} {r.source.name}  chunks={r.chunk_count} retention={ret}")
+    console.print(
+        f"Done. {ok}/{len(reps)} ok ({rejected} rejected, {errored} errored). "
+        f"Index -> {output_dir / 'index.html'}"
+    )
+    if errored:
+        raise typer.Exit(1)
+
+
 @app.command("help")
 def show_help(
     ctx: typer.Context,
@@ -1028,6 +1079,10 @@ def show_help(
             "HTML -> Markdown (flow B: independent converter)",
             [
                 ("convert", "Convert Confluence-rendered HTML to GitLab Markdown + a JSON report."),
+                (
+                    "report",
+                    "Per-file pipeline report (stages, chunk quality, loss, graph) as HTML.",
+                ),
             ],
         ),
         (
