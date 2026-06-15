@@ -187,6 +187,7 @@ class TestSemanticChunk:
             "content_type",
             "language",
             "section_type",
+            "genre",
             "entities",
             "tags",
             "depends_on",

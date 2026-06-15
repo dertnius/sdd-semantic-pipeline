@@ -10,13 +10,20 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from .models import ContentType, DocumentModel, Section, SectionType, SemanticChunk
+from .models import ContentType, DocumentModel, Genre, Section, SectionType, SemanticChunk
 
 # Prose block types that can be packed together into a single section-level
 # chunk. CODE and TABLE stay separate by default — they carry a language /
 # structure and are distinct retrieval units. ``merge_definitions`` additionally
 # folds CODE into the run so an instruction's prose and syntax share one vector.
-_PROSE_TYPES = frozenset({ContentType.PARAGRAPH, ContentType.LIST, ContentType.BLOCKQUOTE})
+_PROSE_TYPES = frozenset(
+    {
+        ContentType.PARAGRAPH,
+        ContentType.LIST,
+        ContentType.BLOCKQUOTE,
+        ContentType.DEFINITION,
+    }
+)
 
 # Conservative allowance (chars) for the per-chunk keyword list when budgeting
 # the embed header — keywords are computed after the content split, so we reserve
@@ -26,18 +33,31 @@ _ENTITY_RESERVE = 200
 # ── Text splitting helpers ────────────────────────────────────────────────────
 
 
-def _split_text(text: str, max_chars: int) -> list[str]:
+def _split_text(
+    text: str,
+    max_chars: int,
+    content_type: ContentType | None = None,
+    language: str | None = None,
+) -> list[str]:
     """
-    Split *text* at natural paragraph boundaries so every piece ≤ *max_chars*.
+    Split *text* into pieces that each render ≤ *max_chars*.
 
-    Strategy (cascading):
+    Prose strategy (cascading):
     1. Split on blank lines (paragraphs).
     2. If a single paragraph still exceeds the limit, split on sentence-ending
        punctuation followed by whitespace.
     3. As a last resort, hard-cut at *max_chars*.
+
+    Code blocks (``content_type == ContentType.CODE``) take a separate path
+    (:func:`_split_code`) that breaks on line boundaries — never mid-token or
+    mid-fence — and re-fences each piece, so a split never strands an unbalanced
+    fence or severs an identifier.
     """
     if len(text) <= max_chars:
         return [text]
+
+    if content_type == ContentType.CODE:
+        return _split_code(text, max_chars, language)
 
     chunks: list[str] = []
     current = ""
@@ -79,11 +99,69 @@ def _split_text(text: str, max_chars: int) -> list[str]:
 import re  # noqa: E402 — imported here to keep the module-level import clean
 
 _SIGNAL_RE = re.compile(r"[A-Za-z0-9]")
+# A code-fence line (3+ backticks or tildes), as emitted by
+# ``structural._elem_to_content_block`` for code blocks.
+_FENCE_LINE = re.compile(r"^(`{3,}|~{3,})")
 
 
 def _has_signal(text: str) -> bool:
     """True if *text* has any alphanumeric content (drops ``\\``-only artifacts)."""
     return bool(_SIGNAL_RE.search(text.replace("`", "")))
+
+
+def _split_code(text: str, max_chars: int, language: str | None) -> list[str]:
+    """Split an oversized fenced code block on line boundaries, re-fencing each piece.
+
+    Structural code blocks arrive as ``\\`\\`\\`lang\\n<code>\\n\\`\\`\\``` . We strip
+    that wrapping fence, pack the inner lines into pieces that — once re-fenced —
+    stay within *max_chars*, and re-wrap each piece with the same fence so the
+    language marker and a balanced fence travel with every chunk. Splitting is
+    line-aligned (never mid-token); only a single line longer than the budget is
+    hard-cut, as a last resort. Falls back to plain line packing if no wrapping
+    fence is detected.
+    """
+    lines = text.split("\n")
+    fence_open = fence_close = ""
+    inner = lines
+    if len(lines) >= 2 and _FENCE_LINE.match(lines[0]) and _FENCE_LINE.match(lines[-1].strip()):
+        fence_open, fence_close = lines[0], lines[-1]
+        inner = lines[1:-1]
+    overhead = (len(fence_open) + len(fence_close) + 2) if fence_open else 0
+    budget = max(1, max_chars - overhead)
+
+    def wrap(body: str) -> str:
+        return f"{fence_open}\n{body}\n{fence_close}" if fence_open else body
+
+    pieces: list[str] = []
+    cur: list[str] = []
+    cur_len = 0
+
+    def flush() -> None:
+        nonlocal cur_len
+        if cur:
+            pieces.append(wrap("\n".join(cur)))
+            cur.clear()
+            cur_len = 0
+
+    for line in inner:
+        if len(line) > budget:
+            # A single line longer than the budget: flush, then hard-cut it.
+            flush()
+            while len(line) > budget:
+                pieces.append(wrap(line[:budget]))
+                line = line[budget:]
+            if line:
+                cur.append(line)
+                cur_len = len(line)
+            continue
+        add = len(line) + (1 if cur else 0)  # +1 for the joining newline
+        if cur and cur_len + add > budget:
+            flush()
+            add = len(line)
+        cur.append(line)
+        cur_len += add
+    flush()
+    return [p for p in pieces if p.strip()]
 
 
 def _header_reserve(section: Section) -> int:
@@ -101,7 +179,10 @@ def _header_reserve(section: Section) -> int:
     )
     tags = [t for t in section.tags if t != section.section_type.value]
     tag_len = len("tags: " + ", ".join(tags)) if tags else 0
-    return len(prefix) + tag_len + _ENTITY_RESERVE + 24  # 24 ≈ separators + "keywords: "
+    genre_len = len(f"genre: {section.genre.value} | ") if section.genre != Genre.GENERAL else 0
+    return (
+        len(prefix) + tag_len + genre_len + _ENTITY_RESERVE + 24
+    )  # 24 ≈ separators + "keywords: "
 
 
 # ── Main chunking logic ───────────────────────────────────────────────────────
@@ -119,6 +200,7 @@ def _section_to_chunks(
     entity_fn: Callable[[str], list[str]] | None = None,
     merge_definitions: bool = False,
     embed_char_budget: int | None = None,
+    keyphrase_fn: Callable[[str], list[str]] | None = None,
 ) -> list[SemanticChunk]:
     """Recursively convert a section and all its subsections into chunks."""
     chunks: list[SemanticChunk] = []
@@ -133,7 +215,7 @@ def _section_to_chunks(
     def emit(
         text: str, content_type: ContentType, language: str | None, first_block_id: str
     ) -> None:
-        for idx, sub_text in enumerate(_split_text(text, width)):
+        for idx, sub_text in enumerate(_split_text(text, width, content_type, language)):
             if not _has_signal(sub_text):
                 continue  # drop punctuation/whitespace-only artifacts (e.g. "\\")
             # Scope entities to the chunk's own content when an extractor is
@@ -141,6 +223,16 @@ def _section_to_chunks(
             # onto sibling chunks that never reference it. Otherwise fall back
             # to the section-level union.
             entities = entity_fn(sub_text) if entity_fn is not None else list(section.entities)
+            # Prose sections (a non-null genre) additionally get deterministic RAKE
+            # keyphrases, so multi-word prose phrases reach the embed `keywords:` line
+            # where the casing-based entity patterns find little. Technical/code
+            # sections (genre GENERAL) are left to the precise entity extractor.
+            if keyphrase_fn is not None and section.genre != Genre.GENERAL:
+                seen = {e.lower() for e in entities}
+                for kp in keyphrase_fn(sub_text):
+                    if kp.lower() not in seen:
+                        entities.append(kp)
+                        seen.add(kp.lower())
             chunks.append(
                 SemanticChunk(
                     chunk_id=f"{doc_id}_{section.section_id}_{first_block_id}_{idx}",
@@ -150,6 +242,7 @@ def _section_to_chunks(
                     content_type=content_type,
                     language=language,
                     section_type=section.section_type,
+                    genre=section.genre,
                     entities=entities,
                     tags=list(section.tags),
                     depends_on=list(section.depends_on),
@@ -232,6 +325,7 @@ def _section_to_chunks(
                 entity_fn,
                 merge_definitions,
                 embed_char_budget,
+                keyphrase_fn,
             )
         )
 
@@ -245,6 +339,7 @@ def chunk_document(
     entity_fn: Callable[[str], list[str]] | None = None,
     merge_definitions: bool = False,
     embed_char_budget: int | None = None,
+    keyphrase_fn: Callable[[str], list[str]] | None = None,
 ) -> list[SemanticChunk]:
     """
     Convert an enriched :class:`DocumentModel` into a flat list of
@@ -268,6 +363,10 @@ def chunk_document(
         embed_char_budget: When set, split content so the rendered ``embed_text``
                            (header + content) stays within this many chars,
                            avoiding silent model truncation.
+        keyphrase_fn:      Optional deterministic keyphrase extractor. When given,
+                           its phrases are merged into each *prose-genre* chunk's
+                           keywords (technical/``GENERAL`` sections are untouched),
+                           enriching the vector for non-technical content.
 
     Returns:
         Ordered list of SemanticChunks (document order preserved).
@@ -292,6 +391,7 @@ def chunk_document(
                 entity_fn,
                 merge_definitions,
                 embed_char_budget,
+                keyphrase_fn,
             )
         )
 

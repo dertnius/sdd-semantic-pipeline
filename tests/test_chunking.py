@@ -3,7 +3,44 @@
 from __future__ import annotations
 
 from sdd_pipeline.chunking import _split_text, chunk_document
-from sdd_pipeline.models import ContentType, DocumentModel, SectionType
+from sdd_pipeline.enrichment import extract_keyphrases
+from sdd_pipeline.models import (
+    ContentBlock,
+    ContentType,
+    DocumentMetadata,
+    DocumentModel,
+    Genre,
+    Section,
+    SectionType,
+)
+
+
+def test_keyphrase_fn_only_enriches_prose_genre_chunks():
+    body = "The migration strategy reduces downtime. Our migration strategy matters greatly."
+    prose = Section(
+        level=1,
+        title="History",
+        section_id="p",
+        breadcrumb=["History"],
+        genre=Genre.NARRATIVE,
+        blocks=[ContentBlock(block_id="b1", content_type=ContentType.PARAGRAPH, text=body)],
+    )
+    technical = Section(
+        level=1,
+        title="API",
+        section_id="t",
+        breadcrumb=["API"],
+        genre=Genre.GENERAL,
+        blocks=[ContentBlock(block_id="b2", content_type=ContentType.PARAGRAPH, text=body)],
+    )
+    doc = DocumentModel(
+        doc_id="d", metadata=DocumentMetadata(title="T"), root_sections=[prose, technical]
+    )
+    chunks = chunk_document(doc, keyphrase_fn=extract_keyphrases)
+    prose_chunk = next(c for c in chunks if c.breadcrumb == ["History"])
+    tech_chunk = next(c for c in chunks if c.breadcrumb == ["API"])
+    assert any("migration strategy" in e for e in prose_chunk.entities)
+    assert not any("migration strategy" in e for e in tech_chunk.entities)
 
 
 class TestSplitText:
@@ -41,6 +78,37 @@ class TestSplitText:
         assert len(result) >= 2
         for chunk in result:
             assert len(chunk) <= 200
+
+
+class TestSplitCode:
+    def _fenced(self, lines: list[str], lang: str = "python") -> str:
+        return f"```{lang}\n" + "\n".join(lines) + "\n```"
+
+    def test_short_code_unchanged(self):
+        code = self._fenced(["x = 1", "y = 2"])
+        assert _split_text(code, 1000, ContentType.CODE, "python") == [code]
+
+    def test_oversized_code_splits_on_line_boundaries_and_refences(self):
+        lines = [f"line_{i} = compute({i})" for i in range(40)]
+        code = self._fenced(lines, "python")
+        pieces = _split_text(code, 200, ContentType.CODE, "python")
+        assert len(pieces) > 1
+        for p in pieces:
+            # Every piece is a balanced, re-fenced block carrying the language.
+            assert p.startswith("```python\n")
+            assert p.endswith("\n```")
+            assert p.count("```") == 2  # exactly one opening + one closing fence
+            # No identifier was severed: each inner line is one of the originals.
+            inner = p[len("```python\n") : -len("\n```")]
+            for ln in inner.split("\n"):
+                assert ln in lines
+
+    def test_single_overlong_code_line_hard_cut(self):
+        code = self._fenced(["a" * 600], "python")
+        pieces = _split_text(code, 200, ContentType.CODE, "python")
+        assert len(pieces) >= 2
+        for p in pieces:
+            assert p.startswith("```python\n") and p.endswith("\n```")
 
 
 class TestChunkDocument:

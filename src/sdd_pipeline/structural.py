@@ -220,6 +220,39 @@ def _serialize_table(elem: pf.Table) -> str:
     return "\n".join([header_line, sep, *body_lines])
 
 
+def _serialize_definition_list(elem: pf.DefinitionList) -> str:
+    """Serialize a definition/description list as ``term — definition`` lines.
+
+    pandoc previously had no handler here, so glossary/"Definitions" sections were
+    silently dropped. Each item renders on one line as ``term — definition`` (plain
+    text — no emphasis markers, matching the rest of this module); multiple
+    definitions for a term join with ``; ``. A term's nested lists/paragraphs are
+    flattened into its definition text.
+    """
+    lines: list[str] = []
+    for item in elem.content:  # pf.DefinitionItem
+        term = _serialize_inline_list(item.term).strip()
+        defs: list[str] = []
+        for definition in item.definitions:  # pf.Definition
+            parts: list[str] = []
+            for block in definition.content:
+                if isinstance(block, (pf.Para, pf.Plain)):
+                    parts.append(_serialize_inlines(block).strip())
+                elif isinstance(block, (pf.BulletList, pf.OrderedList)):
+                    parts.append(_serialize_list(block))
+                else:
+                    parts.append(pf.stringify(block).strip())
+            text = " ".join(p for p in parts if p)
+            if text:
+                defs.append(text)
+        joined = "; ".join(defs)
+        if term and joined:
+            lines.append(f"{term} — {joined}")
+        elif term or joined:
+            lines.append(term or joined)
+    return "\n".join(lines)
+
+
 def _elem_to_content_block(
     elem: pf.Block,
     doc_id: str,
@@ -293,6 +326,16 @@ def _elem_to_content_block(
         return ContentBlock(
             block_id=block_id,
             content_type=ContentType.BLOCKQUOTE,
+            text=text,
+        )
+
+    if isinstance(elem, pf.DefinitionList):
+        text = _serialize_definition_list(elem)
+        if not text:
+            return None
+        return ContentBlock(
+            block_id=block_id,
+            content_type=ContentType.DEFINITION,
             text=text,
         )
 

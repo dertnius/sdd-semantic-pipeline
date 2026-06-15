@@ -5,10 +5,13 @@ from __future__ import annotations
 import pytest
 
 from sdd_pipeline.enrichment import (
+    classify_document,
+    classify_genre,
     classify_section_type,
     enrich_document,
     enrich_section,
     extract_entities,
+    extract_keyphrases,
     extract_tags,
     scan_corpus,
 )
@@ -17,9 +20,203 @@ from sdd_pipeline.models import (
     ContentType,
     DocumentMetadata,
     DocumentModel,
+    Genre,
     Section,
     SectionType,
 )
+
+
+def _genre_section(title: str, blocks: list[tuple[ContentType, str]]) -> Section:
+    return Section(
+        level=2,
+        title=title,
+        section_id="s",
+        breadcrumb=[title],
+        blocks=[
+            ContentBlock(block_id=f"b{i}", content_type=ct, text=t)
+            for i, (ct, t) in enumerate(blocks)
+        ],
+    )
+
+
+class TestClassifyGenre:
+    def test_glossary_from_definition_blocks(self):
+        s = _genre_section(
+            "Terms",
+            [
+                (
+                    ContentType.DEFINITION,
+                    "API — Application Programming Interface\nDTO — Data Transfer Object",
+                )
+            ],
+        )
+        assert classify_genre(s) == Genre.GLOSSARY
+
+    def test_faq_from_question_paragraphs(self):
+        s = _genre_section(
+            "Common questions",
+            [
+                (ContentType.PARAGRAPH, "How do I reset my password?"),
+                (ContentType.PARAGRAPH, "Open settings and click reset."),
+                (ContentType.PARAGRAPH, "Where are logs stored?"),
+                (ContentType.PARAGRAPH, "Under the logs directory."),
+            ],
+        )
+        assert classify_genre(s) == Genre.FAQ
+
+    def test_howto_from_imperative_ordered_list(self):
+        s = _genre_section(
+            "Onboarding",
+            [(ContentType.LIST, "1. Install the CLI\n2. Configure the token\n3. Run the sync")],
+        )
+        assert classify_genre(s) == Genre.HOWTO
+
+    def test_policy_from_modal_density(self):
+        s = _genre_section(
+            "Access rules",
+            [
+                (
+                    ContentType.PARAGRAPH,
+                    "Users must rotate keys quarterly. Access shall be revoked on exit. Secrets must not be shared.",
+                )
+            ],
+        )
+        assert classify_genre(s) == Genre.POLICY
+
+    def test_narrative_fallback_for_plain_prose(self):
+        s = _genre_section(
+            "Background",
+            [
+                (
+                    ContentType.PARAGRAPH,
+                    "This project began as an experiment to make search better over time.",
+                )
+            ],
+        )
+        assert classify_genre(s) == Genre.NARRATIVE
+
+    def test_code_dominant_section_is_general(self):
+        # Prose-ness gate: a small modal sentence cannot flip a code-dominant section.
+        code = (ContentType.CODE, "```python\n" + "x = compute()\n" * 40 + "```")
+        modal = (ContentType.PARAGRAPH, "You must run it.")
+        assert classify_genre(_genre_section("Example", [code, modal])) == Genre.GENERAL
+
+    def test_body_wins_over_conflicting_title(self):
+        # Title says policy, but the body is clearly an FAQ → body wins.
+        s = _genre_section(
+            "Security Policy",
+            [
+                (ContentType.PARAGRAPH, "Is data encrypted at rest?"),
+                (ContentType.PARAGRAPH, "Yes, with AES-256."),
+                (ContentType.PARAGRAPH, "Who can access secrets?"),
+                (ContentType.PARAGRAPH, "Only the platform team."),
+            ],
+        )
+        assert classify_genre(s) == Genre.FAQ
+
+    def test_title_promotes_when_body_silent(self):
+        # Plain prose body (no detector fires) under a "Glossary" heading → title promotes.
+        s = _genre_section(
+            "Glossary",
+            [(ContentType.PARAGRAPH, "This page collects shared vocabulary for the team.")],
+        )
+        assert classify_genre(s) == Genre.GLOSSARY
+
+    def test_enrich_section_sets_genre(self):
+        s = _genre_section(
+            "FAQ",
+            [
+                (ContentType.PARAGRAPH, "What is this?"),
+                (ContentType.PARAGRAPH, "A tool."),
+                (ContentType.PARAGRAPH, "Why?"),
+                (ContentType.PARAGRAPH, "Because."),
+            ],
+        )
+        enrich_section(s)
+        assert s.genre == Genre.FAQ
+
+
+def _doc_with_blocks(blocks: list[tuple[ContentType, str]], title: str = "Doc") -> DocumentModel:
+    section = Section(
+        level=1,
+        title=title,
+        section_id="s",
+        breadcrumb=[title],
+        blocks=[
+            ContentBlock(block_id=f"b{i}", content_type=ct, text=t)
+            for i, (ct, t) in enumerate(blocks)
+        ],
+    )
+    return DocumentModel(
+        doc_id="d", metadata=DocumentMetadata(title=title), root_sections=[section]
+    )
+
+
+class TestClassifyDocument:
+    def test_code_heavy_is_technical(self):
+        doc = _doc_with_blocks(
+            [
+                (ContentType.CODE, "```python\n" + "x = 1\n" * 50 + "```"),
+                (ContentType.PARAGRAPH, "Note."),
+            ]
+        )
+        assert classify_document(doc) == "technical"
+
+    def test_table_heavy_is_technical(self):
+        doc = _doc_with_blocks(
+            [(ContentType.TABLE, "| a | b |\n| --- | --- |\n" + "| 1 | 2 |\n" * 40)]
+        )
+        assert classify_document(doc) == "technical"
+
+    def test_prose_only_is_prose(self):
+        doc = _doc_with_blocks(
+            [
+                (
+                    ContentType.PARAGRAPH,
+                    "A narrative paragraph about the project history and its goals.",
+                )
+            ]
+        )
+        assert classify_document(doc) == "prose"
+
+    def test_mixed_prose_and_some_code_is_mixed(self):
+        doc = _doc_with_blocks(
+            [
+                (ContentType.PARAGRAPH, "P" * 200),
+                (ContentType.CODE, "```python\n" + "y\n" * 30 + "```"),
+            ]
+        )
+        assert classify_document(doc) == "mixed"
+
+    def test_empty_doc_is_mixed(self):
+        doc = DocumentModel(doc_id="e", metadata=DocumentMetadata(title="E"), root_sections=[])
+        assert classify_document(doc) == "mixed"
+
+
+class TestExtractKeyphrases:
+    def test_extracts_multiword_phrase(self):
+        text = (
+            "The incident response procedure must be followed. "
+            "Our incident response procedure is reviewed quarterly."
+        )
+        assert "incident response procedure" in extract_keyphrases(text)
+
+    def test_deterministic(self):
+        text = "Data retention policy applies here. The data retention policy is reviewed annually."
+        assert extract_keyphrases(text) == extract_keyphrases(text)
+
+    def test_drops_stopwords_and_short_tokens(self):
+        assert extract_keyphrases("the a of in on at is to") == []
+
+    def test_respects_top_n(self):
+        text = ". ".join(f"alpha{i} beta{i} delta" for i in range(10))
+        assert len(extract_keyphrases(text, top_n=3)) <= 3
+
+    def test_phrases_do_not_span_sentence_boundaries(self):
+        # A trailing period must end a phrase, not be absorbed into a word.
+        kps = extract_keyphrases("Rotate credentials quarterly. Access is revoked on exit.")
+        assert all("." not in k for k in kps)
+        assert "quarterly access" not in kps
 
 
 def _doc(doc_id: str, title: str, body: str) -> DocumentModel:

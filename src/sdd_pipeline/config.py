@@ -68,6 +68,29 @@ try:
             "Conservative for a 512-token model so vectors are not silently truncated.",
         )
 
+        # ── Document profile routing (advisory) ───────────────────────────────
+        doc_profile_enabled: bool = Field(
+            default=False,
+            description="Auto-detect a coarse document profile (technical/prose/mixed) and "
+            "use it to pick a default chunk merge strategy when the user set none "
+            "(technical→merge_definitions, prose→merge_prose, mixed→no merge). Off by "
+            "default so output is unchanged; the profile is surfaced on metadata.extra.",
+        )
+        doc_profile_code_ratio: float = Field(
+            default=0.5,
+            description="Code-char fraction at/above which a document is profiled technical.",
+        )
+        doc_profile_table_ratio: float = Field(
+            default=0.4,
+            description="Table-char fraction at/above which a document is profiled technical.",
+        )
+        prose_keyphrases: bool = Field(
+            default=True,
+            description="Merge deterministic RAKE keyphrases into the embed keywords of "
+            "prose-genre chunks (glossary/faq/howto/policy/narrative), enriching the vector "
+            "for non-technical content. Technical/code sections are untouched.",
+        )
+
         # ── Chunk hygiene gate (Arm 1) ────────────────────────────────────────
         chunk_gate: bool = Field(
             default=True,
@@ -172,6 +195,10 @@ except ImportError:
         chunk_merge_prose: bool = False
         chunk_merge_definitions: bool = False
         embed_char_budget: int = 1800
+        doc_profile_enabled: bool = False
+        doc_profile_code_ratio: float = 0.5
+        doc_profile_table_ratio: float = 0.4
+        prose_keyphrases: bool = True
         chunk_gate: bool = True
         embed_char_hard_cap: int = 2048
         convert_quarantine: bool = True

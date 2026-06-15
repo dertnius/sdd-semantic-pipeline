@@ -25,6 +25,42 @@ def _header1(title: str) -> dict:
     return {"t": "Header", "c": [1, [title.lower(), [], []], [{"t": "Str", "c": title}]]}
 
 
+def _deflist(items: list[tuple[str, str]]) -> dict:
+    """A pandoc DefinitionList AST node from (term, definition) string pairs."""
+    content = [
+        [[{"t": "Str", "c": term}], [[{"t": "Para", "c": [{"t": "Str", "c": definition}]}]]]
+        for term, definition in items
+    ]
+    return {"t": "DefinitionList", "c": content}
+
+
+class TestDefinitionList:
+    def test_definition_list_recovered_as_definition_block(self):
+        blocks = [
+            _header1("Glossary"),
+            _deflist(
+                [("API", "Application Programming Interface"), ("DTO", "Data Transfer Object")]
+            ),
+        ]
+        doc = build_structural_model(_ast_titled(blocks), doc_id="d1")
+        section = doc.root_sections[0]
+        defs = [b for b in section.blocks if b.content_type == ContentType.DEFINITION]
+        assert len(defs) == 1
+        assert "API — Application Programming Interface" in defs[0].text
+        assert "DTO — Data Transfer Object" in defs[0].text
+
+    def test_definition_block_survives_chunking_and_gate(self):
+        from sdd_pipeline.quality import check_chunk
+
+        blocks = [_header1("Glossary"), _deflist([("API", "Application Programming Interface")])]
+        doc = build_structural_model(_ast_titled(blocks), doc_id="d2")
+        chunks = chunk_document(doc)
+        def_chunks = [c for c in chunks if c.content_type == ContentType.DEFINITION]
+        assert def_chunks
+        # Plain "term — definition" carries no markup shape → not poisoned.
+        assert check_chunk(def_chunks[0]).is_clean
+
+
 class TestShortHash:
     def test_returns_8_chars(self):
         assert len(_short_hash("a", "b", "c")) == 8

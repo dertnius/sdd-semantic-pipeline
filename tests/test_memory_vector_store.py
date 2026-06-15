@@ -14,7 +14,7 @@ import types
 import pytest
 
 from sdd_pipeline.config import PipelineConfig
-from sdd_pipeline.models import ContentType, SectionType, SemanticChunk
+from sdd_pipeline.models import ContentType, Genre, SectionType, SemanticChunk
 from sdd_pipeline.vector_store import (
     ChromaVectorStore,
     MemoryVectorStore,
@@ -33,6 +33,7 @@ def _chunk(
     section_type: SectionType = SectionType.OVERVIEW,
     content_type: ContentType = ContentType.PARAGRAPH,
     space: str = "PLATFORM",
+    genre: Genre = Genre.GENERAL,
 ) -> SemanticChunk:
     return SemanticChunk(
         chunk_id=chunk_id,
@@ -48,7 +49,22 @@ def _chunk(
         exposes=[],
         space=space,
         labels=[],
+        genre=genre,
     )
+
+
+def test_genre_filter_narrows_results(store):
+    store.add_chunks(
+        [
+            _chunk("g1", content="Alpha", genre=Genre.FAQ),
+            _chunk("g2", content="Beta", genre=Genre.GLOSSARY),
+        ],
+        [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+    )
+    faq = store.search([1.0, 0.0, 0.0], n_results=5, genre=Genre.FAQ)
+    assert [r.chunk_id for r in faq] == ["g1"]
+    # get_corpus honours the same filter (used by hybrid lexical indexing).
+    assert {r.chunk_id for r in store.get_corpus(genre=Genre.GLOSSARY)} == {"g2"}
 
 
 @pytest.fixture
@@ -229,6 +245,12 @@ class TestPersistence:
         assert prov["embedding_model"] == "test-model"
         assert prov["embedding_dimension"] == 3
         assert isinstance(prov["embedding_dimension"], int)
+
+    def test_provenance_records_embed_format_version(self, store):
+        from sdd_pipeline.models import EMBED_FORMAT_VERSION
+
+        store.set_provenance("local", "test-model", 3)
+        assert store.get_provenance()["embed_format_version"] == EMBED_FORMAT_VERSION
 
     def test_expected_files_on_disk(self, store, tmp_path):
         store.add_chunks(_CHUNKS, _VECTORS)

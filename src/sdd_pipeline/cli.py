@@ -777,6 +777,12 @@ def search(
         "consequence | done_criteria | deployment | data_model | security",
     ),
     space: str | None = typer.Option(None, "--space", help="Confluence space key filter."),
+    genre: str | None = typer.Option(
+        None,
+        "--genre",
+        "-g",
+        help="Filter by prose genre: glossary | faq | howto | policy | narrative.",
+    ),
     hybrid: bool = typer.Option(
         False,
         "--hybrid",
@@ -786,7 +792,7 @@ def search(
 ) -> None:
     """Search the indexed SDD documents."""
     from .config import PipelineConfig
-    from .models import SectionType
+    from .models import Genre, SectionType
     from .pipeline import SemanticPipeline
 
     overrides: dict = {
@@ -802,6 +808,7 @@ def search(
     pipeline = SemanticPipeline(config=config)
 
     st = SectionType(section_type) if section_type else None
+    gn = Genre(genre) if genre else None
     try:
         # An empty store passes provenance verification and returns [] — usually
         # the index was built with a different --backend or persist dir.
@@ -812,7 +819,7 @@ def search(
                 f"--backend or persist dir?[/yellow]"
             )
         results = pipeline.search(
-            query, n_results=top_k, section_type=st, space=space, hybrid=hybrid
+            query, n_results=top_k, section_type=st, space=space, hybrid=hybrid, genre=gn
         )
     except (ValueError, ImportError) as exc:
         console.print(f"[red]{exc}[/red]")
