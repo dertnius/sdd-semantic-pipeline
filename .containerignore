@@ -1,6 +1,8 @@
-# Build context for .devcontainer/Dockerfile (and `devpod build`) — keep it lean.
-# Only pyproject.toml, README.md, and src/ are needed to build the image; the
-# real working tree is bind-mounted into the container at runtime.
+# Build context for the production Containerfile (root) and the dev image
+# .devcontainer/Dockerfile. Podman/buildah read .containerignore natively (and
+# fall back to .dockerignore if absent). Both builds COPY only pyproject.toml,
+# README.md and src/, so keep the context lean — the working tree is bind-mounted
+# at runtime.
 
 # ── Virtual environments ──────────────────────────────────────────────────────
 .venv/
@@ -45,4 +47,6 @@ Thumbs.db
 # ── Not needed to build the image ─────────────────────────────────────────────
 docs/
 tests/
+k8s/
+scripts/
 src/tools/eval/e2e_corpus/

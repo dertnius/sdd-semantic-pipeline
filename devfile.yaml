@@ -20,10 +20,11 @@ components:
     container:
       # Shared prebuilt dev image — built from the SAME .devcontainer/Dockerfile
       # that DevPod / VS Code Dev Containers use (pandoc + Python deps + a small
-      # dev embedding model baked in). Publish it once and point this at your
-      # registry, e.g.:
-      #   devpod build . --platform linux/amd64 --repository ghcr.io/<your-org>/sdd-pipeline
-      #   # or: docker build -f .devcontainer/Dockerfile -t ghcr.io/<your-org>/sdd-pipeline:latest . && docker push ghcr.io/<your-org>/sdd-pipeline:latest
+      # dev embedding model baked in). Publish it once with rootless Podman/buildah
+      # and point this at your registry, e.g.:
+      #   podman build -f .devcontainer/Dockerfile --platform linux/amd64 -t ghcr.io/<your-org>/sdd-pipeline:latest .
+      #   podman push ghcr.io/<your-org>/sdd-pipeline:latest
+      #   # (buildah bud / docker build also work — the Dockerfile is engine-agnostic)
       image: ghcr.io/<your-org>/sdd-pipeline:latest
       memoryLimit: 6Gi
       cpuLimit: "2"

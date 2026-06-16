@@ -1,7 +1,9 @@
 {
   // ── Dev Container definition (containers.dev standard) ────────────────────
-  // Works with: VS Code Dev Containers + Docker Desktop, and DevPod
-  // (Docker / Kubernetes / cloud providers). See README "Environment setup".
+  // Works with: VS Code Dev Containers + rootless Podman, and DevPod
+  // (Podman / Kubernetes / cloud providers). See README "Environment setup".
+  // To use Podman as the engine, set the VS Code USER setting (not committable):
+  //   "dev.containers.dockerPath": "podman"
   // Documentation: https://containers.dev/
   "name": "SDD Semantic Pipeline",
 
@@ -15,8 +17,16 @@
 
   // The base image runs as this non-root user; the Dockerfile chowns the Python
   // dirs and makes the cache dirs world-writable so it can run the editable
-  // install and persist caches.
+  // install and persist caches. Under rootless Podman, `containerUser` is the
+  // run-as identity and `updateRemoteUserUID` (default true) remaps it to the
+  // host UID so bind-mounted edits stay host-owned.
   "remoteUser": "vscode",
+  "containerUser": "vscode",
+
+  // Rootless Podman: keep the in-container user mapped to the host user so files
+  // written to the bind-mounted workspace are host-owned (the analog of the
+  // production `--userns=keep-id`). Ignored by the Docker engine.
+  "runArgs": ["--userns=keep-id"],
 
   // ── Dev Container Features ─────────────────────────────────────────────────
   // Features install tooling on top of the built image cleanly.
@@ -57,7 +67,8 @@
   // Persist the pip + HuggingFace caches across rebuilds (the Dockerfile creates
   // these dirs world-writable, so a fresh named volume inherits writable perms).
   // Targets match PIP_CACHE_DIR / HF_HOME above. Named-volume mounts apply to the
-  // Docker provider; on Kubernetes/cloud the baked dev model covers first use.
+  // local Podman/Docker provider; on Kubernetes/cloud the baked dev model covers
+  // first use.
   "mounts": [
     "source=sdd-pipeline-pip-cache,target=/opt/cache/pip,type=volume",
     "source=sdd-pipeline-hf-cache,target=/opt/cache/huggingface,type=volume"

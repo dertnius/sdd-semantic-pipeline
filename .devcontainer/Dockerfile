@@ -1,8 +1,12 @@
 # syntax=docker/dockerfile:1
 # ── Prebuild image for the SDD Semantic Pipeline dev container ────────────────
-# Used by .devcontainer/devcontainer.json (build.dockerfile) and `devpod build`.
-# Bakes pandoc + the heavy Python deps (and a small dev embedding model) so cold
-# starts on Docker / Kubernetes / cloud providers are fast.
+# Used by .devcontainer/devcontainer.json (build.dockerfile); build/publish it
+# with rootless Podman/buildah, e.g.
+#   podman build -f .devcontainer/Dockerfile -t <registry>/sdd-pipeline:latest .
+# (engine-agnostic — also builds under Docker / `devpod build`). Bakes pandoc +
+# the heavy Python deps (and a small dev embedding model) so cold starts on
+# Podman / Kubernetes / cloud providers are fast. For a slim DEPLOYABLE runtime
+# image (not this dev image), see the production Containerfile at the repo root.
 #
 # Base: Microsoft devcontainers Python image — provides a non-root `vscode`
 # user, git, curl, and common dev tooling.

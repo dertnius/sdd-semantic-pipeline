@@ -1,0 +1,162 @@
+# ── AKS deployment for the SDD Semantic Pipeline (batch Job) ──────────────────
+# The pipeline is a finite batch tool, so it deploys as a Kubernetes **Job**, not
+# a Deployment. This manifest indexes inbox/ into a vector index on a shared PVC
+# using the **azure** embedding provider — so the cluster makes Azure OpenAI API
+# calls instead of downloading the ~1.3 GB local model.
+#
+# Prerequisites:
+#   1. Build + push the image to Azure Container Registry (ACR):
+#        az acr build --registry <acr> --image sdd-pipeline:0.1.0 --file Containerfile .
+#        # or rootless local build + push:
+#        #   podman build -t <acr>.azurecr.io/sdd-pipeline:0.1.0 .
+#        #   az acr login --name <acr> && podman push <acr>.azurecr.io/sdd-pipeline:0.1.0
+#   2. Let AKS pull from ACR via managed identity (no imagePullSecret needed):
+#        az aks update -n <aks> -g <rg> --attach-acr <acr>
+#   3. Provide the Azure OpenAI key (kept OUT of this file):
+#        kubectl create secret generic azure-openai \
+#          --from-literal=PIPELINE_AZURE_OPENAI_API_KEY='***'
+#      (Production: prefer the AKS Secrets Store CSI driver backed by Key Vault.)
+#   4. Edit the ConfigMap endpoint/deployment and the Job image ref below, then:
+#        kubectl apply -f k8s/job.yaml
+#
+# Seeding the inbox: this example expects the `sdd-inbox` PVC to already hold the
+# source .md/.html files (e.g. `kubectl cp ./inbox <pod>:/app/inbox`, or seed an
+# Azure File share with `az storage file upload-batch`). See the commented
+# initContainer for an in-cluster pull alternative.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sdd-pipeline-config
+data:
+  # Azure OpenAI embeddings — no local model download on-cluster. With
+  # provider=azure the deployment IS the model; --model is ignored.
+  PIPELINE_EMBEDDING_PROVIDER: "azure"
+  PIPELINE_AZURE_OPENAI_ENDPOINT: "https://<resource>.openai.azure.com/"
+  PIPELINE_AZURE_OPENAI_DEPLOYMENT: "<embeddings-deployment>"
+  PIPELINE_AZURE_OPENAI_API_VERSION: "2024-10-21"
+  # memory backend persists <collection>.json under the index dir on the PVC.
+  # For chroma, set this to "chroma" AND build the image with INSTALL_EXTRAS=azure,chroma.
+  PIPELINE_VECTOR_STORE_BACKEND: "memory"
+  PIPELINE_COLLECTION_NAME: "sdd_docs"
+  # Workspace contract — absolute zones (CHROMA_PERSIST_DIR stays under outbox).
+  PIPELINE_INBOX_DIR: "/app/inbox"
+  PIPELINE_OUTBOX_DIR: "/app/outbox"
+  PIPELINE_CHROMA_PERSIST_DIR: "/app/outbox/index"
+  PIPELINE_ENFORCE_WORKSPACE: "true"
+  ANONYMIZED_TELEMETRY: "false"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azure-openai
+type: Opaque
+stringData:
+  # Placeholder only — DO NOT commit a real key. Overwrite via:
+  #   kubectl create secret generic azure-openai --from-literal=PIPELINE_AZURE_OPENAI_API_KEY='***'
+  PIPELINE_AZURE_OPENAI_API_KEY: "REPLACE_ME"
+---
+# Output zone — RWX so an index Job and a later search Job can share it.
+# azurefile tolerates non-root + fsGroup writes; the index lands at the
+# /app/outbox/index sub-path.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sdd-outbox
+spec:
+  accessModes: ["ReadWriteMany"]
+  storageClassName: azurefile
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Input zone — seed it before the Job runs (see header notes / initContainer).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sdd-inbox
+spec:
+  accessModes: ["ReadWriteMany"]
+  storageClassName: azurefile
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sdd-index
+  labels:
+    app: sdd-pipeline
+    role: index
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: sdd-pipeline
+        role: index
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000          # makes the azurefile mounts group-writable for app
+      # ── Optional: seed the inbox from Azure Blob (or git) before indexing ────
+      # initContainers:
+      #   - name: fetch-inbox
+      #     image: mcr.microsoft.com/azure-cli:latest
+      #     command: ["sh", "-c"]
+      #     args:
+      #       - az storage blob download-batch -d /app/inbox -s <container> --account-name <acct>
+      #     volumeMounts:
+      #       - name: inbox
+      #         mountPath: /app/inbox
+      containers:
+        - name: pipeline
+          # Replace with your ACR image ref (see header).
+          image: <acr>.azurecr.io/sdd-pipeline:0.1.0
+          # ENTRYPOINT is `sdd-pipeline`; args are the subcommand + flags.
+          args: ["index", "inbox/", "--provider", "azure"]
+          envFrom:
+            - configMapRef:
+                name: sdd-pipeline-config
+            - secretRef:
+                name: azure-openai
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "6Gi"
+              cpu: "2"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false   # HF_HOME / tmp writes under /app
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: inbox
+              mountPath: /app/inbox
+            - name: outbox
+              mountPath: /app/outbox
+      volumes:
+        - name: inbox
+          persistentVolumeClaim:
+            claimName: sdd-inbox
+        - name: outbox
+          persistentVolumeClaim:
+            claimName: sdd-outbox
+
+# ── Notes ─────────────────────────────────────────────────────────────────────
+# • Search workload: run as a SEPARATE Job (or short-lived Deployment for the
+#   `sdd-pipeline mcp` server) mounting `sdd-outbox` read-only. It MUST also use
+#   `--provider azure` — the index records its (provider, model, dimension)
+#   provenance and search rejects a mismatched embedder (incompatible vectors).
+# • Scheduled re-index: change `kind: Job` to `kind: CronJob` and wrap the
+#   `template` under `spec.jobTemplate.spec.template`, adding e.g.
+#   `spec.schedule: "0 2 * * *"`.
+# • chroma backend: needs INSTALL_EXTRAS=azure,chroma in the image and either the
+#   index dir on this PVC (memory-like persistence) or a separate Chroma
+#   Deployment+Service — out of scope for this example.
