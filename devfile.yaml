@@ -18,8 +18,13 @@ metadata:
 components:
   - name: python
     container:
-      # Python 3.11 Debian-based image; small enough for fast pulls
-      image: python:3.11-bookworm
+      # Shared prebuilt dev image — built from the SAME .devcontainer/Dockerfile
+      # that DevPod / VS Code Dev Containers use (pandoc + Python deps + a small
+      # dev embedding model baked in). Publish it once and point this at your
+      # registry, e.g.:
+      #   devpod build . --platform linux/amd64 --repository ghcr.io/<your-org>/sdd-pipeline
+      #   # or: docker build -f .devcontainer/Dockerfile -t ghcr.io/<your-org>/sdd-pipeline:latest . && docker push ghcr.io/<your-org>/sdd-pipeline:latest
+      image: ghcr.io/<your-org>/sdd-pipeline:latest
       memoryLimit: 6Gi
       cpuLimit: "2"
       mountSources: true
@@ -42,16 +47,24 @@ components:
           value: "false"
         - name: PIP_NO_INPUT
           value: "1"
+        # Match the prebuilt image's cache dirs (persisted via the PVCs below).
+        - name: PIP_CACHE_DIR
+          value: /opt/cache/pip
+        - name: HF_HOME
+          value: /opt/cache/huggingface
       endpoints:
         - name: chromadb-http
           targetPort: 8000
           exposure: internal
           protocol: http
+      # Cache paths match the prebuilt image (PIP_CACHE_DIR / HF_HOME). Note: a
+      # fresh PVC mounted here hides the model baked into the image, so the dev
+      # model re-downloads once on first `index`, then persists across restarts.
       volumeMounts:
         - name: pip-cache
-          path: /root/.cache/pip
+          path: /opt/cache/pip
         - name: hf-cache
-          path: /root/.cache/huggingface
+          path: /opt/cache/huggingface
 
   # Reusable cache volumes so model downloads survive pod restarts
   - name: pip-cache
@@ -66,17 +79,18 @@ commands:
   # ── 1. Bootstrap (run once after container start) ─────────────────────────
   - id: bootstrap
     exec:
-      label: "Bootstrap: install pandoc + Python deps"
+      label: "Bootstrap: verify prebuilt image + refresh editable install"
       component: python
       commandLine: |
         set -e
-        echo "==> Installing pandoc binary..."
-        apt-get update -qq && apt-get install -y -qq pandoc
-        echo "==> pandoc $(pandoc --version | head -1)"
-        echo "==> Installing Python dependencies..."
-        pip install --quiet --upgrade pip
-        pip install --quiet -e "${PROJECT_SOURCE}[dev]"
-        echo "==> All dependencies installed."
+        # pandoc + all Python deps are baked into the prebuilt image, so there is
+        # no apt/pip download here. Refresh the editable install so any deps added
+        # to pyproject.toml since the image was built are picked up (tolerated if
+        # site-packages is read-only — the baked package + PYTHONPATH still work).
+        echo "==> Prebuilt image: pandoc $(pandoc --version | head -1)"
+        pip install --quiet -e "${PROJECT_SOURCE}[dev]" \
+          || echo "    editable refresh skipped (read-only site-packages); using baked package + PYTHONPATH"
+        sdd-pipeline check
       workingDir: ${PROJECT_SOURCE}
 
   # ── 2. Verify environment ─────────────────────────────────────────────────

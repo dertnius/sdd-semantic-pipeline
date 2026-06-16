@@ -1,0 +1,48 @@
+# Build context for .devcontainer/Dockerfile (and `devpod build`) — keep it lean.
+# Only pyproject.toml, README.md, and src/ are needed to build the image; the
+# real working tree is bind-mounted into the container at runtime.
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Pipeline workspace zones (large and/or confidential) ──────────────────────
+outbox/
+inbox/
+
+# ── Build + packaging output ──────────────────────────────────────────────────
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ── Caches ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# ── VCS + secrets ─────────────────────────────────────────────────────────────
+.git/
+.github/
+.env
+.env.*
+
+# ── Editors / OS / agent ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db
+
+# ── Not needed to build the image ─────────────────────────────────────────────
+docs/
+tests/
+src/tools/eval/e2e_corpus/
