@@ -1,0 +1,379 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 7,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "docs/learn/bridge/01-project-anatomy-and-tooling.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 121,
+      "nonEmptyLines": 91,
+      "sections": [
+        {
+          "heading": "01 — Project anatomy and tooling (for a .csproj native)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "`[project]` ≈ the `.csproj` PropertyGroup + PackageReferences",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "`[project.optional-dependencies]` ≈ conditional PackageReferences",
+          "level": 2,
+          "line": 23
+        },
+        {
+          "heading": "`[project.scripts]` ≈ a `dotnet tool` command",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "venv ≈ a self-contained, per-project runtime",
+          "level": 2,
+          "line": 42
+        },
+        {
+          "heading": "`pip install -e \".[dev]\"` ≈ ProjectReference instead of PackageReference",
+          "level": 2,
+          "line": 50
+        },
+        {
+          "heading": "`[tool.*]` tables ≈ analyzer + test settings",
+          "level": 2,
+          "line": 57
+        },
+        {
+          "heading": "The commands you'll actually type",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "Try it",
+          "level": 2,
+          "line": 91
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 98
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "docs/learn/bridge/02-dataclasses-vs-csharp-records.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 122,
+      "nonEmptyLines": 94,
+      "sections": [
+        {
+          "heading": "02 — Dataclasses vs C# records",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "`@dataclass` ≈ `record` (positional class)",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "`field(default_factory=list)` — the foot-gun C# doesn't have",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "`__post_init__` + the frozen-write incantation",
+          "level": 2,
+          "line": 49
+        },
+        {
+          "heading": "`StrEnum` ≈ enum whose `ToString()` is the wire value",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "`asdict()` ≈ reflection-based serialization",
+          "level": 2,
+          "line": 89
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 103
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 124,
+      "nonEmptyLines": 96,
+      "sections": [
+        {
+          "heading": "03 — Protocols, typing, and unions",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "`Protocol` ≈ interface, but structural (Go-style)",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "`str | None` ≈ `string?` — but nobody enforces it at runtime",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "`TYPE_CHECKING` ≈ a compile-time-only reference (cycle breaker)",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "Constructor injection without a container",
+          "level": 2,
+          "line": 61
+        },
+        {
+          "heading": "Type aliases ≈ `global using` alias",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 98
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 126,
+      "nonEmptyLines": 93,
+      "sections": [
+        {
+          "heading": "04 — Iteration: comprehensions, generators, and friends",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Comprehensions ≈ LINQ `Select`/`Where` — but eager",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Generators ≈ `IEnumerable<T>` with `yield return`",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "`sorted(key=lambda)` ≈ `OrderBy(...)`",
+          "level": 2,
+          "line": 56
+        },
+        {
+          "heading": "`Counter` / `defaultdict` ≈ `GetValueOrDefault` patterns, packaged",
+          "level": 2,
+          "line": 68
+        },
+        {
+          "heading": "Slicing and `enumerate`",
+          "level": 2,
+          "line": 83
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 104
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 131,
+      "nonEmptyLines": 98,
+      "sections": [
+        {
+          "heading": "05 — Modules, imports, and lazy patterns",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Module = file = a namespace that is also a singleton",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "`@property` lazy-init ≈ `Lazy<T>`",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "Lazy/optional imports ≈ optional assembly loading with a graceful error",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "`logging.getLogger(__name__)` ≈ `ILogger<T>` category convention",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "`pathlib.Path` ≈ `System.IO` unified into one object",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "`if __name__ == \"__main__\":` ≈ the `Program.Main` guard",
+          "level": 2,
+          "line": 79
+        },
+        {
+          "heading": "Bonus gotcha, live in this repo: the docstring escape-sequence warning",
+          "level": 2,
+          "line": 92
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 106
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "docs/learn/bridge/06-pydantic-settings-and-typer.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 123,
+      "nonEmptyLines": 97,
+      "sections": [
+        {
+          "heading": "06 — pydantic-settings (config) and typer (CLI)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "`BaseSettings` ≈ `IConfiguration` + `IOptions<T>` in one class",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "THE DUAL-BRANCH TRAP — read this twice",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "typer ≈ System.CommandLine, driven by function signatures",
+          "level": 2,
+          "line": 63
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 97
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 135,
+      "nonEmptyLines": 109,
+      "sections": [
+        {
+          "heading": "07 — pytest for xUnit developers",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Discovery by naming, assertion by `assert`",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Fixtures ≈ constructor injection, resolved by parameter *name*",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "`parametrize` ≈ `[Theory]`/`[InlineData]`; markers ≈ `[Trait]`",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "monkeypatch and mocker — the Moq corner",
+          "level": 2,
+          "line": 62
+        },
+        {
+          "heading": "The keystone: inject mocks at the seam",
+          "level": 2,
+          "line": 86
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 111
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    }
+  ]
+}

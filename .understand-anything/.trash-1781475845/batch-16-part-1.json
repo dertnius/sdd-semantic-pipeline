@@ -1,0 +1,125 @@
+{
+  "nodes": [
+    {
+      "id": "config:.devcontainer/devcontainer.json",
+      "type": "config",
+      "name": "devcontainer.json",
+      "filePath": ".devcontainer/devcontainer.json",
+      "summary": "VS Code Dev Container definition based on a Python 3.11 Debian image, installing pandoc and GitHub CLI features and bootstrapping the editable install plus an 'sdd-pipeline check' on create.",
+      "tags": ["configuration", "containerization", "dev-environment", "python"],
+      "complexity": "simple",
+      "languageNotes": "Sets remoteEnv (PYTHONPATH, PIPELINE_* vars) and uses Dev Container Features to layer pandoc onto the base image."
+    },
+    {
+      "id": "document:.github/agents/adr-generator.agent.md",
+      "type": "document",
+      "name": "adr-generator.agent.md",
+      "filePath": ".github/agents/adr-generator.agent.md",
+      "summary": "Prompt definition for an 'ADR Generator' Copilot agent that produces comprehensive Architectural Decision Records with structured formatting optimized for AI and human readers.",
+      "tags": ["documentation", "agent-definition", "adr", "ai-prompt"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.github/copilot-instructions.md",
+      "type": "document",
+      "name": "copilot-instructions.md",
+      "filePath": ".github/copilot-instructions.md",
+      "summary": "Concise Copilot guidance for the SDD semantic pipeline repo, summarizing the 7-stage architecture and linking to source docs for editing conventions and module boundaries.",
+      "tags": ["documentation", "ai-prompt", "contributing", "overview"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/adr/adr-0001-modular-semantic-pipeline.md",
+      "type": "document",
+      "name": "adr-0001-modular-semantic-pipeline.md",
+      "filePath": "docs/adr/adr-0001-modular-semantic-pipeline.md",
+      "summary": "Architectural Decision Record proposing adoption of the modular 7-stage semantic pipeline, with context, decision, consequences, and weighed alternatives.",
+      "tags": ["documentation", "adr", "architecture", "decision"],
+      "complexity": "simple",
+      "languageNotes": "Carries YAML frontmatter (title/status/date/authors/tags) consumed by the pipeline's metadata extraction."
+    },
+    {
+      "id": "document:docs/archive/DISCOVERED_INTERFACES.md",
+      "type": "document",
+      "name": "DISCOVERED_INTERFACES.md",
+      "filePath": "docs/archive/DISCOVERED_INTERFACES.md",
+      "summary": "Archived reference cataloguing the real attribute and function names of the data model and enrichment surface (with file:line refs) used to ground a later enrichment overhaul.",
+      "tags": ["documentation", "archive", "reference", "data-model"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/confluence-conversion-rules.md",
+      "type": "document",
+      "name": "confluence-conversion-rules.md",
+      "filePath": "docs/confluence-conversion-rules.md",
+      "summary": "Definitive rule set for converting Confluence Server/DC storage-format XHTML and rendered HTML exports into GitLab-flavoured Markdown optimized for vector embedding; the spec backing the convert subpackage.",
+      "tags": ["documentation", "specification", "conversion", "markdown"],
+      "complexity": "complex",
+      "languageNotes": "Self-flagged corpus hazard: contains literal Confluence ac:/ri:/at: syntax in code spans, so it must be excluded from any embedding corpus."
+    },
+    {
+      "id": "document:docs/learn/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "docs/learn/README.md",
+      "summary": "Index for a self-study curriculum aimed at a senior C# developer new to Python, routing the reader through bridge concept maps, per-module tours, and code-grounded exercises.",
+      "tags": ["documentation", "entry-point", "learning", "onboarding"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/notes/SPIKE_FINDINGS.md",
+      "type": "document",
+      "name": "SPIKE_FINDINGS.md",
+      "filePath": "docs/notes/SPIKE_FINDINGS.md",
+      "summary": "Spike notes verifying template-derived enrichment assumptions at the pipeline layer (build_structural_model output), documenting how tables flatten to pipe-strings and other extraction observations.",
+      "tags": ["documentation", "spike", "notes", "enrichment"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/template/template.md",
+      "type": "document",
+      "name": "template.md",
+      "filePath": "docs/template/template.md",
+      "summary": "Large SDD document template with a full numbered section skeleton (executive summary, requirements, architecture, decisions) used as a fixture for enrichment and chunking spikes.",
+      "tags": ["documentation", "template", "sdd", "fixture"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:.devcontainer/devcontainer.json",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:.github/copilot-instructions.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/confluence-conversion-rules.md",
+      "target": "file:src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/notes/SPIKE_FINDINGS.md",
+      "target": "document:docs/template/template.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:.github/agents/adr-generator.agent.md",
+      "target": "document:docs/adr/adr-0001-modular-semantic-pipeline.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

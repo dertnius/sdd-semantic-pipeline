@@ -1,0 +1,145 @@
+{
+  "nodes": [
+    {
+      "id": "document:docs/guides/confluence-storage-format-gitlab-markdown.md",
+      "type": "document",
+      "name": "confluence-storage-format-gitlab-markdown.md",
+      "filePath": "docs/guides/confluence-storage-format-gitlab-markdown.md",
+      "summary": "Superseded reference note on converting Confluence storage format to GitLab Markdown, kept for history after confluence-conversion-rules.md replaced it.",
+      "tags": ["documentation", "confluence", "conversion", "superseded"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/guides/convert-html-gitlab-markdown-linux.md",
+      "type": "document",
+      "name": "convert-html-gitlab-markdown-linux.md",
+      "filePath": "docs/guides/convert-html-gitlab-markdown-linux.md",
+      "summary": "Linux operator instructions for running the HTML-to-GitLab-Markdown converter, covering setup and invocation steps.",
+      "tags": ["documentation", "conversion", "linux", "howto"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/guides/convert-html-gitlab-markdown-windows.md",
+      "type": "document",
+      "name": "convert-html-gitlab-markdown-windows.md",
+      "filePath": "docs/guides/convert-html-gitlab-markdown-windows.md",
+      "summary": "Windows operator instructions for running the HTML-to-GitLab-Markdown converter, covering setup and invocation steps.",
+      "tags": ["documentation", "conversion", "windows", "howto"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/guides/index.md",
+      "type": "document",
+      "name": "index.md",
+      "filePath": "docs/guides/index.md",
+      "summary": "Wiki index page that catalogs all guide pages and the learning knowledge base, with per-page summaries and last-updated dates serving as the documentation entry point.",
+      "tags": ["documentation", "entry-point", "index", "navigation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/guides/log.md",
+      "type": "document",
+      "name": "log.md",
+      "filePath": "docs/guides/log.md",
+      "summary": "Chronological wiki ingestion log recording each source-to-wiki-page mapping and feature/refactor event in the documentation workflow.",
+      "tags": ["documentation", "changelog", "provenance", "log"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/guides/pipeline-101.md",
+      "type": "document",
+      "name": "pipeline-101.md",
+      "filePath": "docs/guides/pipeline-101.md",
+      "summary": "Comprehensive operator runbook covering the seven-stage indexing pipeline: onboarding a document to chunks, incremental updates without a full re-index, vocabulary/taxonomy management, semantic-quality evaluation, and a troubleshooting loop.",
+      "tags": ["documentation", "runbook", "pipeline", "operations", "howto"],
+      "complexity": "complex",
+      "languageNotes": "Long-form step-by-step guide organized into seven numbered sections plus quick-reference and cheat-sheet tables."
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:docs/guides/index.md",
+      "target": "document:docs/guides/pipeline-101.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/guides/index.md",
+      "target": "document:docs/guides/confluence-storage-format-gitlab-markdown.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/guides/index.md",
+      "target": "document:docs/guides/convert-html-gitlab-markdown-linux.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/guides/index.md",
+      "target": "document:docs/guides/convert-html-gitlab-markdown-windows.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/guides/log.md",
+      "target": "document:docs/guides/confluence-storage-format-gitlab-markdown.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/guides/log.md",
+      "target": "document:docs/guides/convert-html-gitlab-markdown-linux.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/guides/log.md",
+      "target": "document:docs/guides/convert-html-gitlab-markdown-windows.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/guides/pipeline-101.md",
+      "target": "file:src/sdd_pipeline/pipeline.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/guides/pipeline-101.md",
+      "target": "file:src/sdd_pipeline/cli.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/guides/pipeline-101.md",
+      "target": "file:src/sdd_pipeline/quality.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/guides/convert-html-gitlab-markdown-linux.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/guides/convert-html-gitlab-markdown-windows.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

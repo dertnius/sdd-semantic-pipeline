@@ -1,0 +1,57 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+# Lines below are suggestions — uncomment to activate.
+# Use ! prefix to force-include something excluded by defaults.
+#
+# Built-in defaults (always excluded unless negated):
+#   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
+#
+# --- From .gitignore (uncomment to exclude) ---
+
+# *.py[cod]
+# *$py.class
+# *.egg
+# *.egg-info/
+# .eggs/
+# env/
+# ENV/
+# .pytest_cache/
+# .mypy_cache/
+# .ruff_cache/
+# .tox/
+# .coverage
+# .coverage.*
+# coverage.xml
+# htmlcov/
+# .env
+# .env.*
+# !.env.example
+# *.chunks.json
+# *.chunks.jsonl
+# export-report.json
+# conversion-report.json
+# .tmp_dc/
+# out/
+# src/tools/eval/e2e_corpus/
+# src/tools/eval/corpus_manifest.json
+# *.swp
+# *.swo
+# .DS_Store
+# Thumbs.db
+# .claude/
+
+# --- Transient / scratch (excluded — not project source) ---
+
+.tmp_pytest/
+.understand-anything/
+
+# --- Detected directories (uncomment to exclude) ---
+
+# tests/
+# docs/
+
+# --- Test file patterns (uncomment to exclude) ---
+
+# *.test.*
+# *.spec.*
+# *.snap

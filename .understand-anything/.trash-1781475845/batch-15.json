@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "document:tests/convert/examples/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "tests/convert/examples/README.md",
+      "summary": "Documents the hand-authored Confluence-to-GitLab-Markdown converter fixtures and the converter's actual verified output, defining a three-tier 'no information loss' bar and a per-construct scenario map used to validate the convert subpackage end-to-end.",
+      "tags": ["documentation", "test", "converter", "fixtures", "regression"],
+      "complexity": "moderate",
+      "languageNotes": "Specification-by-example: tables enumerate each supported construct's expected Markdown output and the inherent Tier-2 degradations the converter cannot avoid."
+    },
+    {
+      "id": "document:tests/convert/examples/adversarial-edge-cases.html",
+      "type": "document",
+      "name": "adversarial-edge-cases.html",
+      "filePath": "tests/convert/examples/adversarial-edge-cases.html",
+      "summary": "Sanitized HTML repros of real Confluence-export failure modes (layout-via-table, colour-coded cells, tiered/merged headers, custom brush DSL, unsupported macros, draw.io/SVG) used to drive the converter's loss-and-noise regression checks.",
+      "tags": ["test", "fixtures", "converter", "edge-cases", "html"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:tests/convert/examples/order-management-sad.html",
+      "type": "document",
+      "name": "order-management-sad.html",
+      "filePath": "tests/convert/examples/order-management-sad.html",
+      "summary": "Clean rendered-export mock Confluence page exercising every supported construct on its happy path; serves as the regression baseline for the HTML-to-GitLab-Markdown converter.",
+      "tags": ["test", "fixtures", "converter", "baseline", "html"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:tests/convert/examples/order-management-sad.storage.html",
+      "type": "document",
+      "name": "order-management-sad.storage.html",
+      "filePath": "tests/convert/examples/order-management-sad.storage.html",
+      "summary": "Confluence storage-format (ac:/ri:/at:) mock exercising the converter's best-effort element-based legacy handlers, deliberately excluding CDATA macro bodies that lxml drops.",
+      "tags": ["test", "fixtures", "converter", "storage-format", "html"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:tests/convert/examples/README.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:tests/convert/examples/README.md",
+      "target": "file:tests/convert/examples/order-management-sad.html",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:tests/convert/examples/README.md",
+      "target": "file:tests/convert/examples/adversarial-edge-cases.html",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:tests/convert/examples/README.md",
+      "target": "file:tests/convert/examples/order-management-sad.storage.html",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:tests/convert/examples/order-management-sad.html",
+      "target": "file:tests/convert/test_html_to_gitlab_md_v3.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:tests/convert/examples/adversarial-edge-cases.html",
+      "target": "file:tests/convert/test_html_to_gitlab_md_v3.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:tests/convert/examples/order-management-sad.storage.html",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

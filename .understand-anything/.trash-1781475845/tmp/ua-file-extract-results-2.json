@@ -1,0 +1,2206 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 8,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/sdd_pipeline/ast_parser.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 87,
+      "nonEmptyLines": 72,
+      "functions": [
+        {
+          "name": "generate_ast",
+          "startLine": 14,
+          "endLine": 46,
+          "params": [
+            "md_path",
+            "from_format"
+          ]
+        },
+        {
+          "name": "generate_ast_batch",
+          "startLine": 49,
+          "endLine": 75,
+          "params": [
+            "md_paths",
+            "from_format",
+            "output_dir"
+          ]
+        },
+        {
+          "name": "pandoc_version",
+          "startLine": 78,
+          "endLine": 87,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "generate_ast",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "generate_ast_batch",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "pandoc_version",
+          "line": 78,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "generate_ast",
+          "callee": "subprocess.run",
+          "lineNumber": 32
+        },
+        {
+          "caller": "generate_ast",
+          "callee": "str",
+          "lineNumber": 35
+        },
+        {
+          "caller": "generate_ast",
+          "callee": "json.loads",
+          "lineNumber": 45
+        },
+        {
+          "caller": "generate_ast_batch",
+          "callee": "output_dir.mkdir",
+          "lineNumber": 66
+        },
+        {
+          "caller": "generate_ast_batch",
+          "callee": "generate_ast",
+          "lineNumber": 70
+        },
+        {
+          "caller": "generate_ast_batch",
+          "callee": "out.write_text",
+          "lineNumber": 73
+        },
+        {
+          "caller": "generate_ast_batch",
+          "callee": "json.dumps",
+          "lineNumber": 73
+        },
+        {
+          "caller": "pandoc_version",
+          "callee": "subprocess.run",
+          "lineNumber": 80
+        },
+        {
+          "caller": "pandoc_version",
+          "callee": "result.stdout.split",
+          "lineNumber": 87
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/sdd_pipeline/corpus_taxonomy.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 99,
+      "nonEmptyLines": 83,
+      "functions": [
+        {
+          "name": "build_corpus_taxonomy",
+          "startLine": 37,
+          "endLine": 84,
+          "params": [
+            "docs_dir",
+            "min_docs",
+            "glob",
+            "from_format"
+          ]
+        },
+        {
+          "name": "taxonomy_to_json",
+          "startLine": 87,
+          "endLine": 93,
+          "params": [
+            "taxonomy"
+          ]
+        },
+        {
+          "name": "vocabulary_to_json",
+          "startLine": 96,
+          "endLine": 99,
+          "params": [
+            "vocab"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "build_corpus_taxonomy",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "taxonomy_to_json",
+          "line": 87,
+          "isDefault": false
+        },
+        {
+          "name": "vocabulary_to_json",
+          "line": 96,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "defaultdict",
+          "lineNumber": 52
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "defaultdict",
+          "lineNumber": 52
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "defaultdict",
+          "lineNumber": 53
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "defaultdict",
+          "lineNumber": 54
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "defaultdict",
+          "lineNumber": 54
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "sorted",
+          "lineNumber": 56
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "Path(docs_dir).glob",
+          "lineNumber": 56
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "Path",
+          "lineNumber": 56
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "p.as_posix",
+          "lineNumber": 56
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "generate_ast",
+          "lineNumber": 58
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "build_structural_model",
+          "lineNumber": 59
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "str",
+          "lineNumber": 59
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "doc.iter_sections",
+          "lineNumber": 60
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "_section_key",
+          "lineNumber": 61
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "parse_pipe_table",
+          "lineNumber": 65
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "fields_and_orientation",
+          "lineNumber": 66
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "section_field_docs[key][field].add",
+          "lineNumber": 71
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "field_docs[field].add",
+          "lineNumber": 72
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "section_field_docs.items",
+          "lineNumber": 75
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "sorted",
+          "lineNumber": 76
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "fmap.items",
+          "lineNumber": 76
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "len",
+          "lineNumber": 76
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "sorted",
+          "lineNumber": 80
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "section_orient[key].items",
+          "lineNumber": 80
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "len",
+          "lineNumber": 83
+        },
+        {
+          "caller": "build_corpus_taxonomy",
+          "callee": "field_docs.items",
+          "lineNumber": 83
+        },
+        {
+          "caller": "taxonomy_to_json",
+          "callee": "sorted",
+          "lineNumber": 90
+        },
+        {
+          "caller": "taxonomy_to_json",
+          "callee": "taxonomy.items",
+          "lineNumber": 91
+        },
+        {
+          "caller": "taxonomy_to_json",
+          "callee": "json.dumps",
+          "lineNumber": 93
+        },
+        {
+          "caller": "vocabulary_to_json",
+          "callee": "dict",
+          "lineNumber": 98
+        },
+        {
+          "caller": "vocabulary_to_json",
+          "callee": "sorted",
+          "lineNumber": 98
+        },
+        {
+          "caller": "vocabulary_to_json",
+          "callee": "vocab.items",
+          "lineNumber": 98
+        },
+        {
+          "caller": "vocabulary_to_json",
+          "callee": "json.dumps",
+          "lineNumber": 99
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/sdd_pipeline/direction.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 51,
+      "nonEmptyLines": 38,
+      "functions": [
+        {
+          "name": "load_field_directions",
+          "startLine": 23,
+          "endLine": 46,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "resolve_direction",
+          "startLine": 49,
+          "endLine": 51,
+          "params": [
+            "field",
+            "directions"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "load_field_directions",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "resolve_direction",
+          "line": 49,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "load_field_directions",
+          "callee": "Path",
+          "lineNumber": 28
+        },
+        {
+          "caller": "load_field_directions",
+          "callee": "p.exists",
+          "lineNumber": 29
+        },
+        {
+          "caller": "load_field_directions",
+          "callee": "ImportError",
+          "lineNumber": 35
+        },
+        {
+          "caller": "load_field_directions",
+          "callee": "yaml.safe_load",
+          "lineNumber": 39
+        },
+        {
+          "caller": "load_field_directions",
+          "callee": "p.read_text",
+          "lineNumber": 39
+        },
+        {
+          "caller": "load_field_directions",
+          "callee": "raw.get",
+          "lineNumber": 42
+        },
+        {
+          "caller": "load_field_directions",
+          "callee": "normalise_header",
+          "lineNumber": 43
+        },
+        {
+          "caller": "load_field_directions",
+          "callee": "str",
+          "lineNumber": 43
+        },
+        {
+          "caller": "resolve_direction",
+          "callee": "directions.get",
+          "lineNumber": 51
+        },
+        {
+          "caller": "resolve_direction",
+          "callee": "normalise_header",
+          "lineNumber": 51
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/sdd_pipeline/doc_router.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 67,
+      "nonEmptyLines": 51,
+      "functions": [
+        {
+          "name": "_heading_keys",
+          "startLine": 39,
+          "endLine": 41,
+          "params": [
+            "doc"
+          ]
+        },
+        {
+          "name": "detect_doc_type",
+          "startLine": 44,
+          "endLine": 49,
+          "params": [
+            "doc",
+            "threshold"
+          ]
+        },
+        {
+          "name": "load_taxonomy",
+          "startLine": 52,
+          "endLine": 59,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "taxonomy_for",
+          "startLine": 62,
+          "endLine": 67,
+          "params": [
+            "doc",
+            "sad_taxonomy"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_heading_keys",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "detect_doc_type",
+          "line": 44,
+          "isDefault": false
+        },
+        {
+          "name": "load_taxonomy",
+          "line": 52,
+          "isDefault": false
+        },
+        {
+          "name": "taxonomy_for",
+          "line": 62,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_heading_keys",
+          "callee": "normalise_header",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_heading_keys",
+          "callee": "_LEAD_NUM.sub",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_heading_keys",
+          "callee": "doc.iter_sections",
+          "lineNumber": 41
+        },
+        {
+          "caller": "detect_doc_type",
+          "callee": "_heading_keys",
+          "lineNumber": 46
+        },
+        {
+          "caller": "detect_doc_type",
+          "callee": "len",
+          "lineNumber": 47
+        },
+        {
+          "caller": "detect_doc_type",
+          "callee": "logger.info",
+          "lineNumber": 48
+        },
+        {
+          "caller": "detect_doc_type",
+          "callee": "len",
+          "lineNumber": 48
+        },
+        {
+          "caller": "detect_doc_type",
+          "callee": "sorted",
+          "lineNumber": 48
+        },
+        {
+          "caller": "load_taxonomy",
+          "callee": "Path",
+          "lineNumber": 54
+        },
+        {
+          "caller": "load_taxonomy",
+          "callee": "p.exists",
+          "lineNumber": 55
+        },
+        {
+          "caller": "load_taxonomy",
+          "callee": "logger.warning",
+          "lineNumber": 56
+        },
+        {
+          "caller": "load_taxonomy",
+          "callee": "json.loads",
+          "lineNumber": 58
+        },
+        {
+          "caller": "load_taxonomy",
+          "callee": "p.read_text",
+          "lineNumber": 58
+        },
+        {
+          "caller": "taxonomy_for",
+          "callee": "detect_doc_type",
+          "lineNumber": 64
+        },
+        {
+          "caller": "taxonomy_for",
+          "callee": "logger.info",
+          "lineNumber": 66
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/sdd_pipeline/extract_structural.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 69,
+      "nonEmptyLines": 57,
+      "functions": [
+        {
+          "name": "_records_from_table",
+          "startLine": 26,
+          "endLine": 50,
+          "params": [
+            "section_id",
+            "text"
+          ]
+        },
+        {
+          "name": "extract_structural",
+          "startLine": 53,
+          "endLine": 59,
+          "params": [
+            "section"
+          ]
+        },
+        {
+          "name": "build_structural_inventory",
+          "startLine": 62,
+          "endLine": 69,
+          "params": [
+            "doc"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_records_from_table",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "extract_structural",
+          "line": 53,
+          "isDefault": false
+        },
+        {
+          "name": "build_structural_inventory",
+          "line": 62,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_records_from_table",
+          "callee": "parse_pipe_table",
+          "lineNumber": 27
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "normalise_header",
+          "lineNumber": 28
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "any",
+          "lineNumber": 31
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "enumerate",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "len",
+          "lineNumber": 34
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "cell.strip",
+          "lineNumber": 37
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "_is_placeholder",
+          "lineNumber": 38
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "out.append",
+          "lineNumber": 40
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "EntityRecord",
+          "lineNumber": 40
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "len",
+          "lineNumber": 43
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "normalise_header",
+          "lineNumber": 45
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "row[1].strip",
+          "lineNumber": 46
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "_is_placeholder",
+          "lineNumber": 47
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "out.append",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_records_from_table",
+          "callee": "EntityRecord",
+          "lineNumber": 49
+        },
+        {
+          "caller": "extract_structural",
+          "callee": "out.extend",
+          "lineNumber": 58
+        },
+        {
+          "caller": "extract_structural",
+          "callee": "_records_from_table",
+          "lineNumber": 58
+        },
+        {
+          "caller": "build_structural_inventory",
+          "callee": "doc.iter_sections",
+          "lineNumber": 65
+        },
+        {
+          "caller": "build_structural_inventory",
+          "callee": "extract_structural",
+          "lineNumber": 66
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/sdd_pipeline/header_norm.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 49,
+      "nonEmptyLines": 38,
+      "functions": [
+        {
+          "name": "_singularise_token",
+          "startLine": 31,
+          "endLine": 34,
+          "params": [
+            "tok"
+          ]
+        },
+        {
+          "name": "normalise_header",
+          "startLine": 37,
+          "endLine": 49,
+          "params": [
+            "s"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_singularise_token",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "normalise_header",
+          "line": 37,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_singularise_token",
+          "callee": "len",
+          "lineNumber": 32
+        },
+        {
+          "caller": "_singularise_token",
+          "callee": "tok.endswith",
+          "lineNumber": 32
+        },
+        {
+          "caller": "_singularise_token",
+          "callee": "tok.endswith",
+          "lineNumber": 32
+        },
+        {
+          "caller": "normalise_header",
+          "callee": "s.lower",
+          "lineNumber": 43
+        },
+        {
+          "caller": "normalise_header",
+          "callee": "_PAREN.sub",
+          "lineNumber": 44
+        },
+        {
+          "caller": "normalise_header",
+          "callee": "s.split",
+          "lineNumber": 45
+        },
+        {
+          "caller": "normalise_header",
+          "callee": "_WS.sub(\" \", s).strip",
+          "lineNumber": 46
+        },
+        {
+          "caller": "normalise_header",
+          "callee": "_WS.sub",
+          "lineNumber": 46
+        },
+        {
+          "caller": "normalise_header",
+          "callee": "\" \".join",
+          "lineNumber": 49
+        },
+        {
+          "caller": "normalise_header",
+          "callee": "_singularise_token",
+          "lineNumber": 49
+        },
+        {
+          "caller": "normalise_header",
+          "callee": "s.split",
+          "lineNumber": 49
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/sdd_pipeline/structural.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 398,
+      "nonEmptyLines": 333,
+      "functions": [
+        {
+          "name": "_short_hash",
+          "startLine": 31,
+          "endLine": 32,
+          "params": []
+        },
+        {
+          "name": "_meta_str",
+          "startLine": 35,
+          "endLine": 43,
+          "params": [
+            "val"
+          ]
+        },
+        {
+          "name": "_extract_metadata",
+          "startLine": 46,
+          "endLine": 76,
+          "params": [
+            "doc"
+          ]
+        },
+        {
+          "name": "_link_hint",
+          "startLine": 85,
+          "endLine": 92,
+          "params": [
+            "url"
+          ]
+        },
+        {
+          "name": "_serialize_inline_list",
+          "startLine": 95,
+          "endLine": 123,
+          "params": [
+            "inlines"
+          ]
+        },
+        {
+          "name": "_serialize_inlines",
+          "startLine": 126,
+          "endLine": 128,
+          "params": [
+            "elem"
+          ]
+        },
+        {
+          "name": "_serialize_list",
+          "startLine": 131,
+          "endLine": 183,
+          "params": [
+            "elem",
+            "indent"
+          ]
+        },
+        {
+          "name": "_serialize_table",
+          "startLine": 186,
+          "endLine": 220,
+          "params": [
+            "elem"
+          ]
+        },
+        {
+          "name": "_elem_to_content_block",
+          "startLine": 223,
+          "endLine": 299,
+          "params": [
+            "elem",
+            "doc_id",
+            "section_id",
+            "idx"
+          ]
+        },
+        {
+          "name": "build_structural_model",
+          "startLine": 305,
+          "endLine": 398,
+          "params": [
+            "ast_json",
+            "doc_id",
+            "source_path"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_short_hash",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "_meta_str",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "_extract_metadata",
+          "line": 46,
+          "isDefault": false
+        },
+        {
+          "name": "_link_hint",
+          "line": 85,
+          "isDefault": false
+        },
+        {
+          "name": "_serialize_inline_list",
+          "line": 95,
+          "isDefault": false
+        },
+        {
+          "name": "_serialize_inlines",
+          "line": 126,
+          "isDefault": false
+        },
+        {
+          "name": "_serialize_list",
+          "line": 131,
+          "isDefault": false
+        },
+        {
+          "name": "_serialize_table",
+          "line": 186,
+          "isDefault": false
+        },
+        {
+          "name": "_elem_to_content_block",
+          "line": 223,
+          "isDefault": false
+        },
+        {
+          "name": "build_structural_model",
+          "line": 305,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_short_hash",
+          "callee": "hashlib.md5(\"|\".join(parts).encode()).hexdigest",
+          "lineNumber": 32
+        },
+        {
+          "caller": "_short_hash",
+          "callee": "hashlib.md5",
+          "lineNumber": 32
+        },
+        {
+          "caller": "_short_hash",
+          "callee": "\"|\".join(parts).encode",
+          "lineNumber": 32
+        },
+        {
+          "caller": "_short_hash",
+          "callee": "\"|\".join",
+          "lineNumber": 32
+        },
+        {
+          "caller": "_meta_str",
+          "callee": "pf.stringify",
+          "lineNumber": 40
+        },
+        {
+          "caller": "_meta_str",
+          "callee": "text.strip",
+          "lineNumber": 41
+        },
+        {
+          "caller": "get",
+          "callee": "_meta_str",
+          "lineNumber": 51
+        },
+        {
+          "caller": "get",
+          "callee": "meta.get",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "get",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "get",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "get",
+          "lineNumber": 54
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "get",
+          "lineNumber": 54
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "get",
+          "lineNumber": 54
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "get",
+          "lineNumber": 55
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "get",
+          "lineNumber": 55
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "get",
+          "lineNumber": 55
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "get",
+          "lineNumber": 56
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "get",
+          "lineNumber": 57
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "get",
+          "lineNumber": 57
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "meta.get",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "meta.get",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "isinstance",
+          "lineNumber": 63
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "_meta_str",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "_meta_str",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "_meta_str",
+          "lineNumber": 66
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "s.strip",
+          "lineNumber": 67
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "raw_str.split",
+          "lineNumber": 67
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "s.strip",
+          "lineNumber": 67
+        },
+        {
+          "caller": "_extract_metadata",
+          "callee": "DocumentMetadata",
+          "lineNumber": 69
+        },
+        {
+          "caller": "_link_hint",
+          "callee": "url.startswith",
+          "lineNumber": 89
+        },
+        {
+          "caller": "_link_hint",
+          "callee": "urlsplit",
+          "lineNumber": 90
+        },
+        {
+          "caller": "_link_hint",
+          "callee": "host.startswith",
+          "lineNumber": 91
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "isinstance",
+          "lineNumber": 99
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "parts.append",
+          "lineNumber": 100
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "isinstance",
+          "lineNumber": 101
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "parts.append",
+          "lineNumber": 102
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "isinstance",
+          "lineNumber": 103
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "parts.append",
+          "lineNumber": 104
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "isinstance",
+          "lineNumber": 105
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "parts.append",
+          "lineNumber": 107
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "isinstance",
+          "lineNumber": 108
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "_serialize_inline_list",
+          "lineNumber": 109
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "_link_hint",
+          "lineNumber": 110
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "parts.append",
+          "lineNumber": 111
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "isinstance",
+          "lineNumber": 112
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "parts.append",
+          "lineNumber": 114
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "_serialize_inline_list",
+          "lineNumber": 114
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "isinstance",
+          "lineNumber": 115
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "parts.append",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "_serialize_inline_list",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "hasattr",
+          "lineNumber": 119
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "parts.append",
+          "lineNumber": 120
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "_serialize_inline_list",
+          "lineNumber": 120
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "parts.append",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "pf.stringify",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_serialize_inline_list",
+          "callee": "\"\".join",
+          "lineNumber": 123
+        },
+        {
+          "caller": "_serialize_inlines",
+          "callee": "_serialize_inline_list",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "isinstance",
+          "lineNumber": 145
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "getattr",
+          "lineNumber": 146
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "isinstance",
+          "lineNumber": 160
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "_serialize_inlines(block).strip",
+          "lineNumber": 161
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "_serialize_inlines",
+          "lineNumber": 161
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "nested.append",
+          "lineNumber": 167
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "isinstance",
+          "lineNumber": 168
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "nested.append",
+          "lineNumber": 169
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "_serialize_list",
+          "lineNumber": 169
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "isinstance",
+          "lineNumber": 170
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "nested.append",
+          "lineNumber": 174
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "nested.extend",
+          "lineNumber": 175
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "block.text.strip().splitlines",
+          "lineNumber": 175
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "block.text.strip",
+          "lineNumber": 175
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "nested.append",
+          "lineNumber": 176
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "lines.append",
+          "lineNumber": 179
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "f\"{pad}{marker}{lead}\".rstrip",
+          "lineNumber": 179
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "lines.extend",
+          "lineNumber": 180
+        },
+        {
+          "caller": "_serialize_list",
+          "callee": "\"\\n\".join",
+          "lineNumber": 183
+        },
+        {
+          "caller": "cells",
+          "callee": "_serialize_inlines",
+          "lineNumber": 193
+        },
+        {
+          "caller": "cells",
+          "callee": "hasattr",
+          "lineNumber": 193
+        },
+        {
+          "caller": "cells",
+          "callee": "pf.stringify",
+          "lineNumber": 193
+        },
+        {
+          "caller": "cells",
+          "callee": "\" \".join",
+          "lineNumber": 196
+        },
+        {
+          "caller": "cells",
+          "callee": "p.strip",
+          "lineNumber": 196
+        },
+        {
+          "caller": "cells",
+          "callee": "p.strip",
+          "lineNumber": 196
+        },
+        {
+          "caller": "cells",
+          "callee": "out.append",
+          "lineNumber": 197
+        },
+        {
+          "caller": "cells",
+          "callee": "text.replace(\"\\n\", \" \").replace",
+          "lineNumber": 197
+        },
+        {
+          "caller": "cells",
+          "callee": "text.replace",
+          "lineNumber": 197
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "list",
+          "lineNumber": 201
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "getattr",
+          "lineNumber": 201
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "cells",
+          "lineNumber": 203
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "list",
+          "lineNumber": 207
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "getattr",
+          "lineNumber": 207
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "list",
+          "lineNumber": 207
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "getattr",
+          "lineNumber": 207
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "body_lines.append",
+          "lineNumber": 208
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "\" | \".join",
+          "lineNumber": 208
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "cells",
+          "lineNumber": 208
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "body_lines[0].count",
+          "lineNumber": 212
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "max",
+          "lineNumber": 213
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "\" | \".join",
+          "lineNumber": 218
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "\" | \".join",
+          "lineNumber": 219
+        },
+        {
+          "caller": "_serialize_table",
+          "callee": "\"\\n\".join",
+          "lineNumber": 220
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "_short_hash",
+          "lineNumber": 230
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "str",
+          "lineNumber": 230
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "isinstance",
+          "lineNumber": 232
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "_serialize_inlines(elem).strip",
+          "lineNumber": 233
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "_serialize_inlines",
+          "lineNumber": 233
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "ContentBlock",
+          "lineNumber": 236
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "isinstance",
+          "lineNumber": 242
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "ContentBlock",
+          "lineNumber": 247
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "isinstance",
+          "lineNumber": 254
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "_serialize_list",
+          "lineNumber": 255
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "ContentBlock",
+          "lineNumber": 258
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "isinstance",
+          "lineNumber": 264
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "_serialize_table",
+          "lineNumber": 265
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "ContentBlock",
+          "lineNumber": 268
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "isinstance",
+          "lineNumber": 274
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "isinstance",
+          "lineNumber": 277
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "_serialize_inlines(block).strip",
+          "lineNumber": 278
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "_serialize_inlines",
+          "lineNumber": 278
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "isinstance",
+          "lineNumber": 279
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "_serialize_list",
+          "lineNumber": 280
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "isinstance",
+          "lineNumber": 281
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "block.text.strip",
+          "lineNumber": 285
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "pf.stringify(block).strip",
+          "lineNumber": 287
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "pf.stringify",
+          "lineNumber": 287
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "rendered.splitlines",
+          "lineNumber": 288
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "lines.append",
+          "lineNumber": 289
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "\"\\n\".join(lines).strip",
+          "lineNumber": 290
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "\"\\n\".join",
+          "lineNumber": 290
+        },
+        {
+          "caller": "_elem_to_content_block",
+          "callee": "ContentBlock",
+          "lineNumber": 293
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "pf.load",
+          "lineNumber": 326
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "io.StringIO",
+          "lineNumber": 326
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "json.dumps",
+          "lineNumber": 326
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "_extract_metadata",
+          "lineNumber": 328
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "_short_hash",
+          "lineNumber": 340
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "isinstance",
+          "lineNumber": 344
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "pf.stringify(elem).strip",
+          "lineNumber": 345
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "pf.stringify",
+          "lineNumber": 345
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "_short_hash",
+          "lineNumber": 346
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "str",
+          "lineNumber": 346
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "Section",
+          "lineNumber": 349
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "stack.pop",
+          "lineNumber": 358
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "stack[-1].subsections.append",
+          "lineNumber": 361
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "root_sections.append",
+          "lineNumber": 363
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "stack.append",
+          "lineNumber": 365
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "_elem_to_content_block",
+          "lineNumber": 369
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "(stack[-1].blocks if stack else preamble_blocks).append",
+          "lineNumber": 371
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "(metadata.title or \"Document\").strip",
+          "lineNumber": 375
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "root_sections.insert",
+          "lineNumber": 376
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "Section",
+          "lineNumber": 378
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "logger.warning",
+          "lineNumber": 386
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "len",
+          "lineNumber": 389
+        },
+        {
+          "caller": "build_structural_model",
+          "callee": "DocumentModel",
+          "lineNumber": 393
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 10,
+        "functionCount": 10,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/sdd_pipeline/template_taxonomy.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 173,
+      "nonEmptyLines": 137,
+      "functions": [
+        {
+          "name": "_split_row",
+          "startLine": 39,
+          "endLine": 45,
+          "params": [
+            "line"
+          ]
+        },
+        {
+          "name": "_is_separator",
+          "startLine": 48,
+          "endLine": 49,
+          "params": [
+            "cells"
+          ]
+        },
+        {
+          "name": "parse_pipe_table",
+          "startLine": 52,
+          "endLine": 70,
+          "params": [
+            "text"
+          ]
+        },
+        {
+          "name": "_is_placeholder",
+          "startLine": 73,
+          "endLine": 76,
+          "params": [
+            "cell"
+          ]
+        },
+        {
+          "name": "fields_and_orientation",
+          "startLine": 79,
+          "endLine": 97,
+          "params": [
+            "header",
+            "rows"
+          ]
+        },
+        {
+          "name": "_dedupe",
+          "startLine": 100,
+          "endLine": 107,
+          "params": [
+            "items"
+          ]
+        },
+        {
+          "name": "_walk",
+          "startLine": 110,
+          "endLine": 113,
+          "params": [
+            "sections"
+          ]
+        },
+        {
+          "name": "_section_key",
+          "startLine": 116,
+          "endLine": 117,
+          "params": [
+            "title"
+          ]
+        },
+        {
+          "name": "extract_taxonomy",
+          "startLine": 120,
+          "endLine": 146,
+          "params": [
+            "template_md_path"
+          ]
+        },
+        {
+          "name": "to_canonical_json",
+          "startLine": 149,
+          "endLine": 155,
+          "params": [
+            "taxonomy"
+          ]
+        },
+        {
+          "name": "main",
+          "startLine": 158,
+          "endLine": 169,
+          "params": [
+            "argv"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_split_row",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "_is_separator",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "parse_pipe_table",
+          "line": 52,
+          "isDefault": false
+        },
+        {
+          "name": "_is_placeholder",
+          "line": 73,
+          "isDefault": false
+        },
+        {
+          "name": "fields_and_orientation",
+          "line": 79,
+          "isDefault": false
+        },
+        {
+          "name": "_dedupe",
+          "line": 100,
+          "isDefault": false
+        },
+        {
+          "name": "_walk",
+          "line": 110,
+          "isDefault": false
+        },
+        {
+          "name": "_section_key",
+          "line": 116,
+          "isDefault": false
+        },
+        {
+          "name": "extract_taxonomy",
+          "line": 120,
+          "isDefault": false
+        },
+        {
+          "name": "to_canonical_json",
+          "line": 149,
+          "isDefault": false
+        },
+        {
+          "name": "main",
+          "line": 158,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_split_row",
+          "callee": "line.strip",
+          "lineNumber": 40
+        },
+        {
+          "caller": "_split_row",
+          "callee": "line.startswith",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_split_row",
+          "callee": "line.endswith",
+          "lineNumber": 43
+        },
+        {
+          "caller": "_split_row",
+          "callee": "c.replace(\"\\\\|\", \"|\").strip",
+          "lineNumber": 45
+        },
+        {
+          "caller": "_split_row",
+          "callee": "c.replace",
+          "lineNumber": 45
+        },
+        {
+          "caller": "_split_row",
+          "callee": "_CELL_SPLIT.split",
+          "lineNumber": 45
+        },
+        {
+          "caller": "_is_separator",
+          "callee": "bool",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_is_separator",
+          "callee": "all",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_is_separator",
+          "callee": "_SEP_CELL.match",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_is_separator",
+          "callee": "any",
+          "lineNumber": 49
+        },
+        {
+          "caller": "parse_pipe_table",
+          "callee": "_split_row",
+          "lineNumber": 59
+        },
+        {
+          "caller": "parse_pipe_table",
+          "callee": "text.splitlines",
+          "lineNumber": 59
+        },
+        {
+          "caller": "parse_pipe_table",
+          "callee": "ln.strip",
+          "lineNumber": 59
+        },
+        {
+          "caller": "parse_pipe_table",
+          "callee": "len",
+          "lineNumber": 64
+        },
+        {
+          "caller": "parse_pipe_table",
+          "callee": "_is_separator",
+          "lineNumber": 64
+        },
+        {
+          "caller": "parse_pipe_table",
+          "callee": "_is_separator",
+          "lineNumber": 67
+        },
+        {
+          "caller": "parse_pipe_table",
+          "callee": "_is_separator",
+          "lineNumber": 69
+        },
+        {
+          "caller": "_is_placeholder",
+          "callee": "cell.strip",
+          "lineNumber": 75
+        },
+        {
+          "caller": "_is_placeholder",
+          "callee": "c.startswith",
+          "lineNumber": 76
+        },
+        {
+          "caller": "_is_placeholder",
+          "callee": "c.endswith",
+          "lineNumber": 76
+        },
+        {
+          "caller": "fields_and_orientation",
+          "callee": "normalise_header",
+          "lineNumber": 86
+        },
+        {
+          "caller": "fields_and_orientation",
+          "callee": "any",
+          "lineNumber": 87
+        },
+        {
+          "caller": "fields_and_orientation",
+          "callee": "_dedupe",
+          "lineNumber": 89
+        },
+        {
+          "caller": "fields_and_orientation",
+          "callee": "_is_placeholder",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fields_and_orientation",
+          "callee": "normalise_header",
+          "lineNumber": 94
+        },
+        {
+          "caller": "fields_and_orientation",
+          "callee": "fields.append",
+          "lineNumber": 96
+        },
+        {
+          "caller": "fields_and_orientation",
+          "callee": "_dedupe",
+          "lineNumber": 97
+        },
+        {
+          "caller": "_dedupe",
+          "callee": "set",
+          "lineNumber": 101
+        },
+        {
+          "caller": "_dedupe",
+          "callee": "seen.add",
+          "lineNumber": 105
+        },
+        {
+          "caller": "_dedupe",
+          "callee": "out.append",
+          "lineNumber": 106
+        },
+        {
+          "caller": "_walk",
+          "callee": "_walk",
+          "lineNumber": 113
+        },
+        {
+          "caller": "_section_key",
+          "callee": "normalise_header",
+          "lineNumber": 117
+        },
+        {
+          "caller": "_section_key",
+          "callee": "_LEAD_NUM.sub",
+          "lineNumber": 117
+        },
+        {
+          "caller": "extract_taxonomy",
+          "callee": "Path",
+          "lineNumber": 122
+        },
+        {
+          "caller": "extract_taxonomy",
+          "callee": "generate_ast",
+          "lineNumber": 123
+        },
+        {
+          "caller": "extract_taxonomy",
+          "callee": "build_structural_model",
+          "lineNumber": 124
+        },
+        {
+          "caller": "extract_taxonomy",
+          "callee": "str",
+          "lineNumber": 124
+        },
+        {
+          "caller": "extract_taxonomy",
+          "callee": "_walk",
+          "lineNumber": 127
+        },
+        {
+          "caller": "extract_taxonomy",
+          "callee": "parse_pipe_table",
+          "lineNumber": 134
+        },
+        {
+          "caller": "extract_taxonomy",
+          "callee": "fields_and_orientation",
+          "lineNumber": 135
+        },
+        {
+          "caller": "extract_taxonomy",
+          "callee": "fields.extend",
+          "lineNumber": 136
+        },
+        {
+          "caller": "extract_taxonomy",
+          "callee": "_dedupe",
+          "lineNumber": 138
+        },
+        {
+          "caller": "extract_taxonomy",
+          "callee": "_section_key",
+          "lineNumber": 141
+        },
+        {
+          "caller": "extract_taxonomy",
+          "callee": "_dedupe",
+          "lineNumber": 143
+        },
+        {
+          "caller": "to_canonical_json",
+          "callee": "sorted",
+          "lineNumber": 152
+        },
+        {
+          "caller": "to_canonical_json",
+          "callee": "taxonomy.items",
+          "lineNumber": 153
+        },
+        {
+          "caller": "to_canonical_json",
+          "callee": "json.dumps",
+          "lineNumber": 155
+        },
+        {
+          "caller": "main",
+          "callee": "list",
+          "lineNumber": 159
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 161
+        },
+        {
+          "caller": "main",
+          "callee": "Path",
+          "lineNumber": 163
+        },
+        {
+          "caller": "main",
+          "callee": "Path",
+          "lineNumber": 164
+        },
+        {
+          "caller": "main",
+          "callee": "len",
+          "lineNumber": 164
+        },
+        {
+          "caller": "main",
+          "callee": "Path",
+          "lineNumber": 164
+        },
+        {
+          "caller": "main",
+          "callee": "extract_taxonomy",
+          "lineNumber": 165
+        },
+        {
+          "caller": "main",
+          "callee": "out.parent.mkdir",
+          "lineNumber": 166
+        },
+        {
+          "caller": "main",
+          "callee": "out.write_text",
+          "lineNumber": 167
+        },
+        {
+          "caller": "main",
+          "callee": "to_canonical_json",
+          "lineNumber": 167
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 168
+        },
+        {
+          "caller": "main",
+          "callee": "len",
+          "lineNumber": 168
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 11,
+        "functionCount": 11,
+        "classCount": 0
+      }
+    }
+  ]
+}

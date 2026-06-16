@@ -1,0 +1,315 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 632,
+      "nonEmptyLines": 467,
+      "sections": [
+        {
+          "heading": "INSTRUCTIONS — Confluence Storage Format → GitLab Markdown",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Source: https://confluence.atlassian.com/doc/confluence-storage-format-790796544.html",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "Target script: html_to_gitlab_md.py",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "Confluence version: Data Center 8.5.x (LTS)",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "This file is the authoritative reference for how every Confluence storage",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "format element should be handled during HTML pre-processing.",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "Read this before modifying any parsing or normalisation logic in the script.",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "1. DOCUMENT STRUCTURE",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "2. HEADINGS",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "3. TEXT EFFECTS",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "4. TEXT BREAKS",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "5. LISTS",
+          "level": 2,
+          "line": 80
+        },
+        {
+          "heading": "6. LINKS",
+          "level": 2,
+          "line": 115
+        },
+        {
+          "heading": "7. IMAGES",
+          "level": 2,
+          "line": 172
+        },
+        {
+          "heading": "8. CODE BLOCKS",
+          "level": 2,
+          "line": 215
+        },
+        {
+          "heading": "9. TABLES",
+          "level": 2,
+          "line": 272
+        },
+        {
+          "heading": "10. MACROS (ac:structured-macro)",
+          "level": 2,
+          "line": 309
+        },
+        {
+          "heading": "11. EMOJIS / EMOTICONS",
+          "level": 2,
+          "line": 443
+        },
+        {
+          "heading": "12. PAGE LAYOUTS",
+          "level": 2,
+          "line": 476
+        },
+        {
+          "heading": "13. TEMPLATE VARIABLES AND INSTRUCTIONAL TEXT",
+          "level": 2,
+          "line": 498
+        },
+        {
+          "heading": "14. RESOURCE IDENTIFIERS (ri: namespace)",
+          "level": 2,
+          "line": 513
+        },
+        {
+          "heading": "15. INLINE COMMENTS",
+          "level": 2,
+          "line": 537
+        },
+        {
+          "heading": "16. CONVERSION REPORT",
+          "level": 2,
+          "line": 549
+        },
+        {
+          "heading": "17. ELEMENT PRIORITY ORDER IN _normalise_code_blocks()",
+          "level": 2,
+          "line": 573
+        },
+        {
+          "heading": "18. SELECTOR PRIORITY ORDER IN _find_content_root()",
+          "level": 2,
+          "line": 587
+        },
+        {
+          "heading": "19. KNOWN DC 8.5.x QUIRKS",
+          "level": 2,
+          "line": 607
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 26
+      }
+    },
+    {
+      "path": "docs/inbox/Convert.Linux.Readme.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 171,
+      "nonEmptyLines": 134,
+      "sections": [
+        {
+          "heading": "Convert HTML → GitLab Markdown on Linux",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "UTF-8 note",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "How to run",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "Basic — output `.md` next to the input",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "Choose an explicit output path",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "Convert your own file",
+          "level": 3,
+          "line": 60
+        },
+        {
+          "heading": "Batch conversion + JSON report (recommended)",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "Batch options",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "Single-file options",
+          "level": 2,
+          "line": 125
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 139
+        },
+        {
+          "heading": "Example successful run",
+          "level": 3,
+          "line": 147
+        },
+        {
+          "heading": "Notes",
+          "level": 2,
+          "line": 167
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "docs/inbox/Convert.Windows.Readme.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 168,
+      "nonEmptyLines": 128,
+      "sections": [
+        {
+          "heading": "Convert HTML → GitLab Markdown on Windows",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "Important: UTF-8 on Windows",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "How to run",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "Basic — output `.md` next to the input",
+          "level": 3,
+          "line": 40
+        },
+        {
+          "heading": "Choose an explicit output path",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Convert your own file",
+          "level": 3,
+          "line": 59
+        },
+        {
+          "heading": "Batch conversion + JSON report (recommended)",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "Batch options",
+          "level": 3,
+          "line": 111
+        },
+        {
+          "heading": "Single-file options",
+          "level": 2,
+          "line": 121
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 135
+        },
+        {
+          "heading": "Example successful run",
+          "level": 3,
+          "line": 143
+        },
+        {
+          "heading": "Notes",
+          "level": 2,
+          "line": 163
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "batchImportData": {
+    "src/sdd_pipeline/dump.py": [
+      "src/sdd_pipeline/ast_parser.py",
+      "src/sdd_pipeline/enrichment.py",
+      "src/sdd_pipeline/pipeline.py",
+      "src/sdd_pipeline/workspace.py"
+    ],
+    "src/sdd_pipeline/enrichment.py": [
+      "src/sdd_pipeline/direction.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/reconcile.py"
+    ],
+    "src/sdd_pipeline/reconcile.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/workspace.py": []
+  },
+  "neighborMap": {
+    "src/sdd_pipeline/dump.py": [
+      {
+        "path": "src/sdd_pipeline/ast_parser.py",
+        "batchIndex": 2,
+        "symbols": [
+          "generate_ast",
+          "generate_ast_batch",
+          "pandoc_version"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/pipeline.py",
+        "batchIndex": 1,
+        "symbols": [
+          "ChunkQualityError",
+          "_stable_doc_id",
+          "SemanticPipeline"
+        ]
+      }
+    ],
+    "src/sdd_pipeline/enrichment.py": [
+      {
+        "path": "src/sdd_pipeline/direction.py",
+        "batchIndex": 2,
+        "symbols": [
+          "load_field_directions",
+          "resolve_direction"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/models.py",
+        "batchIndex": 1,
+        "symbols": [
+          "_summarize_table_for_embed",
+          "ContentType",
+          "SectionType",
+          "ContentBlock",
+          "Section",
+          "DocumentMetadata",
+          "DocumentModel",
+          "SemanticChunk",
+          "EntityRecord"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/pipeline.py",
+        "batchIndex": 1,
+        "symbols": [
+          "ChunkQualityError",
+          "_stable_doc_id",
+          "SemanticPipeline"
+        ]
+      }
+    ],
+    "src/sdd_pipeline/reconcile.py": [
+      {
+        "path": "src/sdd_pipeline/models.py",
+        "batchIndex": 1,
+        "symbols": [
+          "_summarize_table_for_embed",
+          "ContentType",
+          "SectionType",
+          "ContentBlock",
+          "Section",
+          "DocumentMetadata",
+          "DocumentModel",
+          "SemanticChunk",
+          "EntityRecord"
+        ]
+      }
+    ]
+  }
+}

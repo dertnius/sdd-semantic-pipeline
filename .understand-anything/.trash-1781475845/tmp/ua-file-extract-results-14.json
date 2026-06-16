@@ -1,0 +1,472 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 5,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 79,
+      "nonEmptyLines": 54,
+      "sections": [
+        {
+          "heading": "Status",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Positive",
+          "level": 3,
+          "line": 27
+        },
+        {
+          "heading": "Negative",
+          "level": 3,
+          "line": 35
+        },
+        {
+          "heading": "Alternatives Considered",
+          "level": 2,
+          "line": 42
+        },
+        {
+          "heading": "Monolithic End-to-End Pipeline Module",
+          "level": 3,
+          "line": 44
+        },
+        {
+          "heading": "Managed External Search Service as Primary Architecture",
+          "level": 3,
+          "line": 49
+        },
+        {
+          "heading": "Keyword-First Retrieval Without Embeddings",
+          "level": 3,
+          "line": 54
+        },
+        {
+          "heading": "Do Nothing (No Formalized Architecture Decision)",
+          "level": 3,
+          "line": 59
+        },
+        {
+          "heading": "Implementation Notes",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 72
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "src/tools/eval/corpus/airflow-aip107.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 184,
+      "nonEmptyLines": 131,
+      "sections": [
+        {
+          "heading": "Status",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Motivation",
+          "level": 2,
+          "line": 55
+        },
+        {
+          "heading": "The details of the Problem",
+          "level": 3,
+          "line": 59
+        },
+        {
+          "heading": "Considerations",
+          "level": 2,
+          "line": 81
+        },
+        {
+          "heading": "What change do you propose to make?",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "What problem does it solve?",
+          "level": 3,
+          "line": 150
+        },
+        {
+          "heading": "Why is it needed?",
+          "level": 3,
+          "line": 154
+        },
+        {
+          "heading": "Are there any downsides to this change?",
+          "level": 3,
+          "line": 158
+        },
+        {
+          "heading": "Which users are affected by the change?",
+          "level": 3,
+          "line": 162
+        },
+        {
+          "heading": "How are users affected by the change? (e.g. DB upgrade required?)",
+          "level": 3,
+          "line": 170
+        },
+        {
+          "heading": "What is the level of migration effort (manual and automated) needed for the users to adapt to the breaking changes? (especially in context of Airflow 3)",
+          "level": 4,
+          "line": 174
+        },
+        {
+          "heading": "Other considerations?",
+          "level": 3,
+          "line": 178
+        },
+        {
+          "heading": "What defines this AIP as \"done\"?",
+          "level": 3,
+          "line": 182
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "src/tools/eval/corpus/impala-vscode.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 112,
+      "nonEmptyLines": 77,
+      "sections": [
+        {
+          "heading": "Introduction",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Setup",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "Front-end Development using VSCode",
+          "level": 2,
+          "line": 44
+        },
+        {
+          "heading": "Setup",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "Run/Debug Unit Tests",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "Remote Debug Frontend",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "Using Dev Container (Developing Inside Docker Container)",
+          "level": 2,
+          "line": 104
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "src/tools/eval/corpus/sad-retailnexus-oms.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 371,
+      "nonEmptyLines": 275,
+      "sections": [
+        {
+          "heading": "📋 Document Properties",
+          "level": 3,
+          "line": 7
+        },
+        {
+          "heading": "Introduction",
+          "level": 1,
+          "line": 25
+        },
+        {
+          "heading": "Purpose",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "Scope",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "Definitions & Acronyms",
+          "level": 2,
+          "line": 51
+        },
+        {
+          "heading": "System Overview",
+          "level": 1,
+          "line": 67
+        },
+        {
+          "heading": "Business Context",
+          "level": 2,
+          "line": 69
+        },
+        {
+          "heading": "System Context Diagram",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Architecture Goals & Constraints",
+          "level": 1,
+          "line": 85
+        },
+        {
+          "heading": "Quality Attribute Requirements",
+          "level": 2,
+          "line": 87
+        },
+        {
+          "heading": "Architectural Constraints",
+          "level": 2,
+          "line": 100
+        },
+        {
+          "heading": "Component Architecture",
+          "level": 1,
+          "line": 110
+        },
+        {
+          "heading": "Architectural Style",
+          "level": 2,
+          "line": 112
+        },
+        {
+          "heading": "High-Level Component Diagram",
+          "level": 2,
+          "line": 122
+        },
+        {
+          "heading": "Microservices Inventory",
+          "level": 2,
+          "line": 132
+        },
+        {
+          "heading": "Integration Architecture",
+          "level": 1,
+          "line": 147
+        },
+        {
+          "heading": "External Integration Contracts",
+          "level": 2,
+          "line": 149
+        },
+        {
+          "heading": "Kafka Topic Registry",
+          "level": 2,
+          "line": 159
+        },
+        {
+          "heading": "Data Architecture",
+          "level": 1,
+          "line": 192
+        },
+        {
+          "heading": "Database-per-Service Strategy",
+          "level": 2,
+          "line": 194
+        },
+        {
+          "heading": "Order Data Model (Core Entity)",
+          "level": 2,
+          "line": 198
+        },
+        {
+          "heading": "Order State Machine",
+          "level": 2,
+          "line": 223
+        },
+        {
+          "heading": "Security Architecture",
+          "level": 1,
+          "line": 236
+        },
+        {
+          "heading": "Authentication & Authorisation",
+          "level": 2,
+          "line": 240
+        },
+        {
+          "heading": "PCI-DSS Considerations",
+          "level": 2,
+          "line": 246
+        },
+        {
+          "heading": "Deployment Architecture",
+          "level": 1,
+          "line": 250
+        },
+        {
+          "heading": "AWS Infrastructure Overview",
+          "level": 2,
+          "line": 252
+        },
+        {
+          "heading": "CI/CD Pipeline",
+          "level": 2,
+          "line": 267
+        },
+        {
+          "heading": "Architecture Decision Records",
+          "level": 1,
+          "line": 307
+        },
+        {
+          "heading": "ADR-001 — Adopt Event-Driven Architecture with Apache Kafka as the Enterprise Event Bus",
+          "level": 4,
+          "line": 309
+        },
+        {
+          "heading": "ADR-002 — Use CQRS with Separate Read and Write Models for Order Queries",
+          "level": 4,
+          "line": 319
+        },
+        {
+          "heading": "ADR-003 — Choreography-Based Saga for Distributed Order Transactions",
+          "level": 4,
+          "line": 329
+        },
+        {
+          "heading": "Risk Register",
+          "level": 1,
+          "line": 350
+        },
+        {
+          "heading": "Open Issues & Action Items",
+          "level": 1,
+          "line": 361
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 34
+      }
+    },
+    {
+      "path": "src/tools/eval/corpus/scripting-on-dtk.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 488,
+      "nonEmptyLines": 370,
+      "sections": [
+        {
+          "heading": "**1. File processing:**",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "**COPY:**",
+          "level": 2,
+          "line": 170
+        },
+        {
+          "heading": "**2. Data Processing:**",
+          "level": 2,
+          "line": 333
+        },
+        {
+          "heading": "**SOQLQUERY:**",
+          "level": 2,
+          "line": 338
+        },
+        {
+          "heading": "**BULKDELETE:**",
+          "level": 2,
+          "line": 381
+        },
+        {
+          "heading": "**BULKUPSERT:**",
+          "level": 2,
+          "line": 419
+        },
+        {
+          "heading": "**RECORDCREATE / RECORDDELETE / RECORDUPDATE:**",
+          "level": 2,
+          "line": 455
+        },
+        {
+          "heading": "**3. Other**",
+          "level": 2,
+          "line": 461
+        },
+        {
+          "heading": "**APEXEXECUTE:**",
+          "level": 2,
+          "line": 466
+        },
+        {
+          "heading": "**DEPLOYZIP:**",
+          "level": 2,
+          "line": 484
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    }
+  ]
+}

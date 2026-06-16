@@ -1,0 +1,30 @@
+{
+  "batchImportData": {
+    ".devcontainer/devcontainer.json": [],
+    ".github/agents/adr-generator.agent.md": [],
+    ".github/copilot-instructions.md": [],
+    "docs/adr/adr-0001-modular-semantic-pipeline.md": [],
+    "docs/archive/DISCOVERED_INTERFACES.md": [],
+    "docs/confluence-conversion-rules.md": [],
+    "docs/learn/README.md": [],
+    "docs/notes/SPIKE_FINDINGS.md": [],
+    "docs/template/template.md": [],
+    "src/sdd_pipeline/cli.py": [],
+    "src/sdd_pipeline/convert/confluence_pf_filter.py": [],
+    "src/sdd_pipeline/retrieval.py": [],
+    "src/tools/scripts/convert-docs.ps1": [],
+    "src/tools/scripts/ctx.py": [],
+    "src/tools/scripts/eval_retrieval.py": [],
+    "src/tools/scripts/fetch_e2e_corpus.py": [],
+    "src/tools/scripts/otelmeter.py": [],
+    "src/tools/scripts/setup-second-brain.ps1": [],
+    "src/tools/scripts/tok.py": [],
+    "tests/__init__.py": [],
+    "tests/conftest.py": [],
+    "tests/convert/__init__.py": [],
+    "tests/convert/test_confluence_pf_filter.py": [],
+    "tests/convert/test_convert_cli.py": [],
+    "tests/convert/test_html_to_gitlab_md_v3.py": []
+  },
+  "neighborMap": {}
+}

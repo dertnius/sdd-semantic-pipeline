@@ -1,0 +1,82 @@
+{
+  "nodes": [
+    {
+      "id": "document:docs/learn/walkthroughs/01-life-of-a-document.md",
+      "type": "document",
+      "name": "01-life-of-a-document.md",
+      "filePath": "docs/learn/walkthroughs/01-life-of-a-document.md",
+      "summary": "End-to-end walkthrough that traces one real SAD document (sad-retailnexus-oms.md) through every pipeline stage — pandoc AST, structural tree, inventory + enrichment, chunking (content vs embed_text), and index/search — using real dumped artifacts and dense-vs-hybrid search comparisons.",
+      "tags": ["documentation", "walkthrough", "pipeline", "tutorial", "data-flow"],
+      "complexity": "complex",
+      "languageNotes": "Mermaid flowchart of the stage pipeline plus annotated JSON artifact excerpts illustrating the content/embed_text split and the enriched.json-vs-chunks.json inventory discrepancy."
+    },
+    {
+      "id": "document:docs/learn/walkthroughs/02-architecture-map.md",
+      "type": "document",
+      "name": "02-architecture-map.md",
+      "filePath": "docs/learn/walkthroughs/02-architecture-map.md",
+      "summary": "Single-page architecture overview of the whole system, with a Mermaid module dependency graph, the onion-style layering rule (contracts → stages → composition root → entry points), the core data-model class diagram, and a complexity-ranked code-reading order.",
+      "tags": ["documentation", "architecture", "overview", "entry-point", "layering"],
+      "complexity": "moderate",
+      "languageNotes": "Mermaid flowchart and classDiagram render the module graph and dataclass relationships; collapsible <details> self-check answers reinforce the pandoc/vector-store guardrail seams."
+    },
+    {
+      "id": "document:docs/learn/walkthroughs/03-test-suite-tour.md",
+      "type": "document",
+      "name": "03-test-suite-tour.md",
+      "filePath": "docs/learn/walkthroughs/03-test-suite-tour.md",
+      "summary": "Tour of the test suite as living documentation — the 1:1 test/module convention, the conftest fixture ladder, the slow/integration marker tiers, the e2e wiring tests, and the separate retrieval-quality eval harness, ending with a decision guide for where a new test belongs.",
+      "tags": ["documentation", "test", "tutorial", "fixtures", "navigation"],
+      "complexity": "moderate",
+      "languageNotes": "Explains pytest fixture dependency injection by analogy to xUnit, and the marker-tier strategy that keeps the orchestrator in the fast lane via mock embedder/store injection."
+    }
+  ],
+  "edges": [
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "document:docs/learn/walkthroughs/02-architecture-map.md", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "file:src/sdd_pipeline/dump.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "file:src/sdd_pipeline/ast_parser.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "file:src/sdd_pipeline/structural.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "file:src/sdd_pipeline/enrichment.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "file:src/sdd_pipeline/extract_structural.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "file:src/sdd_pipeline/extract_prose.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "file:src/sdd_pipeline/chunking.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "file:src/sdd_pipeline/models.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "file:src/sdd_pipeline/pipeline.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "file:src/sdd_pipeline/vector_store.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/01-life-of-a-document.md", "target": "file:src/sdd_pipeline/doc_router.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/cli.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/dump.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/pipeline.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/ast_parser.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/structural.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/enrichment.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/chunking.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/embeddings.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/vector_store.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/retrieval.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/vocabulary.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/models.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/config.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/doc_router.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/template_taxonomy.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/corpus_taxonomy.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/direction.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/reconcile.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/header_norm.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/extract_structural.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/02-architecture-map.md", "target": "file:src/sdd_pipeline/extract_prose.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/walkthroughs/03-test-suite-tour.md", "target": "document:docs/learn/walkthroughs/02-architecture-map.md", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/03-test-suite-tour.md", "target": "file:tests/conftest.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/03-test-suite-tour.md", "target": "file:tests/test_pipeline.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/03-test-suite-tour.md", "target": "file:tests/test_ast_parser.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/03-test-suite-tour.md", "target": "file:tests/test_chunking.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/03-test-suite-tour.md", "target": "file:tests/test_enrichment.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/03-test-suite-tour.md", "target": "file:tests/test_embeddings.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/03-test-suite-tour.md", "target": "file:tests/test_pipeline_inventory_e2e.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/03-test-suite-tour.md", "target": "file:tests/test_e2e_real_docs.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/03-test-suite-tour.md", "target": "file:src/tools/scripts/eval_retrieval.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/walkthroughs/03-test-suite-tour.md", "target": "file:src/tools/scripts/fetch_e2e_corpus.py", "type": "documents", "direction": "forward", "weight": 0.5}
+  ]
+}

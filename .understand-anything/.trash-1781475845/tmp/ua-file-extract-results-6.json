@@ -1,0 +1,88 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "config/entity-vocab.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 5,
+      "nonEmptyLines": 5,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 0
+      }
+    },
+    {
+      "path": "config/field_directions.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 38,
+      "nonEmptyLines": 36,
+      "sections": [
+        {
+          "heading": "exposes",
+          "level": 1,
+          "line": 20
+        },
+        {
+          "heading": "depends_on",
+          "level": 1,
+          "line": 28
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "config/taxonomy.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 48,
+      "nonEmptyLines": 48,
+      "sections": [
+        {
+          "heading": "definitions, acronyms, abbreviation",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "quality attribute",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "solution component 1",
+          "level": 1,
+          "line": 17
+        },
+        {
+          "heading": "solution component 2",
+          "level": 1,
+          "line": 27
+        },
+        {
+          "heading": "stakeholder",
+          "level": 1,
+          "line": 37
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    }
+  ]
+}

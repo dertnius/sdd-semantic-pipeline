@@ -1,0 +1,19 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": ".env.example", "language": "config", "sizeLines": 45, "fileCategory": "config"},
+    {"path": "CLAUDE.md", "language": "markdown", "sizeLines": 337, "fileCategory": "docs"},
+    {"path": "README.md", "language": "markdown", "sizeLines": 591, "fileCategory": "docs"},
+    {"path": "devfile.yaml", "language": "yaml", "sizeLines": 143, "fileCategory": "config"},
+    {"path": "environment.yml", "language": "yaml", "sizeLines": 57, "fileCategory": "config"},
+    {"path": "pyproject.toml", "language": "toml", "sizeLines": 120, "fileCategory": "config"}
+  ],
+  "batchImportData": {
+    ".env.example": [],
+    "CLAUDE.md": [],
+    "README.md": [],
+    "devfile.yaml": [],
+    "environment.yml": [],
+    "pyproject.toml": []
+  }
+}

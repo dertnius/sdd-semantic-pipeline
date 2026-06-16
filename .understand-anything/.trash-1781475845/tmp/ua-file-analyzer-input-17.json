@@ -1,0 +1,182 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {
+      "path": "tests/convert/test_html_to_gitlab_md.py",
+      "language": "python",
+      "sizeLines": 467,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_ast_parser.py",
+      "language": "python",
+      "sizeLines": 155,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_chunk_gate.py",
+      "language": "python",
+      "sizeLines": 162,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_chunking.py",
+      "language": "python",
+      "sizeLines": 344,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_cli_workspace.py",
+      "language": "python",
+      "sizeLines": 97,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_cli.py",
+      "language": "python",
+      "sizeLines": 203,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_config.py",
+      "language": "python",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_corpus_taxonomy.py",
+      "language": "python",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_direction.py",
+      "language": "python",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_doc_router.py",
+      "language": "python",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_e2e_real_docs.py",
+      "language": "python",
+      "sizeLines": 170,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_embeddings.py",
+      "language": "python",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_enrichment_inventory.py",
+      "language": "python",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_enrichment.py",
+      "language": "python",
+      "sizeLines": 320,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_eval_retrieval.py",
+      "language": "python",
+      "sizeLines": 165,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_extract_prose.py",
+      "language": "python",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_extract_structural.py",
+      "language": "python",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_header_norm.py",
+      "language": "python",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_memory_vector_store.py",
+      "language": "python",
+      "sizeLines": 309,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_models.py",
+      "language": "python",
+      "sizeLines": 299,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_pipeline_inventory_e2e.py",
+      "language": "python",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_pipeline.py",
+      "language": "python",
+      "sizeLines": 521,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_quality.py",
+      "language": "python",
+      "sizeLines": 194,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_reconcile.py",
+      "language": "python",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_retrieval.py",
+      "language": "python",
+      "sizeLines": 89,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "tests/convert/test_html_to_gitlab_md.py": [],
+    "tests/test_ast_parser.py": [],
+    "tests/test_chunk_gate.py": [],
+    "tests/test_chunking.py": [],
+    "tests/test_cli_workspace.py": [],
+    "tests/test_cli.py": [],
+    "tests/test_config.py": [],
+    "tests/test_corpus_taxonomy.py": [],
+    "tests/test_direction.py": [],
+    "tests/test_doc_router.py": [],
+    "tests/test_e2e_real_docs.py": [],
+    "tests/test_embeddings.py": [],
+    "tests/test_enrichment_inventory.py": [],
+    "tests/test_enrichment.py": [],
+    "tests/test_eval_retrieval.py": [],
+    "tests/test_extract_prose.py": [],
+    "tests/test_extract_structural.py": [],
+    "tests/test_header_norm.py": [],
+    "tests/test_memory_vector_store.py": [],
+    "tests/test_models.py": [],
+    "tests/test_pipeline_inventory_e2e.py": [],
+    "tests/test_pipeline.py": [],
+    "tests/test_quality.py": [],
+    "tests/test_reconcile.py": [],
+    "tests/test_retrieval.py": []
+  }
+}

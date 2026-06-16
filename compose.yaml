@@ -1,0 +1,55 @@
+# Podman Compose — the SDD pipeline is a batch CLI, not a long-running server, so
+# the `pipeline` service is modeled as run-once: invoke a command and exit.
+#
+#   podman compose build
+#   podman compose run --rm pipeline check
+#   podman compose run --rm pipeline convert
+#   podman compose run --rm pipeline index inbox/sample/ --model all-MiniLM-L6-v2
+#
+# `run --rm` (not `up`) is the idiomatic call for a one-shot task. The optional
+# ChromaDB sidecar is off by default — enable with `--profile chroma`.
+services:
+  pipeline:
+    build:
+      context: .
+      dockerfile: Containerfile
+      args:
+        # azure (default) | azure,chroma — see Containerfile.
+        INSTALL_EXTRAS: ${INSTALL_EXTRAS:-azure}
+    image: sdd-pipeline:latest
+    # Rootless: map the in-image UID-1000 `app` user to the host user so files
+    # written to ./outbox are host-owned (not a high subuid). Honored by Podman.
+    userns_mode: "keep-id:uid=1000,gid=1000"
+    # Azure creds + any PIPELINE_* overrides (gitignored; copy from .env.example).
+    env_file:
+      - .env
+    environment:
+      # Defaults if absent from .env — keep the dev model out of the box.
+      PIPELINE_EMBEDDING_PROVIDER: ${PIPELINE_EMBEDDING_PROVIDER:-local}
+      PIPELINE_EMBEDDING_MODEL: ${PIPELINE_EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+    volumes:
+      # `:Z` = SELinux private relabel — required on Fedora/RHEL hosts, a no-op
+      # on the Windows/macOS Podman-machine VM, so it is always safe to emit.
+      - ./inbox:/app/inbox:Z
+      - ./outbox:/app/outbox:Z
+      # Persist the embedding-model download across runs (local provider).
+      - hf-cache:/app/.cache/huggingface
+    restart: "no"
+    command: ["check"]
+
+  # Optional ChromaDB backend — only started with `--profile chroma`. Pair with
+  # PIPELINE_VECTOR_STORE_BACKEND=chroma and an image built with INSTALL_EXTRAS=azure,chroma.
+  chroma:
+    image: docker.io/chromadb/chroma:latest
+    profiles: ["chroma"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      ANONYMIZED_TELEMETRY: "false"
+    restart: "no"
+
+volumes:
+  hf-cache:
+  chroma-data:

@@ -11,6 +11,25 @@ You are an expert in architectural documentation, this agent creates well-struct
 
 ## Core Workflow
 
+### 0. Retrieve Corpus Context First (sdd-semantic MCP)
+
+Before gathering inputs, ground the ADR in the team's indexed SDD/Confluence
+corpus using the `sdd-semantic` MCP server (registered in `.vscode/mcp.json`):
+
+- Call `find_decision_context(topic)` with the decision title/topic. It returns
+  grouped material — `general`, `context`, `decision`, `alternatives`,
+  `tradeoffs`, `consequences`, `done_criteria` — that maps directly onto the ADR
+  template below.
+- Use `semantic_search(query, section_type=…)` for follow-ups and to pull a
+  passage in full (e.g. `section_type="decision"` or `"alternative"`).
+- Cite every retrieved `source_url` under **References**, and prefer corpus facts
+  over assumptions. Only ask the user for inputs the corpus does not supply.
+
+**Graceful fallback:** if the `sdd-semantic` tools are unavailable or return an
+empty-index error (no index has been built yet), do **not** block. Proceed using
+the conversation context and add a one-line note under Context:
+*"Corpus context unavailable — drafted from conversation only."*
+
 ### 1. Gather Required Information
 
 Before creating an ADR, collect the following inputs from the user or conversation context:

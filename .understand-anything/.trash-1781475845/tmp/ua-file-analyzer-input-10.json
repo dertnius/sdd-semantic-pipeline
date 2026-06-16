@@ -1,0 +1,23 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "docs/learn/exercises/01-trace-a-document.md", "language": "markdown", "sizeLines": 116, "fileCategory": "docs"},
+    {"path": "docs/learn/exercises/02-add-a-section-keyword.md", "language": "markdown", "sizeLines": 90, "fileCategory": "docs"},
+    {"path": "docs/learn/exercises/03-parametrize-header-norm.md", "language": "markdown", "sizeLines": 100, "fileCategory": "docs"},
+    {"path": "docs/learn/exercises/04-add-a-config-field.md", "language": "markdown", "sizeLines": 89, "fileCategory": "docs"},
+    {"path": "docs/learn/exercises/05-extend-an-entity-pattern.md", "language": "markdown", "sizeLines": 91, "fileCategory": "docs"},
+    {"path": "docs/learn/exercises/06-add-a-cli-flag.md", "language": "markdown", "sizeLines": 102, "fileCategory": "docs"},
+    {"path": "docs/learn/exercises/07-tune-hybrid-search-and-measure.md", "language": "markdown", "sizeLines": 119, "fileCategory": "docs"},
+    {"path": "docs/learn/exercises/08-use-the-library-from-scratch.md", "language": "markdown", "sizeLines": 100, "fileCategory": "docs"}
+  ],
+  "batchImportData": {
+    "docs/learn/exercises/01-trace-a-document.md": [],
+    "docs/learn/exercises/02-add-a-section-keyword.md": [],
+    "docs/learn/exercises/03-parametrize-header-norm.md": [],
+    "docs/learn/exercises/04-add-a-config-field.md": [],
+    "docs/learn/exercises/05-extend-an-entity-pattern.md": [],
+    "docs/learn/exercises/06-add-a-cli-flag.md": [],
+    "docs/learn/exercises/07-tune-hybrid-search-and-measure.md": [],
+    "docs/learn/exercises/08-use-the-library-from-scratch.md": []
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "src/sdd_pipeline/convert/__init__.py", "language": "python", "sizeLines": 30, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/convert/base.py", "language": "python", "sizeLines": 298, "fileCategory": "code"},
+    {"path": "src/sdd_pipeline/convert/html_to_gitlab_md.py", "language": "python", "sizeLines": 1690, "fileCategory": "code"}
+  ],
+  "batchImportData": {
+    "src/sdd_pipeline/convert/__init__.py": [
+      "src/sdd_pipeline/convert/base.py",
+      "src/sdd_pipeline/convert/html_to_gitlab_md.py"
+    ],
+    "src/sdd_pipeline/convert/base.py": [],
+    "src/sdd_pipeline/convert/html_to_gitlab_md.py": []
+  }
+}

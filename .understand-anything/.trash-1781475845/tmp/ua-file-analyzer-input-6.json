@@ -1,0 +1,13 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "config/entity-vocab.json", "language": "json", "sizeLines": 5, "fileCategory": "config"},
+    {"path": "config/field_directions.yaml", "language": "yaml", "sizeLines": 37, "fileCategory": "config"},
+    {"path": "config/taxonomy.json", "language": "json", "sizeLines": 48, "fileCategory": "config"}
+  ],
+  "batchImportData": {
+    "config/entity-vocab.json": [],
+    "config/field_directions.yaml": [],
+    "config/taxonomy.json": []
+  }
+}

@@ -1,0 +1,545 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/sdd_pipeline/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/sdd_pipeline/__init__.py",
+      "summary": "Package entry point for the sdd_pipeline package; re-exports the public API (PipelineConfig, the data models, and SemanticPipeline) so callers can import from the top-level package.",
+      "tags": ["entry-point", "barrel", "package-init"],
+      "complexity": "simple",
+      "languageNotes": "Python package __init__ acting as a barrel; aggregates exports from config, models, and pipeline modules."
+    },
+    {
+      "id": "file:src/sdd_pipeline/chunking.py",
+      "type": "file",
+      "name": "chunking.py",
+      "filePath": "src/sdd_pipeline/chunking.py",
+      "summary": "Deterministic stage that turns a DocumentModel section tree into a list of SemanticChunks, handling prose/definition merging, embed-budget-aware text splitting, and per-chunk entity scoping.",
+      "tags": ["data-pipeline", "serialization", "chunking", "deterministic"],
+      "complexity": "complex",
+      "languageNotes": "Recursive section walk with nested closures (emit/flush) for buffering prose merges."
+    },
+    {
+      "id": "config:src/sdd_pipeline/config.py",
+      "type": "config",
+      "name": "config.py",
+      "filePath": "src/sdd_pipeline/config.py",
+      "summary": "Defines PipelineConfig, the pydantic-settings configuration model that loads all pipeline settings from PIPELINE_-prefixed env vars or a .env file, with a pydantic-v1 fallback branch.",
+      "tags": ["configuration", "settings", "type-definition"],
+      "complexity": "moderate",
+      "languageNotes": "Dual-branch pydantic-settings v2 / pydantic-v1 fallback; new config fields must be added to both branches."
+    },
+    {
+      "id": "file:src/sdd_pipeline/embeddings.py",
+      "type": "file",
+      "name": "embeddings.py",
+      "filePath": "src/sdd_pipeline/embeddings.py",
+      "summary": "The only module that loads an embedding backend: provides EmbedderProtocol plus local sentence-transformers and Azure OpenAI embedders, selected by make_embedder(config).",
+      "tags": ["service", "factory", "embeddings", "provider"],
+      "complexity": "moderate",
+      "languageNotes": "Protocol-based pluggable backends with lazy model loading; optional openai SDK imported only inside the Azure path."
+    },
+    {
+      "id": "file:src/sdd_pipeline/extract_prose.py",
+      "type": "file",
+      "name": "extract_prose.py",
+      "filePath": "src/sdd_pipeline/extract_prose.py",
+      "summary": "Extracts candidate entity terms from prose sections using regex heuristics (all-caps, backtick, PascalCase, kebab, paths) and optional spaCy noun chunks, producing a prose inventory for enrichment.",
+      "tags": ["utility", "validation", "entity-extraction", "nlp"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/sdd_pipeline/models.py",
+      "type": "file",
+      "name": "models.py",
+      "filePath": "src/sdd_pipeline/models.py",
+      "summary": "Pure data contracts for the pipeline: ContentBlock/Section/DocumentModel structural types, the SemanticChunk record with its embed-text/metadata/dict serializers, enums (ContentType, SectionType), and EntityRecord.",
+      "tags": ["data-model", "type-definition", "serialization", "models"],
+      "complexity": "complex",
+      "languageNotes": "Frozen/dataclass data contracts with no service logic; SemanticChunk.to_embed_text builds the structured embedding header."
+    },
+    {
+      "id": "file:src/sdd_pipeline/pipeline.py",
+      "type": "file",
+      "name": "pipeline.py",
+      "filePath": "src/sdd_pipeline/pipeline.py",
+      "summary": "Orchestrates the 7-stage indexing/search flow via SemanticPipeline, lazily wiring the embedder and vector store, enforcing the chunk-quality gate, verifying index provenance, and running dense plus hybrid (RRF) search.",
+      "tags": ["entry-point", "service", "orchestration", "api-handler"],
+      "complexity": "complex",
+      "languageNotes": "Lazy property-based dependency injection so unit tests can mock the embedder and vector store."
+    },
+    {
+      "id": "file:src/sdd_pipeline/quality.py",
+      "type": "file",
+      "name": "quality.py",
+      "filePath": "src/sdd_pipeline/quality.py",
+      "summary": "Stdlib-only quality gates: check_markdown lints raw source markdown for embedding-harmful residue, and check_chunk is the binding structural-absence hygiene gate run on produced chunk embed-text.",
+      "tags": ["validation", "quality-gate", "linter", "deterministic"],
+      "complexity": "complex",
+      "languageNotes": "De-fences code (blanking fenced/inline code while preserving line numbers) before running prose residue checks to avoid false positives on code examples."
+    },
+    {
+      "id": "file:src/sdd_pipeline/tui.py",
+      "type": "file",
+      "name": "tui.py",
+      "filePath": "src/sdd_pipeline/tui.py",
+      "summary": "Interactive Textual-based search TUI (SearchApp) layered over SemanticPipeline that keeps the embedder and index warm across queries, with live query box, section/space filters, and a hybrid toggle.",
+      "tags": ["component", "tui", "ui", "search"],
+      "complexity": "complex",
+      "languageNotes": "Imports textual only when the command runs; blocking pipeline.search dispatched via asyncio.to_thread to keep the UI responsive."
+    },
+    {
+      "id": "file:src/sdd_pipeline/vector_store.py",
+      "type": "file",
+      "name": "vector_store.py",
+      "filePath": "src/sdd_pipeline/vector_store.py",
+      "summary": "The only module touching vector-store backends: defines VectorStoreProtocol with pluggable in-memory (langchain-core) and Chroma implementations, plus SearchResult, selected by make_vector_store(config).",
+      "tags": ["service", "factory", "vector-store", "persistence"],
+      "complexity": "complex",
+      "languageNotes": "Both backend libraries imported lazily; memory backend persists via atomic tmp+replace writes with a precomputed-embeddings stub that refuses re-embedding."
+    },
+    {
+      "id": "file:src/sdd_pipeline/vocabulary.py",
+      "type": "file",
+      "name": "vocabulary.py",
+      "filePath": "src/sdd_pipeline/vocabulary.py",
+      "summary": "JSON load/save helpers for the cross-corpus entity vocabulary, keeping vocabulary file I/O out of enrichment.py.",
+      "tags": ["utility", "serialization", "persistence", "vocabulary"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/chunking.py:_split_text",
+      "type": "function",
+      "name": "_split_text",
+      "filePath": "src/sdd_pipeline/chunking.py",
+      "lineRange": [29, 76],
+      "summary": "Splits a block of text into chunks under max_chars, preferring paragraph boundaries and falling back to sentence boundaries to stay within the embed budget.",
+      "tags": ["utility", "chunking", "text-processing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/chunking.py:_header_reserve",
+      "type": "function",
+      "name": "_header_reserve",
+      "filePath": "src/sdd_pipeline/chunking.py",
+      "lineRange": [89, 104],
+      "summary": "Estimates the character cost of the structural header prepended to a chunk's embed text so the content split width leaves room for it.",
+      "tags": ["utility", "chunking", "estimation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/chunking.py:_section_to_chunks",
+      "type": "function",
+      "name": "_section_to_chunks",
+      "filePath": "src/sdd_pipeline/chunking.py",
+      "lineRange": [110, 227],
+      "summary": "Recursively converts a Section (and its subsections) into SemanticChunks, applying prose/definition merging, signal filtering, table separation, and per-chunk entity recomputation.",
+      "tags": ["chunking", "serialization", "recursive"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/sdd_pipeline/chunking.py:chunk_document",
+      "type": "function",
+      "name": "chunk_document",
+      "filePath": "src/sdd_pipeline/chunking.py",
+      "lineRange": [230, 287],
+      "summary": "Top-level entry that walks a DocumentModel's root sections and aggregates them into the full list of SemanticChunks for the document.",
+      "tags": ["chunking", "entry-point", "data-pipeline"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/embeddings.py:make_embedder",
+      "type": "function",
+      "name": "make_embedder",
+      "filePath": "src/sdd_pipeline/embeddings.py",
+      "lineRange": [206, 222],
+      "summary": "Factory that selects and constructs the embedder backend (local sentence-transformers or Azure OpenAI) based on config.embedding_provider.",
+      "tags": ["factory", "embeddings", "provider"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/embeddings.py:embedder_identity",
+      "type": "function",
+      "name": "embedder_identity",
+      "filePath": "src/sdd_pipeline/embeddings.py",
+      "lineRange": [225, 230],
+      "summary": "Returns the (provider, model, dimension) identity tuple used as index provenance to detect incompatible vector spaces.",
+      "tags": ["embeddings", "provenance", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/sdd_pipeline/embeddings.py:EmbeddingModel",
+      "type": "class",
+      "name": "EmbeddingModel",
+      "filePath": "src/sdd_pipeline/embeddings.py",
+      "lineRange": [37, 110],
+      "summary": "Local sentence-transformers embedder implementing EmbedderProtocol with lazy model loading, exposing embed_chunks/embed_query and the model dimension.",
+      "tags": ["service", "embeddings", "local-provider"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/sdd_pipeline/embeddings.py:AzureOpenAIEmbedder",
+      "type": "class",
+      "name": "AzureOpenAIEmbedder",
+      "filePath": "src/sdd_pipeline/embeddings.py",
+      "lineRange": [116, 200],
+      "summary": "Azure OpenAI embedder implementing EmbedderProtocol via the optional openai SDK, batching inputs and reading credentials from environment only.",
+      "tags": ["service", "embeddings", "azure-provider"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/extract_prose.py:_noun_chunks",
+      "type": "function",
+      "name": "_noun_chunks",
+      "filePath": "src/sdd_pipeline/extract_prose.py",
+      "lineRange": [39, 52],
+      "summary": "Returns multi-word noun-phrase candidates from text using spaCy when available, gated behind a lazy optional import.",
+      "tags": ["utility", "nlp", "entity-extraction"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/extract_prose.py:extract_prose",
+      "type": "function",
+      "name": "extract_prose",
+      "filePath": "src/sdd_pipeline/extract_prose.py",
+      "lineRange": [55, 80],
+      "summary": "Extracts deduplicated EntityRecords from a section's prose using several regex patterns plus noun chunks, tagged with the source section id.",
+      "tags": ["entity-extraction", "validation", "nlp"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/extract_prose.py:build_prose_inventory",
+      "type": "function",
+      "name": "build_prose_inventory",
+      "filePath": "src/sdd_pipeline/extract_prose.py",
+      "lineRange": [87, 94],
+      "summary": "Builds a per-section prose entity inventory for a whole document by iterating its sections and calling extract_prose.",
+      "tags": ["entity-extraction", "data-pipeline", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/models.py:_summarize_table_for_embed",
+      "type": "function",
+      "name": "_summarize_table_for_embed",
+      "filePath": "src/sdd_pipeline/models.py",
+      "lineRange": [53, 72],
+      "summary": "Condenses a markdown data table into a header row plus a '(table, N data rows)' summary so high-entropy cells do not dominate the embedding vector.",
+      "tags": ["utility", "serialization", "embeddings"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/sdd_pipeline/models.py:Section",
+      "type": "class",
+      "name": "Section",
+      "filePath": "src/sdd_pipeline/models.py",
+      "lineRange": [113, 130],
+      "summary": "Dataclass representing one document section: level, title, breadcrumb, content blocks, subsections, and enrichment fields (section_type, entities, tags, depends_on, exposes).",
+      "tags": ["data-model", "type-definition"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/sdd_pipeline/models.py:DocumentModel",
+      "type": "class",
+      "name": "DocumentModel",
+      "filePath": "src/sdd_pipeline/models.py",
+      "lineRange": [147, 163],
+      "summary": "Top-level document container holding doc_id, metadata, and the root section tree, with iter_sections to traverse all sections breadth-first.",
+      "tags": ["data-model", "type-definition"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/sdd_pipeline/models.py:SemanticChunk",
+      "type": "class",
+      "name": "SemanticChunk",
+      "filePath": "src/sdd_pipeline/models.py",
+      "lineRange": [167, 319],
+      "summary": "The pipeline's core embeddable record carrying content plus provenance and enrichment, with to_embed_text (structured header + content), to_metadata (scalar-only), and to_dict serializers.",
+      "tags": ["data-model", "serialization", "embeddings"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/sdd_pipeline/models.py:EntityRecord",
+      "type": "class",
+      "name": "EntityRecord",
+      "filePath": "src/sdd_pipeline/models.py",
+      "lineRange": [335, 352],
+      "summary": "Frozen record for an extracted entity with text, target field, source, confidence, section id, and a normalized canonical form set in __post_init__.",
+      "tags": ["data-model", "type-definition", "entity-extraction"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/sdd_pipeline/pipeline.py:SemanticPipeline",
+      "type": "class",
+      "name": "SemanticPipeline",
+      "filePath": "src/sdd_pipeline/pipeline.py",
+      "lineRange": [42, 390],
+      "summary": "Orchestrator wiring parse -> enrich -> chunk -> gate -> embed -> store -> search, with lazy embedder/store construction, chunk-quality enforcement, provenance verification, and dense/hybrid retrieval.",
+      "tags": ["service", "orchestration", "api-handler"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/sdd_pipeline/quality.py:MarkdownQualityReport",
+      "type": "class",
+      "name": "MarkdownQualityReport",
+      "filePath": "src/sdd_pipeline/quality.py",
+      "lineRange": [77, 91],
+      "summary": "Report aggregating QualityIssues from a raw-markdown lint, exposing is_embeddable and an issue_summary.",
+      "tags": ["data-model", "quality-gate", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/sdd_pipeline/quality.py:ChunkQualityReport",
+      "type": "class",
+      "name": "ChunkQualityReport",
+      "filePath": "src/sdd_pipeline/quality.py",
+      "lineRange": [279, 292],
+      "summary": "Report for the binding chunk hygiene gate, distinguishing clean chunks from poisoned ones (is_clean / poison).",
+      "tags": ["data-model", "quality-gate", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/quality.py:check_markdown",
+      "type": "function",
+      "name": "check_markdown",
+      "filePath": "src/sdd_pipeline/quality.py",
+      "lineRange": [94, 107],
+      "summary": "Report-only linter over raw source markdown that runs HTML-leakage, Confluence-artifact, code-ratio, link-density, content-density, and orphaned-heading checks.",
+      "tags": ["validation", "linter", "quality-gate"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/quality.py:_strip_code_preserving_lines",
+      "type": "function",
+      "name": "_strip_code_preserving_lines",
+      "filePath": "src/sdd_pipeline/quality.py",
+      "lineRange": [113, 159],
+      "summary": "Blanks fenced, indented, and inline code while preserving line numbers, so prose residue checks do not false-positive on code examples.",
+      "tags": ["utility", "text-processing", "linter"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/quality.py:check_chunk",
+      "type": "function",
+      "name": "check_chunk",
+      "filePath": "src/sdd_pipeline/quality.py",
+      "lineRange": [295, 352],
+      "summary": "The binding chunk hygiene gate: runs structural-absence residue scans on a chunk's de-fenced embed text and flags over-budget/hard-cap chunks as weak.",
+      "tags": ["validation", "quality-gate", "chunking"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/sdd_pipeline/quality.py:_scan_residue",
+      "type": "function",
+      "name": "_scan_residue",
+      "filePath": "src/sdd_pipeline/quality.py",
+      "lineRange": [355, 392],
+      "summary": "Scans text for markup-shape residue (known/namespace/markup tags, Confluence macros, unrendered entities, base64 blobs) and returns QualityIssues.",
+      "tags": ["validation", "linter", "residue-scan"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/quality.py:_check_orphaned_headings",
+      "type": "function",
+      "name": "_check_orphaned_headings",
+      "filePath": "src/sdd_pipeline/quality.py",
+      "lineRange": [395, 419],
+      "summary": "Flags headings that have no following body content (empty section headings) by comparing de-fenced and raw line streams.",
+      "tags": ["validation", "linter", "quality-gate"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sdd_pipeline/tui.py:format_preview",
+      "type": "function",
+      "name": "format_preview",
+      "filePath": "src/sdd_pipeline/tui.py",
+      "lineRange": [69, 94],
+      "summary": "Builds a Rich Text preview of a search result, rendering breadcrumb, metadata bits, and content for the TUI preview pane.",
+      "tags": ["ui", "utility", "formatting"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/sdd_pipeline/tui.py:SearchApp",
+      "type": "class",
+      "name": "SearchApp",
+      "filePath": "src/sdd_pipeline/tui.py",
+      "lineRange": [100, 257],
+      "summary": "Textual App driving the interactive search UI: composes widgets, handles input/switch/select events, runs pipeline.search off-thread, and fills the result table and preview pane.",
+      "tags": ["component", "tui", "ui", "event-handler"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/sdd_pipeline/vector_store.py:SearchResult",
+      "type": "class",
+      "name": "SearchResult",
+      "filePath": "src/sdd_pipeline/vector_store.py",
+      "lineRange": [41, 61],
+      "summary": "Dataclass for a single search hit carrying chunk_id, content, metadata, distance, and optional fused_score, with a similarity score property.",
+      "tags": ["data-model", "type-definition", "search"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/sdd_pipeline/vector_store.py:ChromaVectorStore",
+      "type": "class",
+      "name": "ChromaVectorStore",
+      "filePath": "src/sdd_pipeline/vector_store.py",
+      "lineRange": [104, 285],
+      "summary": "ChromaDB-backed VectorStoreProtocol implementation handling upsert, filtered search, corpus retrieval, deletion, reset, and provenance on the collection metadata.",
+      "tags": ["service", "vector-store", "persistence"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/sdd_pipeline/vector_store.py:MemoryVectorStore",
+      "type": "class",
+      "name": "MemoryVectorStore",
+      "filePath": "src/sdd_pipeline/vector_store.py",
+      "lineRange": [313, 502],
+      "summary": "In-memory VectorStoreProtocol implementation over langchain-core's InMemoryVectorStore, persisting to a JSON file (atomic writes) with a provenance sidecar and precomputed-vector ingestion.",
+      "tags": ["service", "vector-store", "persistence"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/sdd_pipeline/vector_store.py:make_vector_store",
+      "type": "function",
+      "name": "make_vector_store",
+      "filePath": "src/sdd_pipeline/vector_store.py",
+      "lineRange": [508, 515],
+      "summary": "Factory selecting and constructing the vector-store backend (memory or chroma) from config.vector_store_backend.",
+      "tags": ["factory", "vector-store", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/vocabulary.py:load_vocabulary",
+      "type": "function",
+      "name": "load_vocabulary",
+      "filePath": "src/sdd_pipeline/vocabulary.py",
+      "lineRange": [18, 27],
+      "summary": "Loads the cross-corpus entity vocabulary list from a JSON file, returning an empty list when the path is unset or missing.",
+      "tags": ["utility", "serialization", "vocabulary"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/sdd_pipeline/vocabulary.py:save_vocabulary",
+      "type": "function",
+      "name": "save_vocabulary",
+      "filePath": "src/sdd_pipeline/vocabulary.py",
+      "lineRange": [30, 38],
+      "summary": "Persists a sorted, deduplicated entity vocabulary list to a JSON file, creating parent directories as needed.",
+      "tags": ["utility", "serialization", "vocabulary"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:src/sdd_pipeline/__init__.py", "target": "config:src/sdd_pipeline/config.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/__init__.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/__init__.py", "target": "file:src/sdd_pipeline/pipeline.py", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:src/sdd_pipeline/chunking.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:src/sdd_pipeline/embeddings.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:src/sdd_pipeline/extract_prose.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:src/sdd_pipeline/ast_parser.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:src/sdd_pipeline/chunking.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "config:src/sdd_pipeline/config.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:src/sdd_pipeline/embeddings.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:src/sdd_pipeline/enrichment.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:src/sdd_pipeline/quality.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:src/sdd_pipeline/structural.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:src/sdd_pipeline/vector_store.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:src/sdd_pipeline/vocabulary.py", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:src/sdd_pipeline/tui.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:src/sdd_pipeline/tui.py", "target": "file:src/sdd_pipeline/pipeline.py", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:src/sdd_pipeline/vector_store.py", "target": "file:src/sdd_pipeline/models.py", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:src/sdd_pipeline/chunking.py", "target": "function:src/sdd_pipeline/chunking.py:_split_text", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/chunking.py", "target": "function:src/sdd_pipeline/chunking.py:_header_reserve", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/chunking.py", "target": "function:src/sdd_pipeline/chunking.py:_section_to_chunks", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/chunking.py", "target": "function:src/sdd_pipeline/chunking.py:chunk_document", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/chunking.py", "target": "function:src/sdd_pipeline/chunking.py:chunk_document", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/embeddings.py", "target": "function:src/sdd_pipeline/embeddings.py:make_embedder", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/embeddings.py", "target": "function:src/sdd_pipeline/embeddings.py:make_embedder", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/embeddings.py", "target": "function:src/sdd_pipeline/embeddings.py:embedder_identity", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/embeddings.py", "target": "function:src/sdd_pipeline/embeddings.py:embedder_identity", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/embeddings.py", "target": "class:src/sdd_pipeline/embeddings.py:EmbeddingModel", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/embeddings.py", "target": "class:src/sdd_pipeline/embeddings.py:EmbeddingModel", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/embeddings.py", "target": "class:src/sdd_pipeline/embeddings.py:AzureOpenAIEmbedder", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/embeddings.py", "target": "class:src/sdd_pipeline/embeddings.py:AzureOpenAIEmbedder", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/extract_prose.py", "target": "function:src/sdd_pipeline/extract_prose.py:_noun_chunks", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/extract_prose.py", "target": "function:src/sdd_pipeline/extract_prose.py:extract_prose", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/extract_prose.py", "target": "function:src/sdd_pipeline/extract_prose.py:extract_prose", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/extract_prose.py", "target": "function:src/sdd_pipeline/extract_prose.py:build_prose_inventory", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/extract_prose.py", "target": "function:src/sdd_pipeline/extract_prose.py:build_prose_inventory", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/extract_prose.py:extract_prose", "target": "class:src/sdd_pipeline/models.py:EntityRecord", "type": "depends_on", "direction": "forward", "weight": 0.6},
+
+    {"source": "file:src/sdd_pipeline/models.py", "target": "function:src/sdd_pipeline/models.py:_summarize_table_for_embed", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/models.py", "target": "class:src/sdd_pipeline/models.py:Section", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/models.py", "target": "class:src/sdd_pipeline/models.py:Section", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/models.py", "target": "class:src/sdd_pipeline/models.py:DocumentModel", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/models.py", "target": "class:src/sdd_pipeline/models.py:DocumentModel", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/models.py", "target": "class:src/sdd_pipeline/models.py:SemanticChunk", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/models.py", "target": "class:src/sdd_pipeline/models.py:SemanticChunk", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/models.py", "target": "class:src/sdd_pipeline/models.py:EntityRecord", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/models.py", "target": "class:src/sdd_pipeline/models.py:EntityRecord", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "class:src/sdd_pipeline/models.py:SemanticChunk", "target": "function:src/sdd_pipeline/models.py:_summarize_table_for_embed", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "class:src/sdd_pipeline/pipeline.py:SemanticPipeline", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "class:src/sdd_pipeline/pipeline.py:SemanticPipeline", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "class:src/sdd_pipeline/pipeline.py:SemanticPipeline", "target": "function:src/sdd_pipeline/embeddings.py:make_embedder", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "class:src/sdd_pipeline/pipeline.py:SemanticPipeline", "target": "function:src/sdd_pipeline/vector_store.py:make_vector_store", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "class:src/sdd_pipeline/pipeline.py:SemanticPipeline", "target": "function:src/sdd_pipeline/chunking.py:chunk_document", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "class:src/sdd_pipeline/pipeline.py:SemanticPipeline", "target": "function:src/sdd_pipeline/embeddings.py:embedder_identity", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "class:src/sdd_pipeline/pipeline.py:SemanticPipeline", "target": "function:src/sdd_pipeline/quality.py:check_chunk", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "class:src/sdd_pipeline/pipeline.py:SemanticPipeline", "target": "function:src/sdd_pipeline/vocabulary.py:load_vocabulary", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "class:src/sdd_pipeline/pipeline.py:SemanticPipeline", "target": "function:src/sdd_pipeline/vocabulary.py:save_vocabulary", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "class:src/sdd_pipeline/quality.py:MarkdownQualityReport", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "class:src/sdd_pipeline/quality.py:MarkdownQualityReport", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "class:src/sdd_pipeline/quality.py:ChunkQualityReport", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "class:src/sdd_pipeline/quality.py:ChunkQualityReport", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "function:src/sdd_pipeline/quality.py:check_markdown", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "function:src/sdd_pipeline/quality.py:check_markdown", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "function:src/sdd_pipeline/quality.py:_strip_code_preserving_lines", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "function:src/sdd_pipeline/quality.py:check_chunk", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "function:src/sdd_pipeline/quality.py:check_chunk", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "function:src/sdd_pipeline/quality.py:_scan_residue", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "function:src/sdd_pipeline/quality.py:_check_orphaned_headings", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "function:src/sdd_pipeline/quality.py:check_markdown", "target": "function:src/sdd_pipeline/quality.py:_strip_code_preserving_lines", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/quality.py:check_markdown", "target": "function:src/sdd_pipeline/quality.py:_check_orphaned_headings", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/quality.py:check_chunk", "target": "function:src/sdd_pipeline/quality.py:_scan_residue", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/quality.py:check_chunk", "target": "function:src/sdd_pipeline/quality.py:_strip_code_preserving_lines", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/tui.py", "target": "function:src/sdd_pipeline/tui.py:format_preview", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/tui.py", "target": "function:src/sdd_pipeline/tui.py:format_preview", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/tui.py", "target": "class:src/sdd_pipeline/tui.py:SearchApp", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/tui.py", "target": "class:src/sdd_pipeline/tui.py:SearchApp", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "class:src/sdd_pipeline/tui.py:SearchApp", "target": "class:src/sdd_pipeline/pipeline.py:SemanticPipeline", "type": "depends_on", "direction": "forward", "weight": 0.6},
+    {"source": "class:src/sdd_pipeline/tui.py:SearchApp", "target": "function:src/sdd_pipeline/tui.py:format_preview", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/vector_store.py", "target": "class:src/sdd_pipeline/vector_store.py:SearchResult", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/vector_store.py", "target": "class:src/sdd_pipeline/vector_store.py:SearchResult", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/vector_store.py", "target": "class:src/sdd_pipeline/vector_store.py:ChromaVectorStore", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/vector_store.py", "target": "class:src/sdd_pipeline/vector_store.py:ChromaVectorStore", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/vector_store.py", "target": "class:src/sdd_pipeline/vector_store.py:MemoryVectorStore", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/vector_store.py", "target": "class:src/sdd_pipeline/vector_store.py:MemoryVectorStore", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/vector_store.py", "target": "function:src/sdd_pipeline/vector_store.py:make_vector_store", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/vector_store.py", "target": "function:src/sdd_pipeline/vector_store.py:make_vector_store", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/vector_store.py:make_vector_store", "target": "class:src/sdd_pipeline/vector_store.py:MemoryVectorStore", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:src/sdd_pipeline/vector_store.py:make_vector_store", "target": "class:src/sdd_pipeline/vector_store.py:ChromaVectorStore", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:src/sdd_pipeline/vocabulary.py", "target": "function:src/sdd_pipeline/vocabulary.py:load_vocabulary", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/vocabulary.py", "target": "function:src/sdd_pipeline/vocabulary.py:load_vocabulary", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:src/sdd_pipeline/vocabulary.py", "target": "function:src/sdd_pipeline/vocabulary.py:save_vocabulary", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:src/sdd_pipeline/vocabulary.py", "target": "function:src/sdd_pipeline/vocabulary.py:save_vocabulary", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "config:src/sdd_pipeline/config.py", "target": "file:src/sdd_pipeline/pipeline.py", "type": "configures", "direction": "forward", "weight": 0.6},
+    {"source": "config:src/sdd_pipeline/config.py", "target": "file:src/sdd_pipeline/embeddings.py", "type": "configures", "direction": "forward", "weight": 0.6},
+    {"source": "config:src/sdd_pipeline/config.py", "target": "file:src/sdd_pipeline/vector_store.py", "type": "configures", "direction": "forward", "weight": 0.6}
+  ]
+}

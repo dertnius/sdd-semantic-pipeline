@@ -1,0 +1,46 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {
+      "path": "src/sdd_pipeline/dump.py",
+      "language": "python",
+      "sizeLines": 88,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/enrichment.py",
+      "language": "python",
+      "sizeLines": 540,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/reconcile.py",
+      "language": "python",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/workspace.py",
+      "language": "python",
+      "sizeLines": 196,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/sdd_pipeline/dump.py": [
+      "src/sdd_pipeline/ast_parser.py",
+      "src/sdd_pipeline/enrichment.py",
+      "src/sdd_pipeline/pipeline.py",
+      "src/sdd_pipeline/workspace.py"
+    ],
+    "src/sdd_pipeline/enrichment.py": [
+      "src/sdd_pipeline/direction.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/reconcile.py"
+    ],
+    "src/sdd_pipeline/reconcile.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/workspace.py": []
+  }
+}

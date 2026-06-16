@@ -1,0 +1,55 @@
+{
+  "nodes": [
+    {
+      "id": "document:docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md",
+      "type": "document",
+      "name": "CONFLUENCE_FORMAT_INSTRUCTIONS.md",
+      "filePath": "docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md",
+      "summary": "Authoritative reference spec mapping every Confluence storage-format element (headings, text effects, links, images, code blocks, tables, macros, layouts, ri/ac namespaces) to its GitLab-Markdown handling, governing the html_to_gitlab_md.py converter for Confluence Data Center 8.5.x.",
+      "tags": ["documentation", "specification", "confluence", "markdown-conversion", "reference"],
+      "complexity": "complex",
+      "languageNotes": "19 numbered rule sections plus element-priority and selector-priority ordering tables that the converter's _normalise_code_blocks() and _find_content_root() must follow."
+    },
+    {
+      "id": "document:docs/inbox/Convert.Linux.Readme.md",
+      "type": "document",
+      "name": "Convert.Linux.Readme.md",
+      "filePath": "docs/inbox/Convert.Linux.Readme.md",
+      "summary": "Linux usage guide for the HTML-to-GitLab-Markdown converter covering prerequisites, UTF-8 handling, single-file and batch invocation, CLI options, and verification with an example run.",
+      "tags": ["documentation", "usage-guide", "cli", "markdown-conversion", "linux"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/inbox/Convert.Windows.Readme.md",
+      "type": "document",
+      "name": "Convert.Windows.Readme.md",
+      "filePath": "docs/inbox/Convert.Windows.Readme.md",
+      "summary": "Windows usage guide for the HTML-to-GitLab-Markdown converter covering prerequisites, PYTHONUTF8 console encoding, single-file and batch invocation, CLI options, and verification with an example run.",
+      "tags": ["documentation", "usage-guide", "cli", "markdown-conversion", "windows"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/inbox/Convert.Linux.Readme.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/inbox/Convert.Windows.Readme.md",
+      "target": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

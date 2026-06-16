@@ -1,0 +1,113 @@
+{
+  "nodes": [
+    {
+      "id": "document:docs/learn/bridge/01-project-anatomy-and-tooling.md",
+      "type": "document",
+      "name": "01-project-anatomy-and-tooling.md",
+      "filePath": "docs/learn/bridge/01-project-anatomy-and-tooling.md",
+      "summary": "Onboarding bridge doc mapping the project's pyproject.toml layout, venv, editable install, and tool tables onto familiar .NET/.csproj concepts for a C# developer learning Python tooling.",
+      "tags": ["documentation", "onboarding", "tooling", "build-system", "csharp-bridge"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/bridge/02-dataclasses-vs-csharp-records.md",
+      "type": "document",
+      "name": "02-dataclasses-vs-csharp-records.md",
+      "filePath": "docs/learn/bridge/02-dataclasses-vs-csharp-records.md",
+      "summary": "Bridge doc teaching Python dataclasses, frozen instances, default_factory, StrEnum, and asdict by analogy to C# records, using the project's models.py data contracts as the worked example.",
+      "tags": ["documentation", "onboarding", "data-model", "dataclasses", "csharp-bridge"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "type": "document",
+      "name": "03-protocols-typing-and-unions.md",
+      "filePath": "docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "summary": "Bridge doc explaining structural typing via Protocol, optional unions, TYPE_CHECKING cycle-breaking, and constructor injection, grounded in the project's EmbedderProtocol/VectorStoreProtocol and SemanticPipeline wiring.",
+      "tags": ["documentation", "onboarding", "type-definition", "protocols", "csharp-bridge"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "type": "document",
+      "name": "04-iteration-comprehensions-generators.md",
+      "filePath": "docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "summary": "Bridge doc covering comprehensions, generators, sorted/key, Counter/defaultdict, slicing and enumerate by analogy to LINQ, using real call sites in retrieval.py, enrichment.py, and template_taxonomy.py.",
+      "tags": ["documentation", "onboarding", "iteration", "linq-bridge", "csharp-bridge"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "type": "document",
+      "name": "05-modules-imports-and-lazy-patterns.md",
+      "filePath": "docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "summary": "Bridge doc on Python modules-as-singletons, package __init__.py re-exports, @property lazy-init, optional imports, logging, pathlib, and the __main__ guard, illustrated with pipeline.py, vector_store.py, and dump.py.",
+      "tags": ["documentation", "onboarding", "modules", "lazy-loading", "csharp-bridge"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/bridge/06-pydantic-settings-and-typer.md",
+      "type": "document",
+      "name": "06-pydantic-settings-and-typer.md",
+      "filePath": "docs/learn/bridge/06-pydantic-settings-and-typer.md",
+      "summary": "Bridge doc explaining pydantic-settings BaseSettings (the dual-branch config trap) and typer CLI construction by analogy to IConfiguration/IOptions and System.CommandLine, grounded in config.py and cli.py.",
+      "tags": ["documentation", "onboarding", "configuration", "cli", "csharp-bridge"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "type": "document",
+      "name": "07-pytest-for-xunit-developers.md",
+      "filePath": "docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "summary": "Bridge doc teaching pytest discovery, fixtures, parametrize/markers, monkeypatch/mocker, and mock-at-the-seam injection for xUnit developers, using conftest.py and the project's test suite as worked examples.",
+      "tags": ["documentation", "onboarding", "test", "pytest", "csharp-bridge"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {"source": "document:docs/learn/bridge/01-project-anatomy-and-tooling.md", "target": "config:pyproject.toml", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/01-project-anatomy-and-tooling.md", "target": "file:src/sdd_pipeline/cli.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/01-project-anatomy-and-tooling.md", "target": "file:src/sdd_pipeline/embeddings.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/01-project-anatomy-and-tooling.md", "target": "file:src/sdd_pipeline/vector_store.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/bridge/02-dataclasses-vs-csharp-records.md", "target": "file:src/sdd_pipeline/models.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md", "target": "file:src/sdd_pipeline/embeddings.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md", "target": "file:src/sdd_pipeline/vector_store.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md", "target": "file:src/sdd_pipeline/pipeline.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md", "target": "file:src/sdd_pipeline/models.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md", "target": "file:src/sdd_pipeline/config.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/03-protocols-typing-and-unions.md", "target": "file:tests/test_pipeline.py", "type": "related", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md", "target": "file:src/sdd_pipeline/retrieval.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md", "target": "file:src/sdd_pipeline/enrichment.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md", "target": "file:src/sdd_pipeline/template_taxonomy.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md", "target": "file:src/sdd_pipeline/models.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md", "target": "file:src/sdd_pipeline/pipeline.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md", "target": "file:src/sdd_pipeline/corpus_taxonomy.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/04-iteration-comprehensions-generators.md", "target": "file:src/sdd_pipeline/embeddings.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md", "target": "file:src/sdd_pipeline/__init__.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md", "target": "file:src/sdd_pipeline/pipeline.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md", "target": "file:src/sdd_pipeline/config.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md", "target": "file:src/sdd_pipeline/vector_store.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md", "target": "file:src/sdd_pipeline/embeddings.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md", "target": "file:src/sdd_pipeline/dump.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md", "target": "file:src/sdd_pipeline/enrichment.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/05-modules-imports-and-lazy-patterns.md", "target": "file:src/sdd_pipeline/cli.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/bridge/06-pydantic-settings-and-typer.md", "target": "file:src/sdd_pipeline/config.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/06-pydantic-settings-and-typer.md", "target": "file:src/sdd_pipeline/cli.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/06-pydantic-settings-and-typer.md", "target": "file:src/sdd_pipeline/vector_store.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/06-pydantic-settings-and-typer.md", "target": "file:tests/test_config.py", "type": "related", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md", "target": "file:tests/conftest.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md", "target": "file:src/sdd_pipeline/pipeline.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md", "target": "file:tests/test_pipeline.py", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md", "target": "file:tests/test_enrichment.py", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md", "target": "file:tests/test_config.py", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md", "target": "file:tests/test_ast_parser.py", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md", "target": "file:tests/test_vector_store.py", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/bridge/07-pytest-for-xunit-developers.md", "target": "config:pyproject.toml", "type": "related", "direction": "forward", "weight": 0.5}
+  ]
+}

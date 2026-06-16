@@ -1,0 +1,92 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 4,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "tests/convert/examples/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 104,
+      "nonEmptyLines": 89,
+      "sections": [
+        {
+          "heading": "Confluence → GitLab-Markdown conversion examples",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Files",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "Reproduce",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "The bar: \"no information loss\" in three tiers",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "Scenario map (actual output, verified)",
+          "level": 2,
+          "line": 44
+        },
+        {
+          "heading": "`order-management-sad.html` — clean rendered export",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "`adversarial-edge-cases.html` — what survives, what degrades",
+          "level": 3,
+          "line": 69
+        },
+        {
+          "heading": "Known limitations (Tier-2 — inherent, document not fix)",
+          "level": 2,
+          "line": 80
+        },
+        {
+          "heading": "Storage format (`order-management-sad.storage.html`)",
+          "level": 3,
+          "line": 95
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "tests/convert/examples/adversarial-edge-cases.html",
+      "language": "html",
+      "fileCategory": "markup",
+      "totalLines": 118,
+      "nonEmptyLines": 107,
+      "metrics": {}
+    },
+    {
+      "path": "tests/convert/examples/order-management-sad.html",
+      "language": "html",
+      "fileCategory": "markup",
+      "totalLines": 301,
+      "nonEmptyLines": 256,
+      "metrics": {}
+    },
+    {
+      "path": "tests/convert/examples/order-management-sad.storage.html",
+      "language": "html",
+      "fileCategory": "markup",
+      "totalLines": 50,
+      "nonEmptyLines": 43,
+      "metrics": {}
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+{"session":"win-A","ts":1781740800,"model":"gpt-4.1","response_id":"r1","input":"[{\"role\":\"user\",\"content\":\"first copilot prompt\"}]","output":"[{\"role\":\"assistant\",\"content\":\"ok\"}]"}
+{"session":"win-A","ts":1781740860,"model":"gpt-4.1","response_id":"r2","input":"plain string prompt"}
+{"session":"win-B","ts":1781740900,"model":"gpt-4o","response_id":"r3","input":"[{\"role\":\"system\",\"content\":\"sys\"},{\"role\":\"user\",\"content\":\"second\"}]"}

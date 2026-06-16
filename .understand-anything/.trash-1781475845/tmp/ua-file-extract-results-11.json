@@ -1,0 +1,548 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 11,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "docs/learn/tours/01-models-and-config.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 148,
+      "nonEmptyLines": 129,
+      "sections": [
+        {
+          "heading": "Tour 01 — models.py & config.py: the contract layer",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Reading order",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "The one distinction that explains the whole system",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "config.py: how a knob travels",
+          "level": 2,
+          "line": 89
+        },
+        {
+          "heading": "Executable documentation",
+          "level": 2,
+          "line": 106
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 116
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/learn/tours/02-ast-parser-and-structural.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 130,
+      "nonEmptyLines": 114,
+      "sections": [
+        {
+          "heading": "Tour 02 — ast_parser.py & structural.py: markdown → typed tree",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "ast_parser.py — a deliberately thin wrapper",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "structural.py — reading order",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "doc_id: stable, but only on your machine",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "Executable documentation",
+          "level": 2,
+          "line": 86
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 99
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/learn/tours/03-enrichment.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 110,
+      "nonEmptyLines": 101,
+      "sections": [
+        {
+          "heading": "Tour 03 — enrichment.py: deterministic classification & entities",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Reading order",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "The optional `inventory` parameter (stage 3.5)",
+          "level": 2,
+          "line": 55
+        },
+        {
+          "heading": "Executable documentation",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 80
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/learn/tours/04-vocabulary-and-two-pass-scan.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 118,
+      "nonEmptyLines": 107,
+      "sections": [
+        {
+          "heading": "Tour 04 — vocabulary.py & the two-pass corpus scan",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Reading order",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "CLI surface",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "Executable documentation",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 88
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/learn/tours/05-taxonomy-modules.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 123,
+      "nonEmptyLines": 110,
+      "sections": [
+        {
+          "heading": "Tour 05 — the taxonomy modules: what fields *should* a SAD have?",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Reading order",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "The payoff, in real numbers",
+          "level": 2,
+          "line": 57
+        },
+        {
+          "heading": "CLI",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Executable documentation",
+          "level": 2,
+          "line": 84
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 98
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/learn/tours/06-inventory-extraction-modules.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 128,
+      "nonEmptyLines": 107,
+      "sections": [
+        {
+          "heading": "Tour 06 — Inventory extraction: tables + prose → routed fields",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Role in the pipeline",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Reading order",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Integration point: how records reach chunks",
+          "level": 2,
+          "line": 56
+        },
+        {
+          "heading": "Key design decisions",
+          "level": 2,
+          "line": 74
+        },
+        {
+          "heading": "The observable payoff (real data)",
+          "level": 2,
+          "line": 84
+        },
+        {
+          "heading": "Executable documentation",
+          "level": 2,
+          "line": 97
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 105
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "docs/learn/tours/07-chunking.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 126,
+      "nonEmptyLines": 102,
+      "sections": [
+        {
+          "heading": "Tour 07 — Chunking: sections → embeddable units",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Role in the pipeline",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Reading order",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "The three merge strategies",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "Two budgets, two purposes",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Entity scoping",
+          "level": 2,
+          "line": 88
+        },
+        {
+          "heading": "Executable documentation",
+          "level": 2,
+          "line": 96
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 105
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "docs/learn/tours/08-embeddings-and-vector-store.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 120,
+      "nonEmptyLines": 101,
+      "sections": [
+        {
+          "heading": "Tour 08 — Embeddings & vector store: the two Protocol seams",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Role in the pipeline",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "Reading order: embeddings.py",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Reading order: vector_store.py",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "Provenance: refusing to search a foreign index",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "get_corpus",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Executable documentation",
+          "level": 2,
+          "line": 81
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 96
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "docs/learn/tours/09-retrieval-and-hybrid-search.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 115,
+      "nonEmptyLines": 94,
+      "sections": [
+        {
+          "heading": "Tour 09 — Hybrid retrieval: BM25 + Reciprocal Rank Fusion",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Role in the pipeline",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Reading order: retrieval.py (under 100 lines, read top to bottom)",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "Reading order: pipeline.py::_hybrid_search, step by step",
+          "level": 2,
+          "line": 44
+        },
+        {
+          "heading": "Fused scores are not similarities",
+          "level": 2,
+          "line": 67
+        },
+        {
+          "heading": "Config knobs",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "Executable documentation",
+          "level": 2,
+          "line": 84
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 96
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "docs/learn/tours/10-pipeline-orchestrator-and-cli.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 125,
+      "nonEmptyLines": 102,
+      "sections": [
+        {
+          "heading": "Tour 10 — Orchestrator & CLI: where everything is wired",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Role in the pipeline",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "Reading order: pipeline.py",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "Reading order: cli.py",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "Developer tools (not commands)",
+          "level": 2,
+          "line": 82
+        },
+        {
+          "heading": "Executable documentation",
+          "level": 2,
+          "line": 89
+        },
+        {
+          "heading": "Self-check",
+          "level": 2,
+          "line": 101
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "docs/learn/tours/11-quality-linter.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 92,
+      "nonEmptyLines": 75,
+      "sections": [
+        {
+          "heading": "Tour 11 — `quality.py` & the `lint` command",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "What it is",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Reading order",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Why these choices (the interview/grilling trail)",
+          "level": 2,
+          "line": 62
+        },
+        {
+          "heading": "Try it",
+          "level": 2,
+          "line": 79
+        },
+        {
+          "heading": "Tests as the spec",
+          "level": 2,
+          "line": 87
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    }
+  ]
+}

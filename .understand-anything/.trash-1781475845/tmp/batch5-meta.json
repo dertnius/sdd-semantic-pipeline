@@ -1,0 +1,11 @@
+{
+  "batchImportData": {
+    ".env.example": [],
+    "CLAUDE.md": [],
+    "README.md": [],
+    "devfile.yaml": [],
+    "environment.yml": [],
+    "pyproject.toml": []
+  },
+  "neighborMap": {}
+}

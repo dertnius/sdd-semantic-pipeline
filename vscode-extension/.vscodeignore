@@ -1,0 +1,20 @@
+# Source + tooling — excluded from the .vsix (only dist/, media/, scripts/ ship)
+.vscode/**
+src/**
+test/**
+node_modules/**
+**/__pycache__/**
+**/*.pyc
+**/*.ts
+**/*.map
+tsconfig.json
+esbuild.mjs
+.eslintrc.cjs
+.gitignore
+.vscode-test/**
+**/.DS_Store
+
+# Keep: dist/extension.js (bundled), media/** (webview + vendor), scripts/*.py (oracle)
+!dist/extension.js
+!media/**
+!scripts/**

@@ -1,0 +1,91 @@
+{
+  "nodes": [
+    {
+      "id": "document:src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md",
+      "type": "document",
+      "name": "adr-0001-modular-semantic-pipeline.md",
+      "filePath": "src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md",
+      "summary": "Sample Architecture Decision Record fixture (ADR-0001) used as an evaluation corpus input, documenting the decision to build a modular semantic pipeline with Status/Context/Decision/Consequences/Alternatives sections.",
+      "tags": ["documentation", "fixture", "adr", "decision-record", "test"],
+      "complexity": "moderate",
+      "languageNotes": "Classic ADR structure (Status, Context, Decision, Consequences, Alternatives Considered) exercising the pipeline's decision-record SectionType detection."
+    },
+    {
+      "id": "document:src/tools/eval/corpus/airflow-aip107.md",
+      "type": "document",
+      "name": "airflow-aip107.md",
+      "filePath": "src/tools/eval/corpus/airflow-aip107.md",
+      "summary": "Sample Airflow Improvement Proposal (AIP-107) fixture used as evaluation corpus input, covering motivation, problem details, considerations, migration effort, and AIP done criteria.",
+      "tags": ["documentation", "fixture", "proposal", "airflow", "test"],
+      "complexity": "complex",
+      "languageNotes": "AIP-style proposal with Motivation/Considerations/done-criteria headings, exercising decision/done_criteria SectionType detection and cross-corpus entity terms (Airflow, XCom)."
+    },
+    {
+      "id": "document:src/tools/eval/corpus/impala-vscode.md",
+      "type": "document",
+      "name": "impala-vscode.md",
+      "filePath": "src/tools/eval/corpus/impala-vscode.md",
+      "summary": "Sample developer how-to fixture used as evaluation corpus input, describing front-end development, unit-test debugging, and Dev Container setup for Impala in VSCode.",
+      "tags": ["documentation", "fixture", "how-to", "developer-guide", "test"],
+      "complexity": "moderate",
+      "languageNotes": "Procedural setup/debug guide with nested Setup sections, exercising code-fence handling and the deployment/overview SectionType rules."
+    },
+    {
+      "id": "document:src/tools/eval/corpus/sad-retailnexus-oms.md",
+      "type": "document",
+      "name": "sad-retailnexus-oms.md",
+      "filePath": "src/tools/eval/corpus/sad-retailnexus-oms.md",
+      "summary": "Large Software Architecture Document fixture for the fictional RetailNexus OMS, used as evaluation corpus input — covers system overview, component/integration/data/security/deployment architecture, ADRs, and a risk register.",
+      "tags": ["documentation", "fixture", "architecture", "sad", "test"],
+      "complexity": "complex",
+      "languageNotes": "Full SAD spanning every SectionType (overview, architecture, api, data_model, security, deployment, decision) plus tables, Kafka topic registry, and an order state machine — a broad multi-section retrieval target."
+    },
+    {
+      "id": "document:src/tools/eval/corpus/scripting-on-dtk.md",
+      "type": "document",
+      "name": "scripting-on-dtk.md",
+      "filePath": "src/tools/eval/corpus/scripting-on-dtk.md",
+      "summary": "Reference/spec fixture used as evaluation corpus input, documenting DTK scripting commands (COPY, SOQLQUERY, BULKDELETE, BULKUPSERT, RECORDCREATE/UPDATE/DELETE, APEXEXECUTE, DEPLOYZIP) with syntax and examples.",
+      "tags": ["documentation", "fixture", "reference", "scripting", "test"],
+      "complexity": "complex",
+      "languageNotes": "Command-reference doc with heavy code fences and per-command definition sections — a prime target for the --merge-definitions export mode that folds code into the explanation chunk."
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:src/tools/eval/corpus/airflow-aip107.md",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:src/tools/eval/corpus/impala-vscode.md",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:src/tools/eval/corpus/sad-retailnexus-oms.md",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:src/tools/eval/corpus/scripting-on-dtk.md",
+      "target": "document:src/tools/eval/README.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

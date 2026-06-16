@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ARCH : Aurora &ndash; Event-Driven Order Fulfillment Platform (Software Design Document)</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Architecture &amp; Platform (ARCH)</a></span>
+                            </li>
+                            <li>
+                                <span><a href="Design-Documents_98305.html">Design Documents</a></span>
+                            </li>
+                            <li>
+                                <span><a href="Aurora_393217.html">Aurora Program</a></span>
+                            </li>
+                        </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                        <span id="title-text">
+                            ARCH : Aurora &ndash; Event-Driven Order Fulfillment Platform (Software Design Document)
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="page view">
+                    <div class="page-metadata">
+                        Created by <span class="author"> Jane Smith</span>, last modified by <span class="editor"> Raj Patel</span> on <time datetime="2025-11-14">Nov 14, 2025</time>
+                    </div>
+
+                    <div id="main-content" class="wiki-content group">
+
+<p>
+    <span class="confluence-anchor-link" id="AuroraSDD-top"></span>
+</p>
+
+<h2 id="AuroraSDD-DocumentControl">Document Control</h2>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable" data-pageproperties-id="document-control">
+        <colgroup>
+            <col style="width: 180.0px;" />
+            <col style="width: 420.0px;" />
+        </colgroup>
+        <tbody>
+            <tr>
+                <th class="confluenceTh">Document ID</th>
+                <td class="confluenceTd">SDD-AUR-001</td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Status</th>
+                <td class="confluenceTd">
+                    <span class="status-macro aui-lozenge conf-macro output-inline aui-lozenge-success" data-hasbody="false" data-macro-name="status">APPROVED</span>
+                </td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Version</th>
+                <td class="confluenceTd">3.2</td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Document Owner</th>
+                <td class="confluenceTd">
+                    <a class="confluence-userlink user-mention" data-username="jsmith" href="https://confluence.example.com/display/~jsmith" data-linked-resource-id="201" data-linked-resource-type="userinfo">Jane Smith</a> (Principal Architect)
+                </td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Reviewers</th>
+                <td class="confluenceTd">
+                    <a class="confluence-userlink user-mention" data-username="rpatel" href="https://confluence.example.com/display/~rpatel">Raj Patel</a>,
+                    <a class="confluence-userlink user-mention" data-username="lchen" href="https://confluence.example.com/display/~lchen">Li Chen</a>,
+                    <a class="confluence-userlink user-mention" data-username="mosei" href="https://confluence.example.com/display/~mosei">Marcus Osei</a>
+                </td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Approved By</th>
+                <td class="confluenceTd">
+                    <a class="confluence-userlink user-mention" data-username="cknight" href="https://confluence.example.com/display/~cknight">Carol Knight</a> (VP Engineering) on <time datetime="2025-11-12">12 Nov 2025</time>
+                </td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Classification</th>
+                <td class="confluenceTd">
+                    <span class="status-macro aui-lozenge conf-macro output-inline aui-lozenge-error" data-hasbody="false" data-macro-name="status">INTERNAL &ndash; CONFIDENTIAL</span>
+                </td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Last Reviewed</th>
+                <td class="confluenceTd"><time datetime="2025-11-12">12 Nov 2025</time></td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Related Epic</th>
+                <td class="confluenceTd">
+                    <span class="jira-issue resolved conf-macro output-inline" data-jira-key="AUR-100" data-macro-name="jira">
+                        <a href="https://jira.example.com/browse/AUR-100" class="jira-issue-key">
+                            <img class="icon" src="https://jira.example.com/images/icons/issuetypes/epic.svg" alt="Epic" height="16" width="16" />AUR-100
+                        </a>
+                        <span class="aui-lozenge aui-lozenge-subtle aui-lozenge-success jira-macro-lozenge">DONE</span>
+                    </span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="confluence-information-macro confluence-information-macro-information conf-macro output-block" data-hasbody="true" data-macro-name="info">
+    <span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span>
+    <div class="confluence-information-macro-body">
+        <p>This document is the canonical Software Design Document (SDD) for the <strong>Aurora</strong> platform. It supersedes <a href="Aurora-Legacy-Design_262145.html" data-linked-resource-id="262145" data-linked-resource-type="page" data-base-url="https://confluence.example.com">Aurora Legacy Design (v2.x)</a>. For the higher-level Software Architecture Document, see <a href="Aurora-SAD_360449.html" data-linked-resource-id="360449" data-linked-resource-type="page" data-base-url="https://confluence.example.com">Aurora &ndash; Software Architecture Document</a>.</p>
+    </div>
+</div>
+
+<h2 id="AuroraSDD-TableofContents">Table of Contents</h2>
+
+<div class="toc-macro client-side-toc-macro conf-macro output-block" data-headerelements="H2,H3" data-macro-name="toc">
+    <ul class="toc-indentation">
+        <li><a href="#AuroraSDD-1.Introduction">1. Introduction</a>
+            <ul class="toc-indentation">
+                <li><a href="#AuroraSDD-1.1Purpose">1.1 Purpose</a></li>
+                <li><a href="#AuroraSDD-1.2Scope">1.2 Scope</a></li>
+                <li><a href="#AuroraSDD-1.3Glossary">1.3 Glossary &amp; Definitions</a></li>
+            </ul>
+        </li>
+        <li><a href="#AuroraSDD-2.Requirements">2. Requirements</a></li>
+        <li><a href="#AuroraSDD-3.SystemContext">3. System Context</a></li>
+        <li><a href="#AuroraSDD-4.ArchitectureOverview">4. Architecture Overview</a></li>
+        <li><a href="#AuroraSDD-5.ComponentCatalog">5. Component Catalog</a></li>
+        <li><a href="#AuroraSDD-6.DataModel">6. Data Model</a></li>
+        <li><a href="#AuroraSDD-7.APISpecifications">7. API Specifications</a></li>
+        <li><a href="#AuroraSDD-8.RuntimeFlows">8. Runtime Flows</a></li>
+        <li><a href="#AuroraSDD-9.Integrations">9. External Integrations</a></li>
+        <li><a href="#AuroraSDD-10.ArchitectureDecisionRecords">10. Architecture Decision Records</a></li>
+        <li><a href="#AuroraSDD-11.QualityAttributes">11. Quality Attributes (NFRs)</a></li>
+        <li><a href="#AuroraSDD-12.Deployment">12. Deployment &amp; Infrastructure</a></li>
+        <li><a href="#AuroraSDD-13.Risks">13. Risks, Assumptions &amp; Open Questions</a></li>
+        <li><a href="#AuroraSDD-14.References">14. References</a></li>
+        <li><a href="#AuroraSDD-15.RevisionHistory">15. Revision History</a></li>
+        <li><a href="#AuroraSDD-Appendix">Appendix A &ndash; Configuration Reference</a></li>
+    </ul>
+</div>
+
+<hr />
+
+<h2 id="AuroraSDD-1.Introduction">1. Introduction</h2>
+
+<h3 id="AuroraSDD-1.1Purpose">1.1 Purpose</h3>
+
+<p>Aurora is an <strong>event-driven order fulfillment platform</strong> that orchestrates the lifecycle of customer orders from capture through delivery confirmation. It replaces the monolithic <code>LegacyFulfillment</code> system with a set of loosely-coupled services communicating over <strong>Apache Kafka</strong>. The primary goals are to reduce end-to-end fulfillment latency from <em>~45 minutes</em> to <strong>under 5 minutes (p95)</strong>, and to support a throughput of <strong>12,000 orders/minute</strong> at peak.</p>
+
+<p>This document describes the design at a level sufficient for implementation teams to build, test, and operate the system. It is intended for software engineers, SREs, QA engineers, and architecture reviewers.</p>
+
+<h3 id="AuroraSDD-1.2Scope">1.2 Scope</h3>
+
+<div class="contentLayout2">
+    <div class="columnLayout two-equal" data-layout="two-equal">
+        <div class="cell normal" data-type="normal">
+            <div class="innerCell">
+                <div class="panel conf-macro output-block" style="background-color: #DEEBFF;border-color: #4C9AFF;border-width: 1.0px;" data-macro-name="panel">
+                    <div class="panelHeader" style="border-bottom-width: 1.0px;border-bottom-color: #4C9AFF;"><strong>In Scope</strong></div>
+                    <div class="panelContent">
+                        <ul>
+                            <li>Order ingress and validation</li>
+                            <li>Inventory reservation and release</li>
+                            <li>Payment authorization orchestration</li>
+                            <li>Warehouse dispatch and routing</li>
+                            <li>Customer notification dispatch</li>
+                            <li>Saga-based compensation flows</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cell normal" data-type="normal">
+            <div class="innerCell">
+                <div class="panel conf-macro output-block" style="background-color: #FFEBE6;border-color: #FF5630;border-width: 1.0px;" data-macro-name="panel">
+                    <div class="panelHeader" style="border-bottom-width: 1.0px;border-bottom-color: #FF5630;"><strong>Out of Scope</strong></div>
+                    <div class="panelContent">
+                        <ul>
+                            <li>Pricing &amp; promotions engine (owned by <code>PricingService</code>)</li>
+                            <li>Customer relationship management (CRM)</li>
+                            <li>Returns &amp; reverse logistics (Phase 2)</li>
+                            <li>Tax calculation (delegated to <strong>Avalara</strong>)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 id="AuroraSDD-1.3Glossary">1.3 Glossary &amp; Definitions</h3>
+
+<dl>
+    <dt>Saga</dt>
+    <dd>A sequence of local transactions where each step publishes an event that triggers the next; failures trigger compensating transactions.</dd>
+    <dt>Outbox</dt>
+    <dd>A transactional outbox pattern used to atomically persist domain state and emit events.</dd>
+    <dt>Idempotency Key</dt>
+    <dd>A client-supplied unique key (<code>Idempotency-Key</code> header) that guarantees at-most-once side effects for retried requests.</dd>
+    <dt>SLO</dt>
+    <dd>Service Level Objective &mdash; a target value or range for a service level measured by an SLI.</dd>
+</dl>
+
+<hr />
+
+<h2 id="AuroraSDD-2.Requirements">2. Requirements</h2>
+
+<h3 id="AuroraSDD-2.1FunctionalRequirements">2.1 Functional Requirements</h3>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <colgroup>
+            <col style="width: 90.0px;" />
+            <col style="width: 380.0px;" />
+            <col style="width: 110.0px;" />
+            <col style="width: 110.0px;" />
+        </colgroup>
+        <thead>
+            <tr>
+                <th class="confluenceTh">ID</th>
+                <th class="confluenceTh">Requirement</th>
+                <th class="confluenceTh">Priority</th>
+                <th class="confluenceTh">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="confluenceTd"><strong>REQ-001</strong></td>
+                <td class="confluenceTd">The system shall accept orders via a synchronous REST endpoint and acknowledge within 200ms.</td>
+                <td class="confluenceTd">MUST</td>
+                <td class="confluenceTd"><span class="status-macro aui-lozenge conf-macro output-inline aui-lozenge-success" data-macro-name="status">DONE</span></td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>REQ-002</strong></td>
+                <td class="confluenceTd">The system shall reserve inventory before authorizing payment.</td>
+                <td class="confluenceTd">MUST</td>
+                <td class="confluenceTd"><span class="status-macro aui-lozenge conf-macro output-inline aui-lozenge-success" data-macro-name="status">DONE</span></td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>REQ-003</strong></td>
+                <td class="confluenceTd">On payment failure, the system shall release reserved inventory within 30 seconds.</td>
+                <td class="confluenceTd">MUST</td>
+                <td class="confluenceTd"><span class="status-macro aui-lozenge conf-macro output-inline aui-lozenge-current" data-macro-name="status">IN PROGRESS</span></td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>REQ-004</strong></td>
+                <td class="confluenceTd">The system shall deduplicate orders using a client-supplied <code>Idempotency-Key</code>.</td>
+                <td class="confluenceTd">SHOULD</td>
+                <td class="confluenceTd"><span class="status-macro aui-lozenge conf-macro output-inline aui-lozenge-success" data-macro-name="status">DONE</span></td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>REQ-005</strong></td>
+                <td class="confluenceTd">The system should notify customers via email and SMS on each order state transition.</td>
+                <td class="confluenceTd">COULD</td>
+                <td class="confluenceTd"><span class="status-macro aui-lozenge conf-macro output-inline" data-macro-name="status">PLANNED</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<h3 id="AuroraSDD-2.2NonFunctionalRequirements">2.2 Non-Functional Requirements</h3>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <tbody>
+            <tr>
+                <th class="confluenceTh">ID</th>
+                <th class="confluenceTh">Category</th>
+                <th class="confluenceTh">Target</th>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>NFR-001</strong></td>
+                <td class="confluenceTd">Throughput</td>
+                <td class="confluenceTd">12,000 orders/minute sustained, 18,000 burst</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>NFR-002</strong></td>
+                <td class="confluenceTd">Latency</td>
+                <td class="confluenceTd">End-to-end fulfillment &lt; 5 min (p95), &lt; 9 min (p99)</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>NFR-003</strong></td>
+                <td class="confluenceTd">Availability</td>
+                <td class="confluenceTd">99.95% monthly (max ~21.9 min downtime)</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>NFR-004</strong></td>
+                <td class="confluenceTd">Durability</td>
+                <td class="confluenceTd">Zero order loss; RPO = 0, RTO &le; 15 min</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>NFR-005</strong></td>
+                <td class="confluenceTd">Security</td>
+                <td class="confluenceTd">PCI-DSS SAQ-A scope; PII encrypted at rest (AES-256)</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<hr />
+
+<h2 id="AuroraSDD-3.SystemContext">3. System Context</h2>
+
+<p>The diagram below shows Aurora's boundary and its external collaborators. Aurora exposes a single public ingress (<code>OrderIngressService</code>) and integrates with four external systems.</p>
+
+<p>
+    <span class="confluence-embedded-file-wrapper image-center-wrapper">
+        <img class="confluence-embedded-image image-center" loading="lazy" src="attachments/458291104/458293001.png" data-image-src="attachments/458291104/458293001.png" data-unresolved-comment-count="0" data-linked-resource-id="458293001" data-linked-resource-version="2" data-linked-resource-type="attachment" data-linked-resource-default-alias="aurora-context-diagram.png" data-base-url="https://confluence.example.com" data-linked-resource-content-type="image/png" data-linked-resource-container-id="458291104" data-linked-resource-container-version="12" alt="aurora-context-diagram.png" />
+    </span>
+</p>
+
+<p>The same context is expressed as a Mermaid diagram for version control:</p>
+
+<div class="code panel pdl conf-macro output-block" data-hasbody="true" data-macro-name="code">
+    <div class="codeHeader panelHeader pdl"><b>System Context (Mermaid C4)</b></div>
+    <div class="codeContent panelContent pdl">
+        <pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: text; gutter: false; theme: Confluence" data-theme="Confluence">graph TB
+    Customer([Customer]) --&gt;|HTTPS / REST| OIS[OrderIngressService]
+    OIS --&gt;|publishes order.received| Kafka{{Kafka}}
+    Kafka --&gt; FO[FulfillmentOrchestrator]
+    FO --&gt;|reserve| INV[InventoryService]
+    FO --&gt;|authorize| PG[PaymentGateway]
+    PG --&gt;|HTTPS| Stripe[(Stripe API)]
+    FO --&gt;|dispatch| WMS[WarehouseService]
+    WMS --&gt;|EDI 940| ThirdPL[(3PL Provider)]
+    FO --&gt;|notify| ND[NotificationDispatcher]
+    ND --&gt; SendGrid[(SendGrid)]
+    ND --&gt; Twilio[(Twilio)]</pre>
+    </div>
+</div>
+
+<hr />
+
+<h2 id="AuroraSDD-4.ArchitectureOverview">4. Architecture Overview</h2>
+
+<p>Aurora follows a <strong>choreographed saga</strong> pattern with a thin orchestration layer for compensation. Services are deployed as independent containers on <strong>Kubernetes (EKS)</strong> and communicate asynchronously through Kafka topics. Each service owns its datastore (database-per-service).</p>
+
+<div class="confluence-information-macro confluence-information-macro-tip conf-macro output-block" data-hasbody="true" data-macro-name="tip">
+    <span class="aui-icon aui-icon-small aui-iconfont-approve confluence-information-macro-icon"></span>
+    <div class="confluence-information-macro-body">
+        <p><strong>Design principle:</strong> No service reads another service's database directly. All cross-service state is exchanged via events or well-defined synchronous APIs.</p>
+    </div>
+</div>
+
+<p>The logical decomposition is as follows:</p>
+
+<ol>
+    <li><strong>Edge tier</strong> &mdash; API gateway, authentication, rate limiting.
+        <ul>
+            <li>Kong API Gateway</li>
+            <li>OAuth2 / OIDC via <strong>Keycloak</strong></li>
+        </ul>
+    </li>
+    <li><strong>Application tier</strong> &mdash; domain services.
+        <ol>
+            <li>OrderIngressService</li>
+            <li>FulfillmentOrchestrator</li>
+            <li>InventoryService</li>
+            <li>PaymentGateway (anti-corruption layer over Stripe)</li>
+            <li>WarehouseService</li>
+            <li>NotificationDispatcher</li>
+        </ol>
+    </li>
+    <li><strong>Data tier</strong> &mdash; PostgreSQL clusters, Redis, Kafka, S3.</li>
+</ol>
+
+<hr />
+
+<h2 id="AuroraSDD-5.ComponentCatalog">5. Component Catalog</h2>
+
+<p>The following table enumerates every deployable component, its owning team, and primary technology.</p>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <colgroup>
+            <col /><col /><col /><col />
+        </colgroup>
+        <thead>
+            <tr>
+                <th class="confluenceTh">Component</th>
+                <th class="confluenceTh">Responsibility</th>
+                <th class="confluenceTh">Technology</th>
+                <th class="confluenceTh">Owning Team</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="confluenceTd"><strong>OrderIngressService</strong></td>
+                <td class="confluenceTd">Validates and persists incoming orders; emits <code>order.received</code>.</td>
+                <td class="confluenceTd">Java 17, Spring Boot 3.2</td>
+                <td class="confluenceTd">Team Helios</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>FulfillmentOrchestrator</strong></td>
+                <td class="confluenceTd">Coordinates the fulfillment saga; manages compensation.</td>
+                <td class="confluenceTd">Java 17, Spring Boot 3.2, Axon</td>
+                <td class="confluenceTd">Team Helios</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>InventoryService</strong></td>
+                <td class="confluenceTd">Reserves, confirms, and releases stock-keeping units.</td>
+                <td class="confluenceTd">Go 1.22</td>
+                <td class="confluenceTd">Team Atlas</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>PaymentGateway</strong></td>
+                <td class="confluenceTd">Anti-corruption layer wrapping Stripe; tokenizes cards.</td>
+                <td class="confluenceTd">.NET 8, C#</td>
+                <td class="confluenceTd">Team Vault</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>WarehouseService</strong></td>
+                <td class="confluenceTd">Routes dispatch requests to 3PL via EDI 940/945.</td>
+                <td class="confluenceTd">Python 3.12, FastAPI</td>
+                <td class="confluenceTd">Team Atlas</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><strong>NotificationDispatcher</strong></td>
+                <td class="confluenceTd">Fan-out of customer notifications (email/SMS/push).</td>
+                <td class="confluenceTd">Node.js 20, TypeScript</td>
+                <td class="confluenceTd">Team Comms</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<h3 id="AuroraSDD-5.1FulfillmentOrchestrator">5.1 FulfillmentOrchestrator (detail)</h3>
+
+<p>The <strong>FulfillmentOrchestrator</strong> is the heart of the platform. It subscribes to <code>order.received</code> and drives the saga through the following states: <code>RECEIVED &rarr; INVENTORY_RESERVED &rarr; PAYMENT_AUTHORIZED &rarr; DISPATCHED &rarr; COMPLETED</code>. Any failure transitions to <code>COMPENSATING</code> and ultimately <code>CANCELLED</code>.</p>
+
+<div class="expand-container conf-macro output-block" id="expander-orchestrator-internals" data-macro-name="expand">
+    <div class="expand-control" aria-expanded="false">
+        <span class="expand-icon aui-icon aui-icon-small aui-iconfont-chevron-right"></span>
+        <span class="expand-control-text">Click here to expand internal package structure</span>
+    </div>
+    <div class="expand-content">
+        <div class="code panel pdl conf-macro output-block" data-hasbody="true" data-macro-name="code">
+            <div class="codeContent panelContent pdl">
+                <pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: text; gutter: false; theme: Confluence">com.example.aurora.orchestrator
+ +- api/            REST + gRPC adapters
+ +- domain/         Saga aggregate, value objects
+ +- application/    Command handlers, saga manager
+ +- infrastructure/ Kafka, JPA outbox, Stripe client
+ +- config/         Spring configuration</pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr />
+
+<h2 id="AuroraSDD-6.DataModel">6. Data Model</h2>
+
+<p>Each service owns its schema. The core <code>orders</code> table in <strong>OrderIngressService</strong>'s PostgreSQL instance is defined below.</p>
+
+<div class="code panel pdl conf-macro output-block" data-hasbody="true" data-macro-name="code">
+    <div class="codeHeader panelHeader pdl"><b>orders schema (PostgreSQL 16)</b></div>
+    <div class="codeContent panelContent pdl">
+        <pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: true; theme: Confluence" data-theme="Confluence">CREATE TABLE orders (
+    order_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    idempotency_key VARCHAR(64) NOT NULL,
+    customer_id     UUID NOT NULL,
+    status          order_status NOT NULL DEFAULT 'RECEIVED',
+    total_cents     BIGINT NOT NULL CHECK (total_cents &gt;= 0),
+    currency        CHAR(3) NOT NULL DEFAULT 'USD',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_idempotency UNIQUE (customer_id, idempotency_key)
+);
+
+CREATE INDEX idx_orders_status ON orders (status)
+    WHERE status IN ('RECEIVED', 'INVENTORY_RESERVED');</pre>
+    </div>
+</div>
+
+<p>The entity-relationship diagram is attached as <a href="attachments/458291104/458293002.pdf" data-linked-resource-id="458293002" data-linked-resource-type="attachment" data-linked-resource-default-alias="aurora-erd.pdf">aurora-erd.pdf</a>. Key entity relationships:</p>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <tbody>
+            <tr>
+                <th class="confluenceTh">Parent</th>
+                <th class="confluenceTh">Cardinality</th>
+                <th class="confluenceTh">Child</th>
+            </tr>
+            <tr>
+                <td class="confluenceTd">Order</td>
+                <td class="confluenceTd">1 .. *</td>
+                <td class="confluenceTd">OrderLine</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd">Order</td>
+                <td class="confluenceTd">1 .. 1</td>
+                <td class="confluenceTd">PaymentAuthorization</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd">OrderLine</td>
+                <td class="confluenceTd">* .. 1</td>
+                <td class="confluenceTd">Sku</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<hr />
+
+<h2 id="AuroraSDD-7.APISpecifications">7. API Specifications</h2>
+
+<p>The public API is versioned under <code>/v1</code> and documented via OpenAPI 3.1. The primary endpoint:</p>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <tbody>
+            <tr>
+                <th class="confluenceTh">Method</th>
+                <th class="confluenceTh">Path</th>
+                <th class="confluenceTh">Description</th>
+                <th class="confluenceTh">Auth</th>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><span class="status-macro aui-lozenge conf-macro output-inline aui-lozenge-success" data-macro-name="status">POST</span></td>
+                <td class="confluenceTd"><code>/v1/orders</code></td>
+                <td class="confluenceTd">Submit a new order.</td>
+                <td class="confluenceTd">Bearer (OIDC)</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><span class="status-macro aui-lozenge conf-macro output-inline aui-lozenge-current" data-macro-name="status">GET</span></td>
+                <td class="confluenceTd"><code>/v1/orders/{orderId}</code></td>
+                <td class="confluenceTd">Retrieve order status.</td>
+                <td class="confluenceTd">Bearer (OIDC)</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><span class="status-macro aui-lozenge conf-macro output-inline aui-lozenge-error" data-macro-name="status">DELETE</span></td>
+                <td class="confluenceTd"><code>/v1/orders/{orderId}</code></td>
+                <td class="confluenceTd">Request cancellation (triggers compensation saga).</td>
+                <td class="confluenceTd">Bearer (OIDC)</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<p>Example request and response for <code>POST /v1/orders</code>:</p>
+
+<div class="code panel pdl conf-macro output-block" data-hasbody="true" data-macro-name="code">
+    <div class="codeHeader panelHeader pdl"><b>POST /v1/orders &mdash; request</b></div>
+    <div class="codeContent panelContent pdl">
+        <pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: js; gutter: false; theme: Confluence" data-theme="Confluence">POST /v1/orders HTTP/1.1
+Host: api.aurora.example.com
+Authorization: Bearer eyJhbGciOi...
+Idempotency-Key: 7f3c9a2e-1b4d-4e8a-9c2f-0a1b2c3d4e5f
+Content-Type: application/json
+
+{
+  "customerId": "c1d2e3f4-5678-90ab-cdef-1234567890ab",
+  "currency": "USD",
+  "lines": [
+    { "sku": "SKU-4471", "quantity": 2, "unitPriceCents": 1999 },
+    { "sku": "SKU-9920", "quantity": 1, "unitPriceCents": 4500 }
+  ]
+}</pre>
+    </div>
+</div>
+
+<div class="confluence-information-macro confluence-information-macro-note conf-macro output-block" data-hasbody="true" data-macro-name="note">
+    <span class="aui-icon aui-icon-small aui-iconfont-warning confluence-information-macro-icon"></span>
+    <div class="confluence-information-macro-body">
+        <p><strong>Note:</strong> The <code>Idempotency-Key</code> header is required. Requests missing it receive <code>400 Bad Request</code>. See <a href="#AuroraSDD-2.Requirements">REQ-004</a>.</p>
+    </div>
+</div>
+
+<hr />
+
+<h2 id="AuroraSDD-8.RuntimeFlows">8. Runtime Flows</h2>
+
+<h3 id="AuroraSDD-8.1HappyPath">8.1 Happy-Path Order Fulfillment</h3>
+
+<p>The numbered steps below correspond to the sequence diagram:</p>
+
+<ol>
+    <li>Customer submits an order to <strong>OrderIngressService</strong>.</li>
+    <li>OrderIngressService persists the order and writes to its <strong>outbox</strong> table in the same transaction.</li>
+    <li>A Debezium connector publishes <code>order.received</code> to Kafka.</li>
+    <li><strong>FulfillmentOrchestrator</strong> consumes the event and commands <strong>InventoryService</strong> to reserve stock.</li>
+    <li>On reservation success, it commands <strong>PaymentGateway</strong> to authorize payment via <strong>Stripe</strong>.</li>
+    <li>On authorization, it commands <strong>WarehouseService</strong> to dispatch.</li>
+    <li><strong>NotificationDispatcher</strong> sends a confirmation email and SMS.</li>
+</ol>
+
+<div class="code panel pdl conf-macro output-block" data-hasbody="true" data-macro-name="code">
+    <div class="codeHeader panelHeader pdl"><b>Sequence (PlantUML)</b></div>
+    <div class="codeContent panelContent pdl">
+        <pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: text; gutter: false; theme: Confluence">@startuml
+actor Customer
+Customer -&gt; OrderIngressService : POST /v1/orders
+OrderIngressService -&gt; Kafka : order.received
+Kafka -&gt; FulfillmentOrchestrator : order.received
+FulfillmentOrchestrator -&gt; InventoryService : ReserveStock
+InventoryService --&gt; FulfillmentOrchestrator : Reserved
+FulfillmentOrchestrator -&gt; PaymentGateway : Authorize
+PaymentGateway -&gt; Stripe : POST /charges
+Stripe --&gt; PaymentGateway : 200 OK
+PaymentGateway --&gt; FulfillmentOrchestrator : Authorized
+FulfillmentOrchestrator -&gt; WarehouseService : Dispatch
+@enduml</pre>
+    </div>
+</div>
+
+<h3 id="AuroraSDD-8.2Compensation">8.2 Compensation (Payment Failure)</h3>
+
+<div class="confluence-information-macro confluence-information-macro-warning conf-macro output-block" data-hasbody="true" data-macro-name="warning">
+    <span class="aui-icon aui-icon-small aui-iconfont-error confluence-information-macro-icon"></span>
+    <div class="confluence-information-macro-body">
+        <p><strong>Critical path:</strong> If payment authorization fails after inventory is reserved, the orchestrator <strong>must</strong> emit <code>inventory.release</code> to avoid stranded reservations. See <a href="#AuroraSDD-2.Requirements">REQ-003</a> (target: release within 30s).</p>
+    </div>
+</div>
+
+<hr />
+
+<h2 id="AuroraSDD-9.Integrations">9. External Integrations</h2>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <tbody>
+            <tr>
+                <th class="confluenceTh">System</th>
+                <th class="confluenceTh">Protocol</th>
+                <th class="confluenceTh">Direction</th>
+                <th class="confluenceTh">Owner</th>
+                <th class="confluenceTh">Tracking</th>
+            </tr>
+            <tr>
+                <td class="confluenceTd">Stripe</td>
+                <td class="confluenceTd">HTTPS / REST</td>
+                <td class="confluenceTd">Outbound</td>
+                <td class="confluenceTd">Team Vault</td>
+                <td class="confluenceTd">
+                    <span class="jira-issue resolved conf-macro output-inline" data-jira-key="AUR-142" data-macro-name="jira">
+                        <a href="https://jira.example.com/browse/AUR-142" class="jira-issue-key">
+                            <img class="icon" src="https://jira.example.com/images/icons/issuetypes/story.svg" alt="Story" height="16" width="16" />AUR-142
+                        </a>
+                        <span class="aui-lozenge aui-lozenge-subtle aui-lozenge-success jira-macro-lozenge">DONE</span>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="confluenceTd">SendGrid</td>
+                <td class="confluenceTd">HTTPS / REST</td>
+                <td class="confluenceTd">Outbound</td>
+                <td class="confluenceTd">Team Comms</td>
+                <td class="confluenceTd">
+                    <span class="jira-issue conf-macro output-inline" data-jira-key="AUR-188" data-macro-name="jira">
+                        <a href="https://jira.example.com/browse/AUR-188" class="jira-issue-key">AUR-188</a>
+                        <span class="aui-lozenge aui-lozenge-subtle aui-lozenge-current jira-macro-lozenge">IN PROGRESS</span>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="confluenceTd">Twilio</td>
+                <td class="confluenceTd">HTTPS / REST</td>
+                <td class="confluenceTd">Outbound</td>
+                <td class="confluenceTd">Team Comms</td>
+                <td class="confluenceTd">
+                    <span class="jira-issue conf-macro output-inline" data-jira-key="AUR-189" data-macro-name="jira">
+                        <a href="https://jira.example.com/browse/AUR-189" class="jira-issue-key">AUR-189</a>
+                        <span class="aui-lozenge aui-lozenge-subtle jira-macro-lozenge">TO DO</span>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="confluenceTd">3PL Provider (ShipBob)</td>
+                <td class="confluenceTd">EDI 940 / 945 (AS2)</td>
+                <td class="confluenceTd">Bidirectional</td>
+                <td class="confluenceTd">Team Atlas</td>
+                <td class="confluenceTd">
+                    <span class="jira-issue resolved conf-macro output-inline" data-jira-key="AUR-201" data-macro-name="jira">
+                        <a href="https://jira.example.com/browse/AUR-201" class="jira-issue-key">AUR-201</a>
+                        <span class="aui-lozenge aui-lozenge-subtle aui-lozenge-success jira-macro-lozenge">DONE</span>
+                    </span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<hr />
+
+<h2 id="AuroraSDD-10.ArchitectureDecisionRecords">10. Architecture Decision Records</h2>
+
+<p>ADRs are recorded in <strong>MADR</strong> format and mirrored to the <code>docs/adr/</code> folder in the <a class="external-link" href="https://github.com/example-corp/aurora" rel="nofollow">aurora monorepo</a>.</p>
+
+<h3 id="AuroraSDD-ADR0001">ADR-0001: Use Apache Kafka for inter-service messaging</h3>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <tbody>
+            <tr>
+                <th class="confluenceTh">Status</th>
+                <td class="confluenceTd"><span class="status-macro aui-lozenge conf-macro output-inline aui-lozenge-success" data-macro-name="status">ACCEPTED</span></td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Date</th>
+                <td class="confluenceTd"><time datetime="2025-03-04">04 Mar 2025</time></td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Deciders</th>
+                <td class="confluenceTd">Jane Smith, Raj Patel</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<p><strong>Context.</strong> We need durable, ordered, high-throughput messaging between services with replay capability for the saga pattern.</p>
+<p><strong>Decision.</strong> We will adopt <strong>Apache Kafka</strong> (Amazon MSK) as the backbone, with topics partitioned by <code>customerId</code> to preserve per-customer ordering.</p>
+<p><strong>Consequences.</strong></p>
+<ul>
+    <li><span class="emoticon emoticon-tick">(plus)</span> Replayability supports saga recovery and event sourcing.</li>
+    <li><span class="emoticon emoticon-cross">(minus)</span> Operational complexity; requires MSK expertise and partition-key discipline.</li>
+</ul>
+
+<h3 id="AuroraSDD-ADR0002">ADR-0002: Database-per-service over shared schema</h3>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <tbody>
+            <tr>
+                <th class="confluenceTh">Status</th>
+                <td class="confluenceTd"><span class="status-macro aui-lozenge conf-macro output-inline aui-lozenge-success" data-macro-name="status">ACCEPTED</span></td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Date</th>
+                <td class="confluenceTd"><time datetime="2025-03-18">18 Mar 2025</time></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<p><strong>Context.</strong> Shared databases create tight coupling and deployment contention across teams.</p>
+<p><strong>Decision.</strong> Each service owns a private PostgreSQL schema; cross-service data is exchanged only via events or APIs.</p>
+<p><strong>Consequences.</strong> Stronger autonomy and independent scaling, at the cost of eventual consistency and the need for the transactional outbox pattern.</p>
+
+<h3 id="AuroraSDD-ADR0003">ADR-0003: Synchronous payment authorization vs. fully async</h3>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <tbody>
+            <tr>
+                <th class="confluenceTh">Status</th>
+                <td class="confluenceTd"><span class="status-macro aui-lozenge conf-macro output-inline" data-macro-name="status">PROPOSED</span></td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Date</th>
+                <td class="confluenceTd"><time datetime="2025-10-22">22 Oct 2025</time></td>
+            </tr>
+            <tr>
+                <th class="confluenceTh">Supersedes</th>
+                <td class="confluenceTd">&mdash;</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<p><strong>Context.</strong> Stripe authorization typically completes in &lt; 800ms, but tail latencies can reach 6s. We must decide whether the orchestrator blocks or treats authorization asynchronously.</p>
+<p><strong>Decision.</strong> <em>Pending review by <a class="confluence-userlink user-mention" data-username="mosei" href="https://confluence.example.com/display/~mosei">Marcus Osei</a>.</em></p>
+
+<hr />
+
+<h2 id="AuroraSDD-11.QualityAttributes">11. Quality Attributes (NFRs)</h2>
+
+<div class="contentLayout2">
+    <div class="columnLayout three-equal" data-layout="three-equal">
+        <div class="cell normal" data-type="normal">
+            <div class="innerCell">
+                <div class="panel conf-macro output-block" style="border-width: 1.0px;" data-macro-name="panel">
+                    <div class="panelHeader" style="border-bottom-width: 1.0px;"><strong>Performance</strong></div>
+                    <div class="panelContent">
+                        <p>SLI: p95 fulfillment latency. SLO: &lt; 5 min. Measured via OpenTelemetry traces exported to Honeycomb.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cell normal" data-type="normal">
+            <div class="innerCell">
+                <div class="panel conf-macro output-block" style="border-width: 1.0px;" data-macro-name="panel">
+                    <div class="panelHeader" style="border-bottom-width: 1.0px;"><strong>Security</strong></div>
+                    <div class="panelContent">
+                        <p>Card data never touches Aurora; tokenized at the edge via Stripe Elements. PCI-DSS <strong>SAQ-A</strong> scope.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cell normal" data-type="normal">
+            <div class="innerCell">
+                <div class="panel conf-macro output-block" style="border-width: 1.0px;" data-macro-name="panel">
+                    <div class="panelHeader" style="border-bottom-width: 1.0px;"><strong>Observability</strong></div>
+                    <div class="panelContent">
+                        <p>Structured JSON logs to Loki; metrics to Prometheus; distributed tracing via OTel. Each event carries a <code>traceparent</code>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<blockquote>
+    <p>&ldquo;The system is designed for <strong>graceful degradation</strong>: if NotificationDispatcher is down, orders still complete &mdash; notifications are queued and retried with exponential backoff.&rdquo; &mdash; Jane Smith, design review <time datetime="2025-09-30">30 Sep 2025</time></p>
+</blockquote>
+
+<hr />
+
+<h2 id="AuroraSDD-12.Deployment">12. Deployment &amp; Infrastructure</h2>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <tbody>
+            <tr>
+                <th class="confluenceTh">Environment</th>
+                <th class="confluenceTh">Cluster</th>
+                <th class="confluenceTh">Region</th>
+                <th class="confluenceTh">Replicas (orchestrator)</th>
+            </tr>
+            <tr>
+                <td class="confluenceTd">dev</td>
+                <td class="confluenceTd">eks-aurora-dev</td>
+                <td class="confluenceTd">us-east-1</td>
+                <td class="confluenceTd">2</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd">staging</td>
+                <td class="confluenceTd">eks-aurora-stg</td>
+                <td class="confluenceTd">us-east-1</td>
+                <td class="confluenceTd">3</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd">prod</td>
+                <td class="confluenceTd">eks-aurora-prod</td>
+                <td class="confluenceTd">us-east-1, us-west-2</td>
+                <td class="confluenceTd">12 (HPA, max 40)</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<p>Deployment is via Helm + ArgoCD (GitOps). The orchestrator's resource requests:</p>
+
+<div class="code panel pdl conf-macro output-block" data-hasbody="true" data-macro-name="code">
+    <div class="codeHeader panelHeader pdl"><b>values-prod.yaml (excerpt)</b></div>
+    <div class="codeContent panelContent pdl">
+        <pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: yaml; gutter: true; theme: Confluence" data-theme="Confluence">resources:
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+  limits:
+    cpu: "2000m"
+    memory: "2Gi"
+autoscaling:
+  enabled: true
+  minReplicas: 12
+  maxReplicas: 40
+  targetCPUUtilizationPercentage: 65</pre>
+    </div>
+</div>
+
+<hr />
+
+<h2 id="AuroraSDD-13.Risks">13. Risks, Assumptions &amp; Open Questions</h2>
+
+<h3 id="AuroraSDD-13.1Risks">13.1 Risks</h3>
+
+<div class="confluence-information-macro confluence-information-macro-warning conf-macro output-block" data-hasbody="true" data-macro-name="warning">
+    <span class="aui-icon aui-icon-small aui-iconfont-error confluence-information-macro-icon"></span>
+    <div class="confluence-information-macro-body">
+        <p><strong>RISK-01 (High):</strong> Kafka partition skew on hot customers could cause consumer lag. Mitigation: composite partition key <code>(customerId, orderId)</code> under evaluation.</p>
+    </div>
+</div>
+
+<h3 id="AuroraSDD-13.2OpenQuestions">13.2 Open Questions / Action Items</h3>
+
+<ul class="inline-task-list" data-inline-tasks-content-id="458291104">
+    <li data-inline-task-id="1" class="checked">
+        <span class="placeholder-inline-tasks">
+            <del>Confirm MSK broker count for prod (decided: 6 brokers).</del>
+        </span>
+    </li>
+    <li data-inline-task-id="2">
+        <span class="placeholder-inline-tasks">
+            <a class="confluence-userlink user-mention" data-username="mosei" href="https://confluence.example.com/display/~mosei">Marcus Osei</a> to finalize ADR-0003 (sync vs async payment) by <time datetime="2025-11-28">28 Nov 2025</time>.
+        </span>
+    </li>
+    <li data-inline-task-id="3">
+        <span class="placeholder-inline-tasks">
+            <a class="confluence-userlink user-mention" data-username="lchen" href="https://confluence.example.com/display/~lchen">Li Chen</a> to validate RTO &le; 15 min via game-day chaos test.
+        </span>
+    </li>
+</ul>
+
+<h3 id="AuroraSDD-13.3Assumptions">13.3 Assumptions</h3>
+
+<ol>
+    <li>Stripe SLA of 99.99% is sufficient for the payment critical path.</li>
+    <li>Average order contains &le; 25 line items.</li>
+    <li>The 3PL provider can sustain 12k dispatch requests/minute.</li>
+</ol>
+
+<hr />
+
+<h2 id="AuroraSDD-14.References">14. References</h2>
+
+<ol>
+    <li><a href="Aurora-SAD_360449.html" data-linked-resource-id="360449" data-linked-resource-type="page" data-base-url="https://confluence.example.com">Aurora &ndash; Software Architecture Document</a> (internal)</li>
+    <li><a href="Aurora-PRD_344065.html" data-linked-resource-id="344065" data-linked-resource-type="page" data-base-url="https://confluence.example.com">Aurora &ndash; Product Requirements Document</a> (internal)</li>
+    <li><a class="external-link" href="https://microservices.io/patterns/data/saga.html" rel="nofollow">Saga Pattern &mdash; microservices.io</a> (external)</li>
+    <li><a class="external-link" href="https://kafka.apache.org/documentation/" rel="nofollow">Apache Kafka Documentation</a> (external)</li>
+    <li><a class="external-link" href="https://adr.github.io/madr/" rel="nofollow">MADR &mdash; Markdown Architectural Decision Records</a> (external)</li>
+</ol>
+
+<hr />
+
+<h2 id="AuroraSDD-15.RevisionHistory">15. Revision History</h2>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <tbody>
+            <tr>
+                <th class="confluenceTh">Version</th>
+                <th class="confluenceTh">Date</th>
+                <th class="confluenceTh">Author</th>
+                <th class="confluenceTh">Summary</th>
+            </tr>
+            <tr>
+                <td class="confluenceTd">1.0</td>
+                <td class="confluenceTd"><time datetime="2025-03-01">01 Mar 2025</time></td>
+                <td class="confluenceTd">Jane Smith</td>
+                <td class="confluenceTd">Initial draft.</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd">2.0</td>
+                <td class="confluenceTd"><time datetime="2025-06-15">15 Jun 2025</time></td>
+                <td class="confluenceTd">Raj Patel</td>
+                <td class="confluenceTd">Added saga compensation, ADR-0001 / ADR-0002.</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd">3.0</td>
+                <td class="confluenceTd"><time datetime="2025-09-30">30 Sep 2025</time></td>
+                <td class="confluenceTd">Jane Smith</td>
+                <td class="confluenceTd">Reworked data model; added deployment topology.</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd">3.2</td>
+                <td class="confluenceTd"><time datetime="2025-11-14">14 Nov 2025</time></td>
+                <td class="confluenceTd">Raj Patel</td>
+                <td class="confluenceTd">Added ADR-0003 (proposed); updated integration tracking.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<hr />
+
+<h2 id="AuroraSDD-Appendix">Appendix A &ndash; Configuration Reference</h2>
+
+<p>Environment variables consumed by <strong>FulfillmentOrchestrator</strong>:</p>
+
+<div class="table-wrap">
+    <table class="wrapped confluenceTable">
+        <tbody>
+            <tr>
+                <th class="confluenceTh">Variable</th>
+                <th class="confluenceTh">Default</th>
+                <th class="confluenceTh">Description</th>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><code>KAFKA_BOOTSTRAP_SERVERS</code></td>
+                <td class="confluenceTd"><em>(required)</em></td>
+                <td class="confluenceTd">Comma-separated MSK broker list.</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><code>SAGA_TIMEOUT_MS</code></td>
+                <td class="confluenceTd"><code>300000</code></td>
+                <td class="confluenceTd">Max saga duration before forced compensation.</td>
+            </tr>
+            <tr>
+                <td class="confluenceTd"><code>INVENTORY_RELEASE_DELAY_MS</code></td>
+                <td class="confluenceTd"><code>30000</code></td>
+                <td class="confluenceTd">Grace before releasing reserved stock (REQ-003).</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<p style="text-align: right;"><sub>End of document &mdash; <a href="#AuroraSDD-top">back to top</a></sub></p>
+
+                    </div>
+
+                    <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+                        <div class="greybox" align="left">
+                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt="" />
+                            <a href="attachments/458291104/458293001.png">aurora-context-diagram.png</a> (image/png)
+                            <br />
+                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt="" />
+                            <a href="attachments/458291104/458293002.pdf">aurora-erd.pdf</a> (application/pdf)
+                            <br />
+                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt="" />
+                            <a href="attachments/458291104/458293003.drawio">aurora-architecture.drawio</a> (application/vnd.jgraph.mxfile)
+                        </div>
+                    </div>
+
+                    <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="comments" class="pageSectionTitle">Comments:</h2>
+                        </div>
+                        <div class="comment-block">
+                            <div class="comment" id="comment-458294001">
+                                <div class="comment-body">
+                                    <p>Should we call out the dead-letter topic strategy for poison messages? Right now ADR-0001 doesn't mention DLQ handling.</p>
+                                </div>
+                                <div class="comment-meta">
+                                    Posted by <a class="confluence-userlink user-mention" data-username="lchen" href="https://confluence.example.com/display/~lchen">Li Chen</a> at <time datetime="2025-11-10">10 Nov 2025 14:22</time>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div id="footer" role="contentinfo">
+            <section class="footer-body">
+                <p>Document generated by Confluence on Nov 14, 2025 09:32</p>
+                <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+            </section>
+        </div>
+    </body>
+</html>

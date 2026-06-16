@@ -1,0 +1,153 @@
+{
+  "nodes": [
+    {
+      "id": "document:docs/learn/tours/01-models-and-config.md",
+      "type": "document",
+      "name": "01-models-and-config.md",
+      "filePath": "docs/learn/tours/01-models-and-config.md",
+      "summary": "Guided learning tour of the contract layer (models.py and config.py), explaining the dataclass contracts, the SemanticChunk's two textual identities (content vs to_embed_text), and how a config knob travels from PipelineConfig into chunking.",
+      "tags": ["documentation", "tour", "data-model", "configuration", "learning"],
+      "complexity": "moderate",
+      "languageNotes": "Markdown tour with a Mermaid class diagram and a traced code excerpt of to_embed_text; self-check Q&A in collapsible <details> blocks."
+    },
+    {
+      "id": "document:docs/learn/tours/02-ast-parser-and-structural.md",
+      "type": "document",
+      "name": "02-ast-parser-and-structural.md",
+      "filePath": "docs/learn/tours/02-ast-parser-and-structural.md",
+      "summary": "Guided tour of stages 2-4: how ast_parser.py shells out to pandoc for a JSON AST and structural.py turns that flat header sequence into a typed DocumentModel tree via a level-keyed stack.",
+      "tags": ["documentation", "tour", "ast", "parsing", "learning"],
+      "complexity": "moderate",
+      "languageNotes": "Explains the tagged-union pandoc node shape and the stack-based outline-building algorithm with a real AST excerpt."
+    },
+    {
+      "id": "document:docs/learn/tours/03-enrichment.md",
+      "type": "document",
+      "name": "03-enrichment.md",
+      "filePath": "docs/learn/tours/03-enrichment.md",
+      "summary": "Guided tour of stage 5 enrichment: the ordered keyword rules for section-type classification, the three precision entity-extraction regexes, and the optional inventory routing into depends_on/exposes.",
+      "tags": ["documentation", "tour", "enrichment", "classification", "learning"],
+      "complexity": "moderate",
+      "languageNotes": "Emphasizes determinism (no ML) and the precision-vs-recall asymmetry between extract_entities and scan_corpus."
+    },
+    {
+      "id": "document:docs/learn/tours/04-vocabulary-and-two-pass-scan.md",
+      "type": "document",
+      "name": "04-vocabulary-and-two-pass-scan.md",
+      "filePath": "docs/learn/tours/04-vocabulary-and-two-pass-scan.md",
+      "summary": "Guided tour of the cross-corpus vocabulary: vocabulary.py I/O plus the two-pass scan flow (scan_corpus discovery then enrich-with-full-list) that lets a term coined in one document be recognized in all.",
+      "tags": ["documentation", "tour", "vocabulary", "data-pipeline", "learning"],
+      "complexity": "moderate",
+      "languageNotes": "Includes a Mermaid sequence diagram of the two-pass index_directory flow and documents the scan/index/export CLI surface."
+    },
+    {
+      "id": "document:docs/learn/tours/05-taxonomy-modules.md",
+      "type": "document",
+      "name": "05-taxonomy-modules.md",
+      "filePath": "docs/learn/tours/05-taxonomy-modules.md",
+      "summary": "Guided tour of the four taxonomy modules (header_norm, template_taxonomy, corpus_taxonomy, doc_router) that determine which fields a SAD template defines per section so live document tables can be matched against them.",
+      "tags": ["documentation", "tour", "taxonomy", "schema-definition", "learning"],
+      "complexity": "moderate",
+      "languageNotes": "Covers header normalisation as spec, wide vs key_value table orientation, document-frequency gating, and SAD fingerprint routing with real chunk-count payoffs."
+    },
+    {
+      "id": "document:docs/learn/tours/06-inventory-extraction-modules.md",
+      "type": "document",
+      "name": "06-inventory-extraction-modules.md",
+      "filePath": "docs/learn/tours/06-inventory-extraction-modules.md",
+      "summary": "Guided tour of stage 3.5 inventory extraction: how extract_structural, extract_prose, direction, and reconcile mine per-section EntityRecords from tables and prose and route them by field name into depends_on/exposes/metadata.",
+      "tags": ["documentation", "tour", "extraction", "data-pipeline", "learning"],
+      "complexity": "moderate",
+      "languageNotes": "Documents the confidence ladder (table 1.0 > prose 0.5-0.9), name-not-position routing, and the deterministic reconcile tie-break with a real depends_on payoff."
+    },
+    {
+      "id": "document:docs/learn/tours/07-chunking.md",
+      "type": "document",
+      "name": "07-chunking.md",
+      "filePath": "docs/learn/tours/07-chunking.md",
+      "summary": "Guided tour of stage 6 chunking: how chunk_document flattens the enriched section tree into SemanticChunks, the three merge strategies, the split cascade, dual char budgets, and per-chunk entity scoping.",
+      "tags": ["documentation", "tour", "chunking", "data-pipeline", "learning"],
+      "complexity": "moderate",
+      "languageNotes": "Includes Mermaid flowcharts for merge strategies and explains entity_fn dependency injection and deterministic chunk-id construction."
+    },
+    {
+      "id": "document:docs/learn/tours/08-embeddings-and-vector-store.md",
+      "type": "document",
+      "name": "08-embeddings-and-vector-store.md",
+      "filePath": "docs/learn/tours/08-embeddings-and-vector-store.md",
+      "summary": "Guided tour of stage 7: the EmbedderProtocol and VectorStoreProtocol seams, lazy model loading, memory vs Chroma backends, precomputed-vector writes, and the provenance check that refuses to search a foreign index.",
+      "tags": ["documentation", "tour", "embeddings", "vector-store", "learning"],
+      "complexity": "moderate",
+      "languageNotes": "Frames Python Protocols as structural C# interfaces; covers lazy loading, atomic persistence, and provenance verification."
+    },
+    {
+      "id": "document:docs/learn/tours/09-retrieval-and-hybrid-search.md",
+      "type": "document",
+      "name": "09-retrieval-and-hybrid-search.md",
+      "filePath": "docs/learn/tours/09-retrieval-and-hybrid-search.md",
+      "summary": "Guided tour of hybrid retrieval: retrieval.py's Okapi BM25 and Reciprocal Rank Fusion, plus pipeline._hybrid_search step by step (over-fetch dense pool, BM25 over get_corpus, fuse, map back).",
+      "tags": ["documentation", "tour", "retrieval", "search", "learning"],
+      "complexity": "moderate",
+      "languageNotes": "Explains the BM25+ idf floor, the rrf_k weighting trade-off, and why fused scores are ranks not similarities, with a Mermaid fusion flowchart."
+    },
+    {
+      "id": "document:docs/learn/tours/10-pipeline-orchestrator-and-cli.md",
+      "type": "document",
+      "name": "10-pipeline-orchestrator-and-cli.md",
+      "filePath": "docs/learn/tours/10-pipeline-orchestrator-and-cli.md",
+      "summary": "Guided tour of the composition root: how SemanticPipeline wires the seven stages method by method and how cli.py's eight typer commands map onto pipeline calls, including the config-override pattern.",
+      "tags": ["documentation", "tour", "orchestration", "cli", "learning"],
+      "complexity": "moderate",
+      "languageNotes": "Uses method-and-command summary tables and explains lazy seams, the -1 error sentinel, and the --backend None override subtlety."
+    },
+    {
+      "id": "document:docs/learn/tours/11-quality-linter.md",
+      "type": "document",
+      "name": "11-quality-linter.md",
+      "filePath": "docs/learn/tours/11-quality-linter.md",
+      "summary": "Guided tour of quality.py and the lint command: a read-only raw-markdown linter that flags conversion residue before pandoc, its de-fencing strategy, the six checks, and its relationship to the binding chunk gate.",
+      "tags": ["documentation", "tour", "validation", "linting", "learning"],
+      "complexity": "moderate",
+      "languageNotes": "Frames check_markdown as a Roslyn-style analyzer; contrasts the advisory raw-source linter with the post-pipeline check_chunk gate."
+    }
+  ],
+  "edges": [
+    {"source": "document:docs/learn/tours/01-models-and-config.md", "target": "file:src/sdd_pipeline/models.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/01-models-and-config.md", "target": "file:src/sdd_pipeline/config.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/01-models-and-config.md", "target": "file:src/sdd_pipeline/chunking.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/tours/02-ast-parser-and-structural.md", "target": "file:src/sdd_pipeline/ast_parser.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/02-ast-parser-and-structural.md", "target": "file:src/sdd_pipeline/structural.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/tours/03-enrichment.md", "target": "file:src/sdd_pipeline/enrichment.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/tours/04-vocabulary-and-two-pass-scan.md", "target": "file:src/sdd_pipeline/vocabulary.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/04-vocabulary-and-two-pass-scan.md", "target": "file:src/sdd_pipeline/enrichment.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/04-vocabulary-and-two-pass-scan.md", "target": "file:src/sdd_pipeline/pipeline.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/04-vocabulary-and-two-pass-scan.md", "target": "file:src/sdd_pipeline/cli.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/tours/05-taxonomy-modules.md", "target": "file:src/sdd_pipeline/header_norm.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/05-taxonomy-modules.md", "target": "file:src/sdd_pipeline/template_taxonomy.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/05-taxonomy-modules.md", "target": "file:src/sdd_pipeline/corpus_taxonomy.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/05-taxonomy-modules.md", "target": "file:src/sdd_pipeline/doc_router.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/tours/06-inventory-extraction-modules.md", "target": "file:src/sdd_pipeline/extract_structural.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/06-inventory-extraction-modules.md", "target": "file:src/sdd_pipeline/extract_prose.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/06-inventory-extraction-modules.md", "target": "file:src/sdd_pipeline/direction.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/06-inventory-extraction-modules.md", "target": "file:src/sdd_pipeline/reconcile.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/tours/07-chunking.md", "target": "file:src/sdd_pipeline/chunking.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/tours/08-embeddings-and-vector-store.md", "target": "file:src/sdd_pipeline/embeddings.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/08-embeddings-and-vector-store.md", "target": "file:src/sdd_pipeline/vector_store.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/tours/09-retrieval-and-hybrid-search.md", "target": "file:src/sdd_pipeline/retrieval.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/09-retrieval-and-hybrid-search.md", "target": "file:src/sdd_pipeline/pipeline.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/tours/10-pipeline-orchestrator-and-cli.md", "target": "file:src/sdd_pipeline/pipeline.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/10-pipeline-orchestrator-and-cli.md", "target": "file:src/sdd_pipeline/cli.py", "type": "documents", "direction": "forward", "weight": 0.5},
+
+    {"source": "document:docs/learn/tours/11-quality-linter.md", "target": "file:src/sdd_pipeline/quality.py", "type": "documents", "direction": "forward", "weight": 0.5},
+    {"source": "document:docs/learn/tours/11-quality-linter.md", "target": "file:src/sdd_pipeline/cli.py", "type": "documents", "direction": "forward", "weight": 0.5}
+  ]
+}

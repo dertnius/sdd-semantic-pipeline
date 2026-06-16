@@ -1,0 +1,1100 @@
+{
+  "name": "sdd-pipeline",
+  "description": "A 7-stage semantic search pipeline that converts Confluence-exported markdown into a vector-search index optimised for Software Design Documents, plus an HTML-to-GitLab-Markdown converter; built on pandoc/panflute, sentence-transformers (or Azure OpenAI), and a Typer CLI.",
+  "languages": [
+    "html",
+    "json",
+    "markdown",
+    "powershell",
+    "python",
+    "toml",
+    "yaml"
+  ],
+  "frameworks": [
+    "Pydantic",
+    "Typer",
+    "sentence-transformers",
+    "LangChain",
+    "BeautifulSoup",
+    "Textual",
+    "pytest",
+    "Docker"
+  ],
+  "files": [
+    {
+      "path": ".devcontainer/devcontainer.json",
+      "language": "json",
+      "sizeLines": 72,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".env.example",
+      "language": "config",
+      "sizeLines": 45,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".github/agents/adr-generator.agent.md",
+      "language": "markdown",
+      "sizeLines": 224,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "language": "markdown",
+      "sizeLines": 366,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "CLAUDE.md",
+      "language": "markdown",
+      "sizeLines": 337,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "config/entity-vocab.json",
+      "language": "json",
+      "sizeLines": 5,
+      "fileCategory": "config"
+    },
+    {
+      "path": "config/field_directions.yaml",
+      "language": "yaml",
+      "sizeLines": 37,
+      "fileCategory": "config"
+    },
+    {
+      "path": "config/taxonomy.json",
+      "language": "json",
+      "sizeLines": 48,
+      "fileCategory": "config"
+    },
+    {
+      "path": "devfile.yaml",
+      "language": "yaml",
+      "sizeLines": 143,
+      "fileCategory": "config"
+    },
+    {
+      "path": "docs/adr/adr-0001-modular-semantic-pipeline.md",
+      "language": "markdown",
+      "sizeLines": 79,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/archive/DISCOVERED_INTERFACES.md",
+      "language": "markdown",
+      "sizeLines": 54,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/confluence-conversion-rules.md",
+      "language": "markdown",
+      "sizeLines": 1226,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/confluence-storage-format-gitlab-markdown.md",
+      "language": "markdown",
+      "sizeLines": 45,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/convert-html-gitlab-markdown-linux.md",
+      "language": "markdown",
+      "sizeLines": 36,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/convert-html-gitlab-markdown-windows.md",
+      "language": "markdown",
+      "sizeLines": 34,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/index.md",
+      "language": "markdown",
+      "sizeLines": 48,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/log.md",
+      "language": "markdown",
+      "sizeLines": 38,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/guides/pipeline-101.md",
+      "language": "markdown",
+      "sizeLines": 613,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md",
+      "language": "markdown",
+      "sizeLines": 632,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/inbox/Convert.Linux.Readme.md",
+      "language": "markdown",
+      "sizeLines": 171,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/inbox/Convert.Windows.Readme.md",
+      "language": "markdown",
+      "sizeLines": 168,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/01-project-anatomy-and-tooling.md",
+      "language": "markdown",
+      "sizeLines": 121,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/02-dataclasses-vs-csharp-records.md",
+      "language": "markdown",
+      "sizeLines": 122,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/03-protocols-typing-and-unions.md",
+      "language": "markdown",
+      "sizeLines": 124,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/04-iteration-comprehensions-generators.md",
+      "language": "markdown",
+      "sizeLines": 126,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/05-modules-imports-and-lazy-patterns.md",
+      "language": "markdown",
+      "sizeLines": 131,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/06-pydantic-settings-and-typer.md",
+      "language": "markdown",
+      "sizeLines": 123,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/bridge/07-pytest-for-xunit-developers.md",
+      "language": "markdown",
+      "sizeLines": 135,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/01-trace-a-document.md",
+      "language": "markdown",
+      "sizeLines": 116,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/02-add-a-section-keyword.md",
+      "language": "markdown",
+      "sizeLines": 90,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/03-parametrize-header-norm.md",
+      "language": "markdown",
+      "sizeLines": 100,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/04-add-a-config-field.md",
+      "language": "markdown",
+      "sizeLines": 89,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/05-extend-an-entity-pattern.md",
+      "language": "markdown",
+      "sizeLines": 91,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/06-add-a-cli-flag.md",
+      "language": "markdown",
+      "sizeLines": 102,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/07-tune-hybrid-search-and-measure.md",
+      "language": "markdown",
+      "sizeLines": 119,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/exercises/08-use-the-library-from-scratch.md",
+      "language": "markdown",
+      "sizeLines": 100,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/README.md",
+      "language": "markdown",
+      "sizeLines": 88,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/01-models-and-config.md",
+      "language": "markdown",
+      "sizeLines": 148,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/02-ast-parser-and-structural.md",
+      "language": "markdown",
+      "sizeLines": 130,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/03-enrichment.md",
+      "language": "markdown",
+      "sizeLines": 110,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/04-vocabulary-and-two-pass-scan.md",
+      "language": "markdown",
+      "sizeLines": 118,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/05-taxonomy-modules.md",
+      "language": "markdown",
+      "sizeLines": 122,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/06-inventory-extraction-modules.md",
+      "language": "markdown",
+      "sizeLines": 128,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/07-chunking.md",
+      "language": "markdown",
+      "sizeLines": 126,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/08-embeddings-and-vector-store.md",
+      "language": "markdown",
+      "sizeLines": 120,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/09-retrieval-and-hybrid-search.md",
+      "language": "markdown",
+      "sizeLines": 115,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/10-pipeline-orchestrator-and-cli.md",
+      "language": "markdown",
+      "sizeLines": 125,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/tours/11-quality-linter.md",
+      "language": "markdown",
+      "sizeLines": 92,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/walkthroughs/01-life-of-a-document.md",
+      "language": "markdown",
+      "sizeLines": 277,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/walkthroughs/02-architecture-map.md",
+      "language": "markdown",
+      "sizeLines": 109,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/learn/walkthroughs/03-test-suite-tour.md",
+      "language": "markdown",
+      "sizeLines": 115,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/notes/SPIKE_FINDINGS.md",
+      "language": "markdown",
+      "sizeLines": 63,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/template/template.md",
+      "language": "markdown",
+      "sizeLines": 521,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "environment.yml",
+      "language": "yaml",
+      "sizeLines": 57,
+      "fileCategory": "config"
+    },
+    {
+      "path": "pyproject.toml",
+      "language": "toml",
+      "sizeLines": 120,
+      "fileCategory": "config"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 591,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/sdd_pipeline/__init__.py",
+      "language": "python",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/ast_parser.py",
+      "language": "python",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/chunking.py",
+      "language": "python",
+      "sizeLines": 287,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/cli.py",
+      "language": "python",
+      "sizeLines": 1237,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/config.py",
+      "language": "python",
+      "sizeLines": 213,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/convert/__init__.py",
+      "language": "python",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/convert/base.py",
+      "language": "python",
+      "sizeLines": 298,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/convert/confluence_pf_filter.py",
+      "language": "python",
+      "sizeLines": 463,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/convert/html_to_gitlab_md.py",
+      "language": "python",
+      "sizeLines": 1690,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/corpus_taxonomy.py",
+      "language": "python",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/direction.py",
+      "language": "python",
+      "sizeLines": 51,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/doc_router.py",
+      "language": "python",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/dump.py",
+      "language": "python",
+      "sizeLines": 88,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/embeddings.py",
+      "language": "python",
+      "sizeLines": 230,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/enrichment.py",
+      "language": "python",
+      "sizeLines": 540,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/extract_prose.py",
+      "language": "python",
+      "sizeLines": 94,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/extract_structural.py",
+      "language": "python",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/header_norm.py",
+      "language": "python",
+      "sizeLines": 49,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/models.py",
+      "language": "python",
+      "sizeLines": 356,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/pipeline.py",
+      "language": "python",
+      "sizeLines": 390,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/quality.py",
+      "language": "python",
+      "sizeLines": 419,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/reconcile.py",
+      "language": "python",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/retrieval.py",
+      "language": "python",
+      "sizeLines": 96,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/structural.py",
+      "language": "python",
+      "sizeLines": 398,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/template_taxonomy.py",
+      "language": "python",
+      "sizeLines": 173,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/tui.py",
+      "language": "python",
+      "sizeLines": 262,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/vector_store.py",
+      "language": "python",
+      "sizeLines": 515,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/vocabulary.py",
+      "language": "python",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/sdd_pipeline/workspace.py",
+      "language": "python",
+      "sizeLines": 196,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md",
+      "language": "markdown",
+      "sizeLines": 79,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/corpus/airflow-aip107.md",
+      "language": "markdown",
+      "sizeLines": 184,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/corpus/impala-vscode.md",
+      "language": "markdown",
+      "sizeLines": 112,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/corpus/sad-retailnexus-oms.md",
+      "language": "markdown",
+      "sizeLines": 371,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/corpus/scripting-on-dtk.md",
+      "language": "markdown",
+      "sizeLines": 488,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/e2e_queries.yaml",
+      "language": "yaml",
+      "sizeLines": 83,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/tools/eval/e2e_sources.yaml",
+      "language": "yaml",
+      "sizeLines": 28,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/tools/eval/queries.yaml",
+      "language": "yaml",
+      "sizeLines": 158,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/tools/eval/README.md",
+      "language": "markdown",
+      "sizeLines": 86,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/eval/RETRIEVAL_LOG.md",
+      "language": "markdown",
+      "sizeLines": 60,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/tools/scripts/convert-docs.ps1",
+      "language": "powershell",
+      "sizeLines": 106,
+      "fileCategory": "script"
+    },
+    {
+      "path": "src/tools/scripts/ctx.py",
+      "language": "python",
+      "sizeLines": 332,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/tools/scripts/eval_retrieval.py",
+      "language": "python",
+      "sizeLines": 337,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/tools/scripts/fetch_e2e_corpus.py",
+      "language": "python",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/tools/scripts/otelmeter.py",
+      "language": "python",
+      "sizeLines": 890,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/tools/scripts/setup-second-brain.ps1",
+      "language": "powershell",
+      "sizeLines": 109,
+      "fileCategory": "script"
+    },
+    {
+      "path": "src/tools/scripts/tok.py",
+      "language": "python",
+      "sizeLines": 341,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/conftest.py",
+      "language": "python",
+      "sizeLines": 383,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/convert/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/convert/examples/adversarial-edge-cases.html",
+      "language": "html",
+      "sizeLines": 118,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "tests/convert/examples/order-management-sad.html",
+      "language": "html",
+      "sizeLines": 301,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "tests/convert/examples/order-management-sad.storage.html",
+      "language": "html",
+      "sizeLines": 50,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "tests/convert/examples/README.md",
+      "language": "markdown",
+      "sizeLines": 104,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/convert/test_confluence_pf_filter.py",
+      "language": "python",
+      "sizeLines": 336,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/convert/test_convert_cli.py",
+      "language": "python",
+      "sizeLines": 169,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/convert/test_html_to_gitlab_md_v3.py",
+      "language": "python",
+      "sizeLines": 453,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/convert/test_html_to_gitlab_md.py",
+      "language": "python",
+      "sizeLines": 467,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_ast_parser.py",
+      "language": "python",
+      "sizeLines": 155,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_chunk_gate.py",
+      "language": "python",
+      "sizeLines": 162,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_chunking.py",
+      "language": "python",
+      "sizeLines": 344,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_cli_workspace.py",
+      "language": "python",
+      "sizeLines": 97,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_cli.py",
+      "language": "python",
+      "sizeLines": 203,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_config.py",
+      "language": "python",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_corpus_taxonomy.py",
+      "language": "python",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_direction.py",
+      "language": "python",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_doc_router.py",
+      "language": "python",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_e2e_real_docs.py",
+      "language": "python",
+      "sizeLines": 170,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_embeddings.py",
+      "language": "python",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_enrichment_inventory.py",
+      "language": "python",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_enrichment.py",
+      "language": "python",
+      "sizeLines": 320,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_eval_retrieval.py",
+      "language": "python",
+      "sizeLines": 165,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_extract_prose.py",
+      "language": "python",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_extract_structural.py",
+      "language": "python",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_header_norm.py",
+      "language": "python",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_memory_vector_store.py",
+      "language": "python",
+      "sizeLines": 309,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_models.py",
+      "language": "python",
+      "sizeLines": 299,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_pipeline_inventory_e2e.py",
+      "language": "python",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_pipeline.py",
+      "language": "python",
+      "sizeLines": 521,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_quality.py",
+      "language": "python",
+      "sizeLines": 194,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_reconcile.py",
+      "language": "python",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_retrieval.py",
+      "language": "python",
+      "sizeLines": 89,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_search_offline.py",
+      "language": "python",
+      "sizeLines": 76,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_structural.py",
+      "language": "python",
+      "sizeLines": 562,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_template_taxonomy.py",
+      "language": "python",
+      "sizeLines": 106,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_tui.py",
+      "language": "python",
+      "sizeLines": 147,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_vector_store.py",
+      "language": "python",
+      "sizeLines": 266,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_vocabulary.py",
+      "language": "python",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_workspace.py",
+      "language": "python",
+      "sizeLines": 143,
+      "fileCategory": "code"
+    }
+  ],
+  "totalFiles": 144,
+  "filteredByIgnore": 81,
+  "estimatedComplexity": "large",
+  "importMap": {
+    ".devcontainer/devcontainer.json": [],
+    ".env.example": [],
+    ".github/agents/adr-generator.agent.md": [],
+    ".github/copilot-instructions.md": [],
+    "CLAUDE.md": [],
+    "config/entity-vocab.json": [],
+    "config/field_directions.yaml": [],
+    "config/taxonomy.json": [],
+    "devfile.yaml": [],
+    "docs/adr/adr-0001-modular-semantic-pipeline.md": [],
+    "docs/archive/DISCOVERED_INTERFACES.md": [],
+    "docs/confluence-conversion-rules.md": [],
+    "docs/guides/confluence-storage-format-gitlab-markdown.md": [],
+    "docs/guides/convert-html-gitlab-markdown-linux.md": [],
+    "docs/guides/convert-html-gitlab-markdown-windows.md": [],
+    "docs/guides/index.md": [],
+    "docs/guides/log.md": [],
+    "docs/guides/pipeline-101.md": [],
+    "docs/inbox/CONFLUENCE_FORMAT_INSTRUCTIONS.md": [],
+    "docs/inbox/Convert.Linux.Readme.md": [],
+    "docs/inbox/Convert.Windows.Readme.md": [],
+    "docs/learn/bridge/01-project-anatomy-and-tooling.md": [],
+    "docs/learn/bridge/02-dataclasses-vs-csharp-records.md": [],
+    "docs/learn/bridge/03-protocols-typing-and-unions.md": [],
+    "docs/learn/bridge/04-iteration-comprehensions-generators.md": [],
+    "docs/learn/bridge/05-modules-imports-and-lazy-patterns.md": [],
+    "docs/learn/bridge/06-pydantic-settings-and-typer.md": [],
+    "docs/learn/bridge/07-pytest-for-xunit-developers.md": [],
+    "docs/learn/exercises/01-trace-a-document.md": [],
+    "docs/learn/exercises/02-add-a-section-keyword.md": [],
+    "docs/learn/exercises/03-parametrize-header-norm.md": [],
+    "docs/learn/exercises/04-add-a-config-field.md": [],
+    "docs/learn/exercises/05-extend-an-entity-pattern.md": [],
+    "docs/learn/exercises/06-add-a-cli-flag.md": [],
+    "docs/learn/exercises/07-tune-hybrid-search-and-measure.md": [],
+    "docs/learn/exercises/08-use-the-library-from-scratch.md": [],
+    "docs/learn/README.md": [],
+    "docs/learn/tours/01-models-and-config.md": [],
+    "docs/learn/tours/02-ast-parser-and-structural.md": [],
+    "docs/learn/tours/03-enrichment.md": [],
+    "docs/learn/tours/04-vocabulary-and-two-pass-scan.md": [],
+    "docs/learn/tours/05-taxonomy-modules.md": [],
+    "docs/learn/tours/06-inventory-extraction-modules.md": [],
+    "docs/learn/tours/07-chunking.md": [],
+    "docs/learn/tours/08-embeddings-and-vector-store.md": [],
+    "docs/learn/tours/09-retrieval-and-hybrid-search.md": [],
+    "docs/learn/tours/10-pipeline-orchestrator-and-cli.md": [],
+    "docs/learn/tours/11-quality-linter.md": [],
+    "docs/learn/walkthroughs/01-life-of-a-document.md": [],
+    "docs/learn/walkthroughs/02-architecture-map.md": [],
+    "docs/learn/walkthroughs/03-test-suite-tour.md": [],
+    "docs/notes/SPIKE_FINDINGS.md": [],
+    "docs/template/template.md": [],
+    "environment.yml": [],
+    "pyproject.toml": [],
+    "README.md": [],
+    "src/sdd_pipeline/__init__.py": [
+      "src/sdd_pipeline/config.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/pipeline.py"
+    ],
+    "src/sdd_pipeline/ast_parser.py": [],
+    "src/sdd_pipeline/chunking.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/cli.py": [],
+    "src/sdd_pipeline/config.py": [],
+    "src/sdd_pipeline/convert/__init__.py": [
+      "src/sdd_pipeline/convert/base.py",
+      "src/sdd_pipeline/convert/html_to_gitlab_md.py"
+    ],
+    "src/sdd_pipeline/convert/base.py": [],
+    "src/sdd_pipeline/convert/confluence_pf_filter.py": [],
+    "src/sdd_pipeline/convert/html_to_gitlab_md.py": [],
+    "src/sdd_pipeline/corpus_taxonomy.py": [
+      "src/sdd_pipeline/ast_parser.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/structural.py",
+      "src/sdd_pipeline/template_taxonomy.py"
+    ],
+    "src/sdd_pipeline/direction.py": [
+      "src/sdd_pipeline/header_norm.py"
+    ],
+    "src/sdd_pipeline/doc_router.py": [
+      "src/sdd_pipeline/header_norm.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/template_taxonomy.py"
+    ],
+    "src/sdd_pipeline/dump.py": [
+      "src/sdd_pipeline/ast_parser.py",
+      "src/sdd_pipeline/enrichment.py",
+      "src/sdd_pipeline/pipeline.py",
+      "src/sdd_pipeline/workspace.py"
+    ],
+    "src/sdd_pipeline/embeddings.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/enrichment.py": [
+      "src/sdd_pipeline/direction.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/reconcile.py"
+    ],
+    "src/sdd_pipeline/extract_prose.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/extract_structural.py": [
+      "src/sdd_pipeline/header_norm.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/template_taxonomy.py"
+    ],
+    "src/sdd_pipeline/header_norm.py": [],
+    "src/sdd_pipeline/models.py": [],
+    "src/sdd_pipeline/pipeline.py": [
+      "src/sdd_pipeline/ast_parser.py",
+      "src/sdd_pipeline/chunking.py",
+      "src/sdd_pipeline/config.py",
+      "src/sdd_pipeline/embeddings.py",
+      "src/sdd_pipeline/enrichment.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/quality.py",
+      "src/sdd_pipeline/structural.py",
+      "src/sdd_pipeline/vector_store.py",
+      "src/sdd_pipeline/vocabulary.py"
+    ],
+    "src/sdd_pipeline/quality.py": [],
+    "src/sdd_pipeline/reconcile.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/retrieval.py": [],
+    "src/sdd_pipeline/structural.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/template_taxonomy.py": [
+      "src/sdd_pipeline/ast_parser.py",
+      "src/sdd_pipeline/header_norm.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/structural.py"
+    ],
+    "src/sdd_pipeline/tui.py": [
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/pipeline.py"
+    ],
+    "src/sdd_pipeline/vector_store.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/vocabulary.py": [],
+    "src/sdd_pipeline/workspace.py": [],
+    "src/tools/eval/corpus/adr-0001-modular-semantic-pipeline.md": [],
+    "src/tools/eval/corpus/airflow-aip107.md": [],
+    "src/tools/eval/corpus/impala-vscode.md": [],
+    "src/tools/eval/corpus/sad-retailnexus-oms.md": [],
+    "src/tools/eval/corpus/scripting-on-dtk.md": [],
+    "src/tools/eval/e2e_queries.yaml": [],
+    "src/tools/eval/e2e_sources.yaml": [],
+    "src/tools/eval/queries.yaml": [],
+    "src/tools/eval/README.md": [],
+    "src/tools/eval/RETRIEVAL_LOG.md": [],
+    "src/tools/scripts/convert-docs.ps1": [],
+    "src/tools/scripts/ctx.py": [],
+    "src/tools/scripts/eval_retrieval.py": [],
+    "src/tools/scripts/fetch_e2e_corpus.py": [],
+    "src/tools/scripts/otelmeter.py": [],
+    "src/tools/scripts/setup-second-brain.ps1": [],
+    "src/tools/scripts/tok.py": [],
+    "tests/__init__.py": [],
+    "tests/conftest.py": [],
+    "tests/convert/__init__.py": [],
+    "tests/convert/examples/adversarial-edge-cases.html": [],
+    "tests/convert/examples/order-management-sad.html": [],
+    "tests/convert/examples/order-management-sad.storage.html": [],
+    "tests/convert/examples/README.md": [],
+    "tests/convert/test_confluence_pf_filter.py": [],
+    "tests/convert/test_convert_cli.py": [],
+    "tests/convert/test_html_to_gitlab_md_v3.py": [],
+    "tests/convert/test_html_to_gitlab_md.py": [],
+    "tests/test_ast_parser.py": [],
+    "tests/test_chunk_gate.py": [],
+    "tests/test_chunking.py": [],
+    "tests/test_cli_workspace.py": [],
+    "tests/test_cli.py": [],
+    "tests/test_config.py": [],
+    "tests/test_corpus_taxonomy.py": [],
+    "tests/test_direction.py": [],
+    "tests/test_doc_router.py": [],
+    "tests/test_e2e_real_docs.py": [],
+    "tests/test_embeddings.py": [],
+    "tests/test_enrichment_inventory.py": [],
+    "tests/test_enrichment.py": [],
+    "tests/test_eval_retrieval.py": [],
+    "tests/test_extract_prose.py": [],
+    "tests/test_extract_structural.py": [],
+    "tests/test_header_norm.py": [],
+    "tests/test_memory_vector_store.py": [],
+    "tests/test_models.py": [],
+    "tests/test_pipeline_inventory_e2e.py": [],
+    "tests/test_pipeline.py": [],
+    "tests/test_quality.py": [],
+    "tests/test_reconcile.py": [],
+    "tests/test_retrieval.py": [],
+    "tests/test_search_offline.py": [],
+    "tests/test_structural.py": [],
+    "tests/test_template_taxonomy.py": [],
+    "tests/test_tui.py": [],
+    "tests/test_vector_store.py": [],
+    "tests/test_vocabulary.py": [],
+    "tests/test_workspace.py": []
+  }
+}

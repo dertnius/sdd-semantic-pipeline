@@ -1,0 +1,29 @@
+{
+  "projectRoot": "C:/Users/midgard/dev/poc/sdd-semantic-pipeline",
+  "batchFiles": [
+    {"path": "docs/learn/tours/01-models-and-config.md", "language": "markdown", "sizeLines": 148, "fileCategory": "docs"},
+    {"path": "docs/learn/tours/02-ast-parser-and-structural.md", "language": "markdown", "sizeLines": 130, "fileCategory": "docs"},
+    {"path": "docs/learn/tours/03-enrichment.md", "language": "markdown", "sizeLines": 110, "fileCategory": "docs"},
+    {"path": "docs/learn/tours/04-vocabulary-and-two-pass-scan.md", "language": "markdown", "sizeLines": 118, "fileCategory": "docs"},
+    {"path": "docs/learn/tours/05-taxonomy-modules.md", "language": "markdown", "sizeLines": 122, "fileCategory": "docs"},
+    {"path": "docs/learn/tours/06-inventory-extraction-modules.md", "language": "markdown", "sizeLines": 128, "fileCategory": "docs"},
+    {"path": "docs/learn/tours/07-chunking.md", "language": "markdown", "sizeLines": 126, "fileCategory": "docs"},
+    {"path": "docs/learn/tours/08-embeddings-and-vector-store.md", "language": "markdown", "sizeLines": 120, "fileCategory": "docs"},
+    {"path": "docs/learn/tours/09-retrieval-and-hybrid-search.md", "language": "markdown", "sizeLines": 115, "fileCategory": "docs"},
+    {"path": "docs/learn/tours/10-pipeline-orchestrator-and-cli.md", "language": "markdown", "sizeLines": 125, "fileCategory": "docs"},
+    {"path": "docs/learn/tours/11-quality-linter.md", "language": "markdown", "sizeLines": 92, "fileCategory": "docs"}
+  ],
+  "batchImportData": {
+    "docs/learn/tours/01-models-and-config.md": [],
+    "docs/learn/tours/02-ast-parser-and-structural.md": [],
+    "docs/learn/tours/03-enrichment.md": [],
+    "docs/learn/tours/04-vocabulary-and-two-pass-scan.md": [],
+    "docs/learn/tours/05-taxonomy-modules.md": [],
+    "docs/learn/tours/06-inventory-extraction-modules.md": [],
+    "docs/learn/tours/07-chunking.md": [],
+    "docs/learn/tours/08-embeddings-and-vector-store.md": [],
+    "docs/learn/tours/09-retrieval-and-hybrid-search.md": [],
+    "docs/learn/tours/10-pipeline-orchestrator-and-cli.md": [],
+    "docs/learn/tours/11-quality-linter.md": []
+  }
+}

@@ -1,0 +1,290 @@
+{
+  "nodes": [
+    {
+      "id": "file:tests/convert/test_html_to_gitlab_md.py",
+      "type": "file",
+      "name": "test_html_to_gitlab_md.py",
+      "filePath": "tests/convert/test_html_to_gitlab_md.py",
+      "summary": "Comprehensive test suite for the HTML to GitLab-Markdown converter, covering stats counting, pandoc resolution, content-root selection, spec conformance for Confluence constructs, and the convert CLI command.",
+      "tags": ["test", "converter", "spec-conformance", "cli"],
+      "complexity": "complex",
+      "languageNotes": "Uses pytest classes as grouping containers (TestStats, TestSpecConformance, etc.) over the convert subpackage."
+    },
+    {
+      "id": "file:tests/test_ast_parser.py",
+      "type": "file",
+      "name": "test_ast_parser.py",
+      "filePath": "tests/test_ast_parser.py",
+      "summary": "Tests the pandoc AST wrapper: version probing, single-file AST generation with required keys, and batch generation including JSON output writing.",
+      "tags": ["test", "ast", "pandoc", "slow"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_chunk_gate.py",
+      "type": "file",
+      "name": "test_chunk_gate.py",
+      "filePath": "tests/test_chunk_gate.py",
+      "summary": "Tests the binding chunk hygiene gate (quality.check_chunk), validating that poisoned markup-residue chunks are flagged while clean and code chunks pass.",
+      "tags": ["test", "validation", "quality-gate"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_chunking.py",
+      "type": "file",
+      "name": "test_chunking.py",
+      "filePath": "tests/test_chunking.py",
+      "summary": "Tests the deterministic chunking stage: text splitting, chunk_document metadata inheritance, entity scoping, merge-definitions/merge-prose modes, embed budget, and junk filtering.",
+      "tags": ["test", "chunking", "data-model"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_cli_workspace.py",
+      "type": "file",
+      "name": "test_cli_workspace.py",
+      "filePath": "tests/test_cli_workspace.py",
+      "summary": "Tests the CLI workspace zone guards, ensuring index/lint reject out-of-zone input/output paths and that defaults land in the configured inbox/outbox zones.",
+      "tags": ["test", "cli", "workspace", "validation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_cli.py",
+      "type": "file",
+      "name": "test_cli.py",
+      "filePath": "tests/test_cli.py",
+      "summary": "End-to-end tests for the export, scan, and lint CLI commands, covering format validation, vocabulary persistence, merge-definitions colocation, and lint exit codes.",
+      "tags": ["test", "cli", "export", "integration"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_config.py",
+      "type": "file",
+      "name": "test_config.py",
+      "filePath": "tests/test_config.py",
+      "summary": "Tests PipelineConfig loading: workspace defaults and env overrides, entity-terms JSON parsing, embed/merge defaults, and vector-store backend selection.",
+      "tags": ["test", "configuration", "config"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_corpus_taxonomy.py",
+      "type": "file",
+      "name": "test_corpus_taxonomy.py",
+      "filePath": "tests/test_corpus_taxonomy.py",
+      "summary": "Tests the corpus taxonomy module that classifies and aggregates document taxonomy across the corpus.",
+      "tags": ["test", "taxonomy", "corpus"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_direction.py",
+      "type": "file",
+      "name": "test_direction.py",
+      "filePath": "tests/test_direction.py",
+      "summary": "Tests the direction module: loading field directions and resolving the direction for a given field.",
+      "tags": ["test", "direction", "metadata"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_doc_router.py",
+      "type": "file",
+      "name": "test_doc_router.py",
+      "filePath": "tests/test_doc_router.py",
+      "summary": "Tests the document router: detecting document type, loading taxonomy, and resolving the taxonomy applicable to a document.",
+      "tags": ["test", "routing", "taxonomy"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_e2e_real_docs.py",
+      "type": "file",
+      "name": "test_e2e_real_docs.py",
+      "filePath": "tests/test_e2e_real_docs.py",
+      "summary": "End-to-end tests running the full SemanticPipeline against real documents, exercising the parse-through-search flow with actual fixtures.",
+      "tags": ["test", "e2e", "pipeline", "slow"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_embeddings.py",
+      "type": "file",
+      "name": "test_embeddings.py",
+      "filePath": "tests/test_embeddings.py",
+      "summary": "Tests the embeddings layer: the Azure OpenAI embedder batching/ordering/error handling and the make_embedder factory dispatch between local and azure providers.",
+      "tags": ["test", "embeddings", "azure", "factory"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_enrichment_inventory.py",
+      "type": "file",
+      "name": "test_enrichment_inventory.py",
+      "filePath": "tests/test_enrichment_inventory.py",
+      "summary": "Tests enrichment inventory behavior, validating enrich_section produces expected entity records and section metadata.",
+      "tags": ["test", "enrichment", "inventory"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_enrichment.py",
+      "type": "file",
+      "name": "test_enrichment.py",
+      "filePath": "tests/test_enrichment.py",
+      "summary": "Comprehensive tests for the enrichment stage: section-type classification, entity extraction, tag extraction, recursive section enrichment, and the cross-corpus scan_corpus discovery.",
+      "tags": ["test", "enrichment", "classification", "entity-extraction"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_eval_retrieval.py",
+      "type": "file",
+      "name": "test_eval_retrieval.py",
+      "filePath": "tests/test_eval_retrieval.py",
+      "summary": "Unit tests for the retrieval-eval scoring core in src/tools/scripts/eval_retrieval.py, loaded by path since the scripts dir is not on the import path.",
+      "tags": ["test", "evaluation", "retrieval", "scoring"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_extract_prose.py",
+      "type": "file",
+      "name": "test_extract_prose.py",
+      "filePath": "tests/test_extract_prose.py",
+      "summary": "Tests the prose extraction module: build_prose_inventory and extract_prose over a DocumentModel.",
+      "tags": ["test", "extraction", "prose"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_extract_structural.py",
+      "type": "file",
+      "name": "test_extract_structural.py",
+      "filePath": "tests/test_extract_structural.py",
+      "summary": "Tests the structural extraction module: build_structural_inventory and extract_structural over a DocumentModel section tree.",
+      "tags": ["test", "extraction", "structural"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_header_norm.py",
+      "type": "file",
+      "name": "test_header_norm.py",
+      "filePath": "tests/test_header_norm.py",
+      "summary": "Tests the header normalization helper (normalise_header) that canonicalizes section heading text.",
+      "tags": ["test", "normalization", "header"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_memory_vector_store.py",
+      "type": "file",
+      "name": "test_memory_vector_store.py",
+      "filePath": "tests/test_memory_vector_store.py",
+      "summary": "Tests the in-memory vector store backend: roundtrip search, filters, corpus retrieval, delete/reset, persistence reload, protocol conformance, and the make_vector_store factory.",
+      "tags": ["test", "vector-store", "persistence", "factory"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_models.py",
+      "type": "file",
+      "name": "test_models.py",
+      "filePath": "tests/test_models.py",
+      "summary": "Tests the pure dataclass models: ContentBlock, enums, DocumentModel section iteration, and the SemanticChunk embed-text/metadata/dict serialization contracts.",
+      "tags": ["test", "data-model", "serialization", "models"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_pipeline_inventory_e2e.py",
+      "type": "file",
+      "name": "test_pipeline_inventory_e2e.py",
+      "filePath": "tests/test_pipeline_inventory_e2e.py",
+      "summary": "End-to-end tests verifying the pipeline produces the expected inventory output over a constructed DocumentModel.",
+      "tags": ["test", "e2e", "pipeline", "inventory"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_pipeline.py",
+      "type": "file",
+      "name": "test_pipeline.py",
+      "filePath": "tests/test_pipeline.py",
+      "summary": "Core tests for SemanticPipeline orchestration: stable doc ids, lazy embedder/store construction, process/index file and directory flows, cross-corpus scan, search delegation/provenance, and the chunk gate.",
+      "tags": ["test", "pipeline", "orchestration", "integration"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_quality.py",
+      "type": "file",
+      "name": "test_quality.py",
+      "filePath": "tests/test_quality.py",
+      "summary": "Tests the raw-markdown linter (quality.check_markdown), validating detection of embedding-harmful residue like leaked HTML, macros, code dumps, and near-empty stubs.",
+      "tags": ["test", "quality", "linter", "validation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_reconcile.py",
+      "type": "file",
+      "name": "test_reconcile.py",
+      "filePath": "tests/test_reconcile.py",
+      "summary": "Tests the reconcile module that merges and deduplicates EntityRecord instances.",
+      "tags": ["test", "reconcile", "entity"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_retrieval.py",
+      "type": "file",
+      "name": "test_retrieval.py",
+      "filePath": "tests/test_retrieval.py",
+      "summary": "Tests the lexical retrieval primitives: tokenize, the BM25Index ranking, and reciprocal_rank_fusion used by hybrid search.",
+      "tags": ["test", "retrieval", "bm25", "hybrid-search"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {"source": "file:src/sdd_pipeline/convert/html_to_gitlab_md.py", "target": "file:tests/convert/test_html_to_gitlab_md.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "file:tests/convert/test_html_to_gitlab_md.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/ast_parser.py", "target": "file:tests/test_ast_parser.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "file:tests/test_chunk_gate.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+    {"source": "file:src/sdd_pipeline/models.py", "target": "file:tests/test_chunk_gate.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/chunking.py", "target": "file:tests/test_chunking.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+    {"source": "file:src/sdd_pipeline/models.py", "target": "file:tests/test_chunking.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "file:tests/test_cli_workspace.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/cli.py", "target": "file:tests/test_cli.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/config.py", "target": "file:tests/test_config.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/corpus_taxonomy.py", "target": "file:tests/test_corpus_taxonomy.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/direction.py", "target": "file:tests/test_direction.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/doc_router.py", "target": "file:tests/test_doc_router.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:tests/test_e2e_real_docs.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+    {"source": "file:src/sdd_pipeline/config.py", "target": "file:tests/test_e2e_real_docs.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/embeddings.py", "target": "file:tests/test_embeddings.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+    {"source": "file:src/sdd_pipeline/config.py", "target": "file:tests/test_embeddings.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "file:tests/test_enrichment_inventory.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/enrichment.py", "target": "file:tests/test_enrichment.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/tools/scripts/eval_retrieval.py", "target": "file:tests/test_eval_retrieval.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/extract_prose.py", "target": "file:tests/test_extract_prose.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/extract_structural.py", "target": "file:tests/test_extract_structural.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/header_norm.py", "target": "file:tests/test_header_norm.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/vector_store.py", "target": "file:tests/test_memory_vector_store.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+    {"source": "file:src/sdd_pipeline/config.py", "target": "file:tests/test_memory_vector_store.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/models.py", "target": "file:tests/test_models.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:tests/test_pipeline_inventory_e2e.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+    {"source": "file:src/sdd_pipeline/config.py", "target": "file:tests/test_pipeline_inventory_e2e.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/pipeline.py", "target": "file:tests/test_pipeline.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+    {"source": "file:src/sdd_pipeline/vocabulary.py", "target": "file:tests/test_pipeline.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+    {"source": "file:src/sdd_pipeline/config.py", "target": "file:tests/test_pipeline.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/quality.py", "target": "file:tests/test_quality.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/reconcile.py", "target": "file:tests/test_reconcile.py", "type": "tested_by", "direction": "forward", "weight": 0.5},
+
+    {"source": "file:src/sdd_pipeline/retrieval.py", "target": "file:tests/test_retrieval.py", "type": "tested_by", "direction": "forward", "weight": 0.5}
+  ]
+}

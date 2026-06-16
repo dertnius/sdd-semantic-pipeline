@@ -1,0 +1,190 @@
+{
+  "name": "agent-usage-monitor",
+  "displayName": "Agent Usage Monitor",
+  "description": "Status-bar consumption indicator + usage analytics dashboard for GitHub Copilot and Claude Code, built on the tok.py / otelmeter.py scripts.",
+  "version": "0.1.0",
+  "publisher": "midgard",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "usageMonitor.openDashboard",
+        "title": "Open Usage Dashboard",
+        "category": "Usage Monitor",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "usageMonitor.refresh",
+        "title": "Refresh Now",
+        "category": "Usage Monitor",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "usageMonitor.downloadBilling",
+        "title": "Download GitHub Billing Report",
+        "category": "Usage Monitor"
+      },
+      {
+        "command": "usageMonitor.importCsv",
+        "title": "Import Copilot Premium-Requests CSV",
+        "category": "Usage Monitor"
+      },
+      {
+        "command": "usageMonitor.setupOtel",
+        "title": "Set Up Live Copilot OTel (auto-configure)",
+        "category": "Usage Monitor"
+      },
+      {
+        "command": "usageMonitor.startOtel",
+        "title": "Start Live Copilot OTel Capture",
+        "category": "Usage Monitor"
+      },
+      {
+        "command": "usageMonitor.stopOtel",
+        "title": "Stop Live Copilot OTel Capture",
+        "category": "Usage Monitor"
+      },
+      {
+        "command": "usageMonitor.printOtelConfig",
+        "title": "Show Copilot OTel Setup Instructions",
+        "category": "Usage Monitor"
+      },
+      {
+        "command": "usageMonitor.fetchUsageApi",
+        "title": "Fetch GitHub Usage Total (gh api)",
+        "category": "Usage Monitor"
+      },
+      {
+        "command": "usageMonitor.parseCopilotFile",
+        "title": "Parse Copilot OTel File (file exporter)",
+        "category": "Usage Monitor"
+      }
+    ],
+    "configuration": {
+      "title": "Agent Usage Monitor",
+      "properties": {
+        "usageMonitor.statusBar.alignment": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ],
+          "default": "right",
+          "markdownDescription": "Which side of the status bar to anchor the indicator. Changing this recreates the item."
+        },
+        "usageMonitor.statusBar.priority": {
+          "type": "number",
+          "default": 100,
+          "markdownDescription": "Status-bar sort priority. Higher numbers sit further toward the chosen edge."
+        },
+        "usageMonitor.statusBar.metric": {
+          "type": "string",
+          "enum": [
+            "cost",
+            "tokens",
+            "both"
+          ],
+          "default": "both",
+          "markdownDescription": "What the indicator shows. Live OTel leads with **tokens** (authoritative); the imported-CSV fallback leads with **$** (authoritative)."
+        },
+        "usageMonitor.statusBar.scope": {
+          "type": "string",
+          "enum": [
+            "global",
+            "newestSession"
+          ],
+          "default": "global",
+          "markdownDescription": "`global`: every window shows the same total across all captured sessions. `newestSession`: show the most-recently-active session only (approximate 'current window')."
+        },
+        "usageMonitor.refreshIntervalSeconds": {
+          "type": "number",
+          "default": 30,
+          "minimum": 5,
+          "markdownDescription": "How often (seconds) to re-read usage data for the status bar."
+        },
+        "usageMonitor.source": {
+          "type": "string",
+          "enum": [
+            "copilot",
+            "claude"
+          ],
+          "default": "copilot",
+          "markdownDescription": "Primary usage source. `claude` (Phase 2) reads `~/.claude/projects/**/*.jsonl` directly."
+        },
+        "usageMonitor.pythonPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Python interpreter for the optional live-OTel sidecar. Empty = auto-detect (ms-python.python, then `py -3`/`python` on PATH)."
+        },
+        "usageMonitor.claudeConfigDir": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Override the Claude config dir (default: `CLAUDE_CONFIG_DIR` or `~/.claude`)."
+        },
+        "usageMonitor.otel.endpointPort": {
+          "type": "number",
+          "default": 4318,
+          "markdownDescription": "Port the OTel sidecar binds and Copilot exports to (`http://localhost:<port>`)."
+        },
+        "usageMonitor.otel.captureContent": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Capture Copilot prompt/response **content** from OTel spans (`gen_ai.input.messages`). Requires `github.copilot.chat.otel.captureContent`. **Privacy: this records your prompts and code locally.**"
+        },
+        "usageMonitor.ghPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the GitHub CLI (`gh`) for the aggregate usage tile. Empty = `gh` on PATH."
+        },
+        "usageMonitor.githubOrg": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Org login for the aggregate usage tile (uses the org billing endpoint). Empty = your user account."
+        },
+        "usageMonitor.otel.copilotFile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to Copilot's OTel **file-exporter** output to parse directly (file mode). Empty = auto-detect from `github.copilot.chat.otel.outfile` when `exporterType` is `file`."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "package": "node esbuild.mjs --production",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext ts",
+    "test:parity": "node --import tsx test/parity.ts",
+    "test:smoke": "node esbuild.mjs && node test/smoke.cjs",
+    "test:otel": "python test/otel_content_test.py",
+    "test": "npm run typecheck && npm run lint && npm run test:parity && npm run test:smoke && npm run test:otel"
+  },
+  "dependencies": {
+    "js-tiktoken": "^1.0.21"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "chart.js": "^4.4.3",
+    "esbuild": "^0.21.5",
+    "eslint": "^8.57.0",
+    "gridstack": "^11.5.1",
+    "tsx": "^4.15.0",
+    "typescript": "^5.4.5"
+  }
+}

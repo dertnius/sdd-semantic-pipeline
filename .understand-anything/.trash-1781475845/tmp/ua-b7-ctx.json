@@ -1,0 +1,11 @@
+{
+  "batchImportData": {
+    "docs/guides/confluence-storage-format-gitlab-markdown.md": [],
+    "docs/guides/convert-html-gitlab-markdown-linux.md": [],
+    "docs/guides/convert-html-gitlab-markdown-windows.md": [],
+    "docs/guides/index.md": [],
+    "docs/guides/log.md": [],
+    "docs/guides/pipeline-101.md": []
+  },
+  "neighborMap": {}
+}

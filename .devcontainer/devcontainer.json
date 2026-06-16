@@ -1,19 +1,37 @@
 {
-  // ── VS Code Dev Container definition ──────────────────────────────────────
-  // Works with: VS Code Dev Containers extension + Docker Desktop (Windows/Mac/Linux)
+  // ── Dev Container definition (containers.dev standard) ────────────────────
+  // Works with: VS Code Dev Containers + rootless Podman, and DevPod
+  // (Podman / Kubernetes / cloud providers). See README "Environment setup".
+  // To use Podman as the engine, set the VS Code USER setting (not committable):
+  //   "dev.containers.dockerPath": "podman"
   // Documentation: https://containers.dev/
   "name": "SDD Semantic Pipeline",
 
-  // Python 3.11 Debian-based base image
-  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bookworm",
+  // Prebuilt image: pandoc + the heavy Python deps are baked in (see
+  // .devcontainer/Dockerfile) so cold starts / `devpod build` are fast.
+  // context ".." = repo root so the Dockerfile can COPY pyproject.toml / src.
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  // The base image runs as this non-root user; the Dockerfile chowns the Python
+  // dirs and makes the cache dirs world-writable so it can run the editable
+  // install and persist caches. Under rootless Podman, `containerUser` is the
+  // run-as identity and `updateRemoteUserUID` (default true) remaps it to the
+  // host UID so bind-mounted edits stay host-owned.
+  "remoteUser": "vscode",
+  "containerUser": "vscode",
+
+  // Rootless Podman: keep the in-container user mapped to the host user so files
+  // written to the bind-mounted workspace are host-owned (the analog of the
+  // production `--userns=keep-id`). Ignored by the Docker engine.
+  "runArgs": ["--userns=keep-id"],
 
   // ── Dev Container Features ─────────────────────────────────────────────────
-  // Features install tooling on top of the base image cleanly
+  // Features install tooling on top of the built image cleanly.
   "features": {
-    // Pandoc binary (latest stable)
-    "ghcr.io/devcontainers-contrib/features/pandoc:1": {
-      "version": "latest"
-    },
+    // pandoc is baked into the Dockerfile (Debian's apt pandoc 2.17 is too old).
     // Git + GitHub CLI (useful for Copilot auth and push workflows)
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
@@ -29,7 +47,11 @@
     "PIPELINE_OUTBOX_DIR": "${containerWorkspaceFolder}/outbox",
     "PIPELINE_CHROMA_PERSIST_DIR": "${containerWorkspaceFolder}/outbox/index",
     "PIPELINE_EMBEDDING_MODEL": "all-MiniLM-L6-v2",
-    "ANONYMIZED_TELEMETRY": "false"
+    "ANONYMIZED_TELEMETRY": "false",
+    // Keep pip + HuggingFace caches on the mounted volumes (see "mounts").
+    // Also set in the Dockerfile, repeated here for non-docker providers.
+    "PIP_CACHE_DIR": "/opt/cache/pip",
+    "HF_HOME": "/opt/cache/huggingface"
   },
 
   // ── Forwarded ports ────────────────────────────────────────────────────────
@@ -42,10 +64,14 @@
   },
 
   // ── Mounts ─────────────────────────────────────────────────────────────────
-  // Persist pip cache across rebuilds to avoid re-downloading packages
+  // Persist the pip + HuggingFace caches across rebuilds (the Dockerfile creates
+  // these dirs world-writable, so a fresh named volume inherits writable perms).
+  // Targets match PIP_CACHE_DIR / HF_HOME above. Named-volume mounts apply to the
+  // local Podman/Docker provider; on Kubernetes/cloud the baked dev model covers
+  // first use.
   "mounts": [
-    "source=sdd-pipeline-pip-cache,target=/root/.cache/pip,type=volume",
-    "source=sdd-pipeline-hf-cache,target=/root/.cache/huggingface,type=volume"
+    "source=sdd-pipeline-pip-cache,target=/opt/cache/pip,type=volume",
+    "source=sdd-pipeline-hf-cache,target=/opt/cache/huggingface,type=volume"
   ],
 
   // ── VS Code customisations ─────────────────────────────────────────────────

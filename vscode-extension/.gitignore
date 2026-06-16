@@ -1,0 +1,10 @@
+node_modules/
+dist/
+out/
+*.vsix
+.vscode-test/
+__pycache__/
+*.pyc
+media/vendor/chart.umd.min.js
+media/vendor/gridstack-all.js
+media/vendor/gridstack.min.css

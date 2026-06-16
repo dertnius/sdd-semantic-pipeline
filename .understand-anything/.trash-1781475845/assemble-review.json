@@ -1,0 +1,16 @@
+{
+  "fixedSectionOk": true,
+  "nodesRecovered": 0,
+  "edgesRestored": 10,
+  "crossBatchEdgesAdded": 0,
+  "typesRemapped": 0,
+  "complexityRemapped": 0,
+  "notes": [
+    "Fixed section is reasonable: 10 tested_by edges flipped + 8 dropped are normal LLM directional/orphan noise on a 565-edge graph; 25 production nodes tagged tested is plausible for this suite. No single ID-correction pattern dominated and no skewed complexity, so no upstream concern flagged.",
+    "All 10 'could not fix' dropped edges were cross-batch prefix mismatches (target existed under config:/document: instead of file:). Recovered all 10 by retargeting to the correct existing node id; no new nodes invented.",
+    "7 edges retargeted file:src/sdd_pipeline/config.py -> config:src/sdd_pipeline/config.py (1 configures from .env.example, 6 documents from learn docs); 3 edges retargeted file:tests/convert/examples/*.html -> document:tests/convert/examples/*.html (related, from examples/README.md).",
+    "All 0 nodes were missing an id; no unknown node types; all complexity values already valid (simple/moderate/complex). No node recovery needed.",
+    "Cross-batch import verification: all 45 internal import relations in scan-result.json importMap already have a corresponding 'imports' edge in the assembled graph. No import edges were missing; none added.",
+    "Post-fix graph integrity verified: 299 nodes, 557 edges, 0 dangling edges, 0 duplicate (source,target,type) edges. Added edges follow existing schema (source/target/type/direction/weight, direction=forward, weight=0.7)."
+  ]
+}

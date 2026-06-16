@@ -1,0 +1,185 @@
+{
+  "batchImportData": {
+    "src/sdd_pipeline/__init__.py": [
+      "src/sdd_pipeline/config.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/pipeline.py"
+    ],
+    "src/sdd_pipeline/chunking.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/config.py": [],
+    "src/sdd_pipeline/embeddings.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/extract_prose.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/models.py": [],
+    "src/sdd_pipeline/pipeline.py": [
+      "src/sdd_pipeline/ast_parser.py",
+      "src/sdd_pipeline/chunking.py",
+      "src/sdd_pipeline/config.py",
+      "src/sdd_pipeline/embeddings.py",
+      "src/sdd_pipeline/enrichment.py",
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/quality.py",
+      "src/sdd_pipeline/structural.py",
+      "src/sdd_pipeline/vector_store.py",
+      "src/sdd_pipeline/vocabulary.py"
+    ],
+    "src/sdd_pipeline/quality.py": [],
+    "src/sdd_pipeline/tui.py": [
+      "src/sdd_pipeline/models.py",
+      "src/sdd_pipeline/pipeline.py"
+    ],
+    "src/sdd_pipeline/vector_store.py": [
+      "src/sdd_pipeline/models.py"
+    ],
+    "src/sdd_pipeline/vocabulary.py": []
+  },
+  "neighborMap": {
+    "src/sdd_pipeline/models.py": [
+      {
+        "path": "src/sdd_pipeline/corpus_taxonomy.py",
+        "batchIndex": 2,
+        "symbols": [
+          "build_corpus_taxonomy",
+          "taxonomy_to_json",
+          "vocabulary_to_json"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/doc_router.py",
+        "batchIndex": 2,
+        "symbols": [
+          "_heading_keys",
+          "detect_doc_type",
+          "load_taxonomy",
+          "taxonomy_for"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/enrichment.py",
+        "batchIndex": 3,
+        "symbols": [
+          "classify_section_type",
+          "_compile_terms",
+          "extract_entities",
+          "extract_tags",
+          "enrich_section",
+          "enrich_document",
+          "_append_unique",
+          "_write_to_field",
+          "_apply_inventory",
+          "_collect_raw_terms",
+          "_collect_section_terms",
+          "scan_corpus"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/extract_structural.py",
+        "batchIndex": 2,
+        "symbols": [
+          "_records_from_table",
+          "extract_structural",
+          "build_structural_inventory"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/reconcile.py",
+        "batchIndex": 3,
+        "symbols": [
+          "reconcile",
+          "_supersedes"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/structural.py",
+        "batchIndex": 2,
+        "symbols": [
+          "_short_hash",
+          "_meta_str",
+          "_extract_metadata",
+          "_link_hint",
+          "_serialize_inline_list",
+          "_serialize_inlines",
+          "_serialize_list",
+          "_serialize_table",
+          "_elem_to_content_block",
+          "build_structural_model"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/template_taxonomy.py",
+        "batchIndex": 2,
+        "symbols": [
+          "_split_row",
+          "_is_separator",
+          "parse_pipe_table",
+          "_is_placeholder",
+          "fields_and_orientation",
+          "_dedupe",
+          "_walk",
+          "_section_key",
+          "extract_taxonomy",
+          "to_canonical_json",
+          "main"
+        ]
+      }
+    ],
+    "src/sdd_pipeline/pipeline.py": [
+      {
+        "path": "src/sdd_pipeline/ast_parser.py",
+        "batchIndex": 2,
+        "symbols": [
+          "generate_ast",
+          "generate_ast_batch",
+          "pandoc_version"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/enrichment.py",
+        "batchIndex": 3,
+        "symbols": [
+          "classify_section_type",
+          "_compile_terms",
+          "extract_entities",
+          "extract_tags",
+          "enrich_section",
+          "enrich_document",
+          "_append_unique",
+          "_write_to_field",
+          "_apply_inventory",
+          "_collect_raw_terms",
+          "_collect_section_terms",
+          "scan_corpus"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/structural.py",
+        "batchIndex": 2,
+        "symbols": [
+          "_short_hash",
+          "_meta_str",
+          "_extract_metadata",
+          "_link_hint",
+          "_serialize_inline_list",
+          "_serialize_inlines",
+          "_serialize_list",
+          "_serialize_table",
+          "_elem_to_content_block",
+          "build_structural_model"
+        ]
+      },
+      {
+        "path": "src/sdd_pipeline/dump.py",
+        "batchIndex": 3,
+        "symbols": [
+          "_write",
+          "main"
+        ]
+      }
+    ]
+  }
+}
