@@ -1,0 +1,8 @@
+model,date,quantity,gross_amount,discount_amount,net_amount,exceeds_quota,username
+gpt-4.1,2026-06-01,10,0.40,0.40,0.00,FALSE,midgard
+gpt-4.1,2026-06-01,5,0.20,0.00,0.20,TRUE,midgard
+claude-3.5-sonnet,2026-06-02,3,0.30,0.00,0.30,TRUE,midgard
+claude-3.5-sonnet,2026-06-02,2,0.20,0.20,0.00,FALSE,teammate
+gpt-4o,2026-06-03,8,0.80,0.10,0.70,TRUE,midgard
+o3-mini,2026-06-03,1,0.05,0.05,0.00,FALSE,teammate
+"gpt-4.1",2026-06-04,2,0.08,0.00,0.08,TRUE,"da Costa, R."

@@ -1,0 +1,7 @@
+{"type":"user","sessionId":"sess1","cwd":"C:\\work\\proj","gitBranch":"main","timestamp":"2026-06-15T08:00:00.000Z","message":{"role":"user","content":"first prompt about widgets"}}
+{"type":"assistant","sessionId":"sess1","cwd":"C:\\work\\proj","requestId":"req1","timestamp":"2026-06-15T08:00:01.000Z","message":{"id":"msg1","model":"claude-opus-4-8","role":"assistant","usage":{"input_tokens":1000,"output_tokens":200,"cache_read_input_tokens":500,"cache_creation_input_tokens":100}}}
+{"type":"user","sessionId":"sess1","cwd":"C:\\work\\proj","timestamp":"2026-06-15T08:01:00.000Z","message":{"role":"user","content":[{"type":"text","text":"second prompt with code"}]}}
+{"type":"assistant","sessionId":"sess1","cwd":"C:\\work\\proj","requestId":"req2","timestamp":"2026-06-15T08:01:02.000Z","costUSD":0.0123,"message":{"id":"msg2","model":"claude-sonnet-4","role":"assistant","usage":{"input_tokens":300,"output_tokens":80,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}
+{"type":"user","sessionId":"sess1","timestamp":"2026-06-15T08:02:00.000Z","toolUseResult":{"ok":1},"message":{"role":"user","content":[{"type":"tool_result","content":"ignored"}]}}
+{"type":"user","sessionId":"sess1","timestamp":"2026-06-15T08:03:00.000Z","message":{"role":"user","content":"<command-message>foo</command-message>\n<command-name>/foo</command-name>"}}
+{"type":"last-prompt","sessionId":"sess1","leafUuid":"abc"}

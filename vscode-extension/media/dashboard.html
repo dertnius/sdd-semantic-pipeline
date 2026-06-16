@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src %%CSP_SOURCE%% data:; style-src %%CSP_SOURCE%% 'unsafe-inline'; font-src %%CSP_SOURCE%%; script-src 'nonce-%%NONCE%%';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="%%GRIDSTACK_CSS%%" rel="stylesheet" />
+    <link href="%%STYLE%%" rel="stylesheet" />
+    <title>Agent Usage</title>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="title">
+        <span class="dot"></span>
+        <h1>Agent Usage</h1>
+        <span id="modeBadge" class="badge">…</span>
+      </div>
+      <div class="actions">
+        <button data-cmd="refresh" title="Refresh">↻ Refresh</button>
+        <button data-cmd="importCsv">Import CSV</button>
+        <button data-cmd="downloadBilling">Download report</button>
+        <button data-cmd="fetchUsageApi" class="ghost">API total</button>
+        <button data-cmd="parseCopilotFile">Parse file</button>
+        <button data-cmd="startOtel">Start OTel</button>
+        <button data-cmd="stopOtel" class="ghost">Stop</button>
+        <button data-cmd="setupOtel" class="ghost">OTel setup</button>
+        <button id="resetLayout" class="ghost" title="Reset panel layout">⊞ Reset</button>
+      </div>
+    </header>
+
+    <p id="subline" class="subline"></p>
+
+    <div class="grid-stack">
+      <div class="grid-stack-item" gs-id="overview" gs-x="0" gs-y="0" gs-w="12" gs-h="2">
+        <div class="grid-stack-item-content panel">
+          <div class="panel-head gs-drag"><span>Overview</span><span class="grip">⠿</span></div>
+          <div class="panel-body"><div id="overview" class="cards"></div></div>
+        </div>
+      </div>
+
+      <div class="grid-stack-item" gs-id="modelChart" gs-x="0" gs-y="2" gs-w="6" gs-h="4">
+        <div class="grid-stack-item-content panel">
+          <div class="panel-head gs-drag"><span>By model</span><span class="grip">⠿</span></div>
+          <div class="panel-body"><div class="chart-wrap"><canvas id="modelChart"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="grid-stack-item" gs-id="secondChart" gs-x="6" gs-y="2" gs-w="6" gs-h="4">
+        <div class="grid-stack-item-content panel">
+          <div class="panel-head gs-drag"><span id="secondChartTitle">Trend</span><span class="grip">⠿</span></div>
+          <div class="panel-body"><div class="chart-wrap"><canvas id="secondChart"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="grid-stack-item" gs-id="sessions" gs-x="0" gs-y="6" gs-w="7" gs-h="5">
+        <div class="grid-stack-item-content panel">
+          <div class="panel-head gs-drag">
+            <span>Recent sessions <span class="hint" id="sessionsHint"></span></span><span class="grip">⠿</span>
+          </div>
+          <div class="panel-body"><div id="sessions" class="sessions"></div></div>
+        </div>
+      </div>
+
+      <div class="grid-stack-item" gs-id="tokenizer" gs-x="7" gs-y="6" gs-w="5" gs-h="5">
+        <div class="grid-stack-item-content panel">
+          <div class="panel-head gs-drag"><span>Tokenizer <span class="hint">o200k</span></span><span class="grip">⠿</span></div>
+          <div class="panel-body">
+            <div class="tok-controls">
+              <input id="tokModel" type="text" placeholder="model" value="gpt-4.1" />
+              <button id="tokRun">Tokenize</button>
+            </div>
+            <textarea id="tokInput" rows="3" placeholder="Paste a prompt, or click a prompt in a session…"></textarea>
+            <div id="tokMeta" class="tok-meta"></div>
+            <div id="tokOut" class="tok-out"></div>
+            <div id="tokNote" class="tok-note"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="foot">
+      Drag panels by their header · resize from the bottom-right · layout is saved. Tokens are
+      authoritative; $ is estimated unless an authoritative cost metric/CSV is present · fully local.
+    </footer>
+
+    <script nonce="%%NONCE%%" src="%%GRIDSTACK%%"></script>
+    <script nonce="%%NONCE%%" src="%%CHARTJS%%"></script>
+    <script nonce="%%NONCE%%" src="%%SCRIPT%%"></script>
+  </body>
+</html>
