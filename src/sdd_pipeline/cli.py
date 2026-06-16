@@ -1074,6 +1074,73 @@ def tui(
     run_search_tui(config, hybrid=hybrid)
 
 
+# ── mcp ───────────────────────────────────────────────────────────────────────
+
+
+@app.command(name="mcp")
+def mcp_serve(
+    index_dir: str | None = typer.Option(
+        None, "--index", "-i", help="Vector index path. Default: outbox/index."
+    ),
+    model: str = typer.Option("BAAI/bge-large-en-v1.5", "--model", "-m"),
+    provider: str = typer.Option(
+        "local", "--provider", help="Embedding backend: local | azure (must match the index)."
+    ),
+    backend: str | None = typer.Option(
+        None,
+        "--backend",
+        help="Vector store backend: memory (default) | chroma (must match the index). "
+        "Unset falls back to PIPELINE_VECTOR_STORE_BACKEND.",
+    ),
+    hybrid: bool = typer.Option(
+        False, "--hybrid", "-H", help="Default tools to hybrid (dense + BM25) retrieval."
+    ),
+) -> None:
+    """Run a local MCP server (stdio) exposing semantic search over the index.
+
+    Requires the optional 'mcp' install extra. Designed for GitHub Copilot: register
+    it in .vscode/mcp.json so the ADR-generator agent can retrieve corpus context.
+    Speaks JSON-RPC on stdout - do not pipe anything else through this command. The
+    embedder (--model/--provider) must match the one that built the index.
+    """
+    from .config import PipelineConfig
+    from .workspace import WorkspaceError, resolve_index_path
+
+    overrides: dict = {
+        "embedding_model": model,
+        "embedding_provider": provider,
+    }
+    if backend is not None:
+        overrides["vector_store_backend"] = backend
+    if hybrid:
+        overrides["hybrid_search"] = True
+
+    ws = PipelineConfig(**overrides)
+    try:
+        index_path = resolve_index_path(
+            index_dir or ws.chroma_persist_dir,
+            outbox_dir=ws.outbox_dir,
+            enforce=ws.enforce_workspace,
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    overrides["chroma_persist_dir"] = str(index_path)
+    config = PipelineConfig(**overrides)
+
+    try:
+        from .mcp_server import run_server
+    except ImportError as exc:
+        console.print(
+            r'[red]MCP SDK is not installed.[/red] Install the MCP extra: pip install ".\[mcp]"'
+        )
+        raise typer.Exit(1) from exc
+
+    # From here on the stdio protocol owns stdout; run_server writes only to stderr.
+    run_server(config)
+
+
 # ── check ─────────────────────────────────────────────────────────────────────
 
 
@@ -1131,6 +1198,14 @@ def check() -> None:
         rows.append(("openai (azure, optional)", getattr(openai, "__version__", "installed"), True))
     except ImportError:
         rows.append(("openai (azure, optional)", "not installed", True))
+
+    # Optional MCP server — informational, never gates the check.
+    try:
+        import mcp
+
+        rows.append(("mcp (MCP server, optional)", getattr(mcp, "__version__", "installed"), True))
+    except ImportError:
+        rows.append(("mcp (MCP server, optional)", "not installed - pip install '.[mcp]'", True))
 
     for var in ("PIPELINE_AZURE_OPENAI_ENDPOINT", "PIPELINE_AZURE_OPENAI_DEPLOYMENT"):
         rows.append((var, "set" if os.environ.get(var) else "unset", True))
@@ -1248,6 +1323,10 @@ def show_help(
                 (
                     "tui",
                     "Interactive search browser (TUI); needs the tui extra. (needs model)",
+                ),
+                (
+                    "mcp",
+                    "Local MCP server (stdio) for GitHub Copilot; needs the mcp extra. (needs model)",
                 ),
                 ("export", "Write each file's chunks to .chunks.json/.jsonl for other pipelines."),
                 ("scan", "Discover and persist the cross-corpus entity vocabulary."),

@@ -14,6 +14,7 @@ For full overview, read [README.md](../README.md).
 - CLI entrypoint: [src/sdd_pipeline/cli.py](../src/sdd_pipeline/cli.py)
 - Data model contracts: [src/sdd_pipeline/models.py](../src/sdd_pipeline/models.py)
 - Canonical setup and commands: [README.md](../README.md), [devfile.yaml](../devfile.yaml), [pyproject.toml](../pyproject.toml)
+- Local retrieval for agents: the `sdd-semantic` MCP server (`sdd-pipeline mcp`, registered in [.vscode/mcp.json](../.vscode/mcp.json)) exposes semantic search over the indexed corpus (`semantic_search`, `find_decision_context`, `list_section_types`, `list_spaces`). The ADR Generator agent calls it to ground ADRs; build an index first (`sdd-pipeline index`).
 
 ## High-Value Commands
 

@@ -289,9 +289,34 @@ sdd-pipeline lint [input_dir] [options]
 sdd-pipeline check
 ```
 
-Reports Python, pandoc, and each Python dependency, plus optional `chromadb`
-and `openai` availability and whether the Azure env vars are set (the API key
-value is never printed). Exits non-zero if a required dependency is missing.
+Reports Python, pandoc, and each Python dependency, plus optional `chromadb`,
+`openai`, and `mcp` availability and whether the Azure env vars are set (the API
+key value is never printed). Exits non-zero if a required dependency is missing.
+
+### `mcp` — local MCP server for GitHub Copilot (semantic RAG)
+
+```bash
+pip install ".[mcp]"          # one-time: install the MCP extra
+sdd-pipeline index inbox/     # build an index first (the server only reads it)
+sdd-pipeline mcp              # serve over stdio (JSON-RPC on stdout)
+```
+
+Runs a local [Model Context Protocol](https://modelcontextprotocol.io) server
+(stdio) that exposes semantic search over the indexed corpus so a Copilot agent
+can ground its work in your SDD/Confluence docs. Tools:
+
+| Tool | Returns |
+|---|---|
+| `semantic_search(query, top_k, section_type, space, hybrid)` | top-k chunks (full content) |
+| `find_decision_context(topic)` | snippets grouped for an ADR: `general`, `context`, `decision`, `alternatives`, `tradeoffs`, `consequences`, `done_criteria` |
+| `list_section_types()` / `list_spaces()` | valid filter values |
+
+Takes the same `--index/--model/--provider/--backend` flags as `search`; the
+embedder **must match the one that built the index** (a mismatch is reported as a
+clean tool error). The server warms the model at startup and logs to **stderr**;
+an empty/unbuilt index makes the tools raise an actionable error rather than
+returning silently. See *GitHub Copilot integration* below for the `.vscode/mcp.json`
+registration.
 
 ---
 
@@ -416,13 +441,20 @@ conda env update -f environment.yml --prune
 ### Option B — Remote devfile (OpenShift Dev Spaces / Eclipse Che)
 
 The `devfile.yaml` at the repo root is picked up automatically when you open
-the repository URL in Dev Spaces.
+the repository URL in Dev Spaces. It uses the **same prebuilt image** as the Dev
+Container / DevPod (built from [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile)),
+so pandoc and the Python deps are baked in.
+
+> **Prerequisite:** publish that image to a registry your Dev Spaces cluster can
+> pull and point the `image:` field in `devfile.yaml` at it — e.g.
+> `devpod build . --platform linux/amd64 --repository <registry>/sdd-pipeline`
+> (or `docker build -f .devcontainer/Dockerfile -t <registry>/sdd-pipeline:latest . && docker push …`).
 
 1. Navigate to your Dev Spaces instance.
 2. Paste the repo URL → **Create Workspace**.
-3. The `bootstrap` command runs automatically (`postStart` event):
-   - Installs `pandoc` via `apt-get`
-   - Runs `pip install -e ".[dev]"`
+3. The `bootstrap` command runs automatically (`postStart` event): pandoc and the
+   Python deps are already baked in, so it just refreshes the editable install
+   (picking up any new `pyproject.toml` deps) and runs `sdd-pipeline check`.
 4. Open a terminal and run:
    ```bash
    sdd-pipeline check
@@ -433,7 +465,7 @@ the repository URL in Dev Spaces.
 
 | Command | What it does |
 |---|---|
-| `bootstrap` | Install pandoc + pip deps (runs on postStart) |
+| `bootstrap` | Verify the prebuilt image + refresh the editable install (runs on postStart) |
 | `check` | Verify all dependencies |
 | `test` | Unit tests (no pandoc / ML required) |
 | `test-all` | All tests including slow integration |
@@ -451,6 +483,71 @@ Requires Docker Desktop on Windows / Mac / Linux.
 2. Open the repo folder → VS Code detects `.devcontainer/devcontainer.json`.
 3. Click **Reopen in Container**.
 4. The `postCreateCommand` installs all dependencies automatically.
+
+---
+
+### Option D — DevPod (devpod.sh)
+
+[DevPod](https://devpod.sh) is a client-only tool that builds reproducible dev
+environments from the **same `.devcontainer/devcontainer.json`** used in Option C
+(the [containers.dev](https://containers.dev) standard) on pluggable *providers* —
+local Docker, a remote SSH host, Kubernetes, or a cloud VM. No DevPod-specific
+file is needed; the dev container is backed by a prebuilt image
+([`.devcontainer/Dockerfile`](.devcontainer/Dockerfile)) that bakes in pandoc, the
+heavy Python deps, and a small dev embedding model so cold starts are fast.
+
+#### Docker provider (default — local)
+
+```bash
+# One-time: install the DevPod CLI (or use the desktop app), then add the provider
+devpod provider add docker
+
+# From a local clone (run in the repo root):
+devpod up . --ide vscode          # opens VS Code desktop attached to the workspace
+#   --ide openvscode               # browser-based VS Code instead
+#   --ide none                     # headless: then `ssh sdd-semantic-pipeline.devpod`
+
+# …or straight from git (no local clone needed):
+devpod up github.com/<org>/sdd-semantic-pipeline --ide vscode
+```
+
+The `customizations.vscode` extensions/settings and the
+`PIPELINE_*` env from `devcontainer.json` are applied automatically. Verify with
+`sdd-pipeline check`, then `sdd-pipeline index inbox/sample/ --model all-MiniLM-L6-v2`.
+
+#### Kubernetes / cloud providers
+
+```bash
+devpod provider add kubernetes        # or a cloud provider (aws/gcp/azure/…)
+
+# Prebuild + push the image once so remote nodes pull it instead of building:
+devpod build . --platform linux/amd64 --repository <registry>/sdd-pipeline
+
+devpod up . --provider kubernetes --ide openvscode
+```
+
+Caveats for remote providers:
+
+- **Caches.** The named-volume pip/HuggingFace caches in `devcontainer.json` are a
+  Docker-provider convenience. On Kubernetes/cloud the **baked `all-MiniLM-L6-v2`
+  dev model** makes the first `index` work offline; the production
+  `BAAI/bge-large-en-v1.5` model (~1.3 GB) still downloads on first use, so prefer
+  the dev model there or pre-pull `bge-large` into a persistent volume.
+- **Sizing.** Embedding needs real RAM/CPU — target ~6 GiB / 2 CPU
+  (mirrors [`devfile.yaml`](devfile.yaml)).
+- **Architecture.** The Dockerfile builds for both amd64 and arm64; pass
+  `--platform` to `devpod build` to pin the target.
+
+#### Secrets (Azure embeddings)
+
+Never bake secrets into the image. Provide Azure credentials at runtime via a
+**gitignored `.env`** in the workspace (read by pydantic-settings; see
+[.env.example](.env.example) / [.gitignore](.gitignore)) or per workspace:
+
+```bash
+devpod up . --workspace-env PIPELINE_AZURE_OPENAI_API_KEY=… \
+            --workspace-env PIPELINE_EMBEDDING_PROVIDER=azure
+```
 
 ---
 
@@ -621,7 +718,9 @@ sdd-semantic-pipeline/
 │   ├── adr/ · notes/ · inbox/ · template/ · archive/
 │   └── confluence-conversion-rules.md  ← the converter spec
 ├── build/                    ← setuptools build output, gitignored (build/lib, build/bdist)
-├── .vscode/ · .github/ · .devcontainer/   ← IDE / Copilot / dev-container config (tracked)
+├── .vscode/ · .github/      ← IDE / Copilot config (tracked)
+├── .devcontainer/           ← dev container: devcontainer.json + Dockerfile (VS Code Dev Containers + DevPod)
+├── .dockerignore            ← keeps the dev-image build context lean
 ├── devfile.yaml              ← OpenShift Dev Spaces / Eclipse Che
 ├── environment.yml           ← conda / micromamba environment
 ├── pyproject.toml            ← project metadata, pytest, ruff, mypy
@@ -646,10 +745,46 @@ Use `@workspace` in the chat panel for cross-file questions:
 The `.vscode/settings.json` sets `github.copilot.advanced.workspaceContext` to index
 `src/**` and `tests/**` for inline suggestions.
 
+### MCP server + ADR-generator agent
+
+`.github/agents/adr-generator.agent.md` is a Copilot agent that writes
+Architectural Decision Records. It is wired to the `sdd-pipeline mcp` server
+(see the [`mcp` command](#mcp--local-mcp-server-for-github-copilot-semantic-rag))
+so it retrieves grounding from the indexed corpus before drafting: its step 0
+calls `find_decision_context(topic)`, maps the buckets onto the ADR template, and
+cites the retrieved `source_url`s. If no index is built it degrades gracefully and
+notes that it drafted from conversation only.
+
+Register the server in `.vscode/mcp.json` (already committed):
+
+```jsonc
+{
+  "servers": {
+    "sdd-semantic": {
+      "type": "stdio",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe",  // POSIX: .venv/bin/python
+      "args": ["-m", "sdd_pipeline.cli", "mcp", "--model", "BAAI/bge-large-en-v1.5", "--provider", "local"],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "PIPELINE_CHROMA_PERSIST_DIR": "${workspaceFolder}/outbox/index",
+        "PIPELINE_EMBEDDING_MODEL": "BAAI/bge-large-en-v1.5"
+      }
+    }
+  }
+}
+```
+
+The `command` path and the `PIPELINE_EMBEDDING_MODEL` must match your venv layout
+and the model you indexed with. On macOS/Linux use `.venv/bin/python`. After a
+`sdd-pipeline index` run, reload VS Code and the `sdd-semantic` tools appear in
+Copilot agent mode.
+
 ---
 
 ## Requirements
 
 - Python ≥ 3.11
-- pandoc ≥ 3.0 (installed via conda-forge or apt)
-- Docker (for Dev Container option only)
+- pandoc ≥ 3.0 (installed via conda-forge, the `.deb`, or baked into the dev image)
+- Docker / Kubernetes / a cloud provider — only for the Dev Container (Option C)
+  or DevPod (Option D); both build [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile)
+  ([DevPod](https://devpod.sh) needs its CLI/app on top)

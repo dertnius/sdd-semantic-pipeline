@@ -247,6 +247,31 @@ and `--max-unrecognized` (config: `convert_quarantine`, `convert_max_unrecognize
   responsive. Needs a real terminal (not a redirected pipe). Pure helpers
   (`parse_top_k`/`resolve_section_type`/`format_preview`) are unit-tested and the
   app via Textual's headless `run_test()` pilot.
+- **MCP server for Copilot** (`sdd-pipeline mcp`, module `mcp_server.py`, optional
+  `[mcp]` extra → the `mcp` SDK's FastMCP): a CLI-layer presentation wrapper over
+  `SemanticPipeline` (like `tui`) that serves semantic search over **stdio** so
+  GitHub Copilot's ADR-generator agent can RAG over the indexed corpus. It imports
+  `mcp` only when the command runs, so core flows never pull it in; it imports only
+  the public `SemanticPipeline` + enums (no `vector_store`/`embeddings`/`workspace`
+  — the CLI command does path resolution), so **no guardrail is broken**. Four
+  tools: `semantic_search` (full content; lean `section_type`/`space`/`hybrid`
+  filters; `hybrid=None` defers to the server default — never forces it off),
+  `find_decision_context` (snippets grouped onto the ADR template — a guaranteed
+  `general` recall bucket plus precision buckets `context`/`decision`/
+  `alternatives`/`tradeoffs`/`consequences`/`done_criteria`, deduped precision-first
+  so a passage appears once), and `list_section_types`/`list_spaces`. Each tool's
+  logic is a plain module function (`run_search`/`find_decision_context_impl`/
+  `result_to_dict`/`resolve_section_type`/…), so the contract is unit-tested
+  model-free via `hashing_embedder` (no MCP runtime) — see `tests/test_mcp_server.py`.
+  The **stdio contract** keeps stdout for JSON-RPC: all diagnostics go to stderr,
+  ASCII-only (Windows cp1252). `run_server` eagerly warms the model at startup
+  (so the first call is fast and a provenance mismatch surfaces in the VS Code
+  server log); an empty/unbuilt index makes the search tools raise an actionable
+  error rather than silently returning `[]`. The embedder **must match the index
+  provenance** (`_verify_provenance` raises on mismatch, surfaced as a clean tool
+  error). Wired for Copilot via `.vscode/mcp.json` (registers the stdio server) +
+  a step-0 retrieval instruction in `.github/agents/adr-generator.agent.md`
+  (no `tools:` allowlist — that would strip the agent's file-writing).
 
 ## Architecture guardrails
 

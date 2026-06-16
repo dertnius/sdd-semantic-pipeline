@@ -34,10 +34,12 @@ dev = [
     "mypy>=1.9",
     "chromadb>=0.5",       # keeps the chroma-backend tests runnable in CI
     "textual>=0.50",       # interactive search TUI (sdd-pipeline tui) + its tests
+    "mcp>=1.27",           # MCP stdio server (sdd-pipeline mcp) + its tests
 ]
 azure = ["openai>=1.0"]
 chroma = ["chromadb>=0.5"]
 tui = ["textual>=0.50"]    # interactive search browser: sdd-pipeline tui
+mcp = ["mcp>=1.27"]        # MCP stdio server for GitHub Copilot: sdd-pipeline mcp
 
 [project.scripts]
 sdd-pipeline = "sdd_pipeline.cli:app"
