@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SDD Semantic Pipeline — short version</title>
+<style>
+  :root{
+    --blue:#1f6feb; --blue-dk:#0a3069; --ink:#1c2128; --muted:#57606a;
+    --line:#d0d7de; --bg:#ffffff;
+    --red:#d1242f; --red-bg:#fff1f0; --green:#1a7f37; --green-bg:#eafff0;
+    --amber:#9a6700; --amber-bg:#fff8c5; --panel:#f6f8fa; --info-bg:#ddf4ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:#eef1f5; overflow:hidden;
+  }
+  /* progress + chrome */
+  #bar{position:fixed;top:0;left:0;height:5px;background:var(--blue);width:0;
+       transition:width .4s ease;z-index:50;border-radius:0 3px 3px 0}
+  #counter{position:fixed;bottom:14px;right:18px;font-size:15px;color:var(--muted);z-index:50}
+  #hint{position:fixed;bottom:14px;left:18px;font-size:14px;color:var(--muted);z-index:50}
+  .nav{position:fixed;bottom:10px;z-index:50;border:1px solid var(--line);background:#fff;
+       color:var(--blue);width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;
+       display:flex;align-items:center;justify-content:center;transition:background .15s}
+  .nav:hover{background:var(--info-bg)} .nav:active{transform:scale(.94)}
+  #prev{right:118px} #next{right:66px}
+
+  /* stage */
+  .deck{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  .slide{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+         padding:4.5vh 6vw}
+  .slide.active{display:flex}
+  .inner{width:100%;max-width:1060px}
+  .slide.active .inner{animation:enter .55s cubic-bezier(.22,.61,.36,1) both}
+  @keyframes enter{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+  h1{font-size:clamp(34px,5.4vw,62px);color:var(--blue);line-height:1.08;letter-spacing:-.5px}
+  h2{font-size:clamp(26px,3.6vw,40px);color:var(--blue);line-height:1.12;
+     border-bottom:3px solid var(--line);padding-bottom:12px;margin-bottom:26px}
+  .sub{font-size:clamp(18px,2.3vw,26px);color:var(--ink);margin-top:22px;font-weight:400}
+  .tiny{font-size:clamp(13px,1.5vw,16px);color:var(--muted)}
+  p{font-size:clamp(18px,2.1vw,25px);line-height:1.5}
+  b,strong{color:var(--blue-dk)}
+
+  /* fragments */
+  .frag{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}
+  .frag.show{opacity:1;transform:none}
+  .frag.l{transform:translateX(-34px)} .frag.r{transform:translateX(34px)}
+  .frag.l.show,.frag.r.show{transform:none}
+
+  /* lists */
+  ul{list-style:none} li{font-size:clamp(17px,2.05vw,24px);line-height:1.4;margin:14px 0;
+     padding-left:34px;position:relative}
+  li .mk{position:absolute;left:0;top:1px;font-weight:700}
+
+  /* two-column before/after */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:6px}
+  .panel{border-radius:14px;padding:20px 26px}
+  .panel h3{font-size:clamp(20px,2.5vw,28px);margin-bottom:6px}
+  .before{background:var(--red-bg);border-left:8px solid var(--red)}
+  .before h3{color:var(--red)} .before li .mk{color:var(--red)}
+  .after{background:var(--green-bg);border-left:8px solid var(--green)}
+  .after h3{color:var(--green)} .after li .mk{color:var(--green)}
+
+  .tag{display:inline-block;background:#fff;border:1px solid var(--blue);color:var(--blue-dk);
+       border-radius:20px;padding:3px 12px;font-size:clamp(12px,1.4vw,16px);margin:4px 6px 0 0;font-weight:500}
+  .tag.k{border-color:var(--green);color:var(--green)}
+
+  /* callouts */
+  .why{background:var(--amber-bg);border-left:8px solid var(--amber);border-radius:12px;
+       padding:16px 22px;margin-top:24px;font-size:clamp(16px,2vw,23px)}
+  .why b{color:var(--amber)}
+  .ask{background:var(--info-bg);border-left:8px solid var(--blue);border-radius:12px;
+       padding:18px 24px;margin-top:22px}
+  .ask .h{font-weight:600;color:var(--blue-dk);font-size:clamp(17px,2vw,23px);margin-bottom:8px}
+
+  /* ===== pipeline journey animation ===== */
+  #pipeSlide .inner{max-width:1120px}
+  .plegend{display:flex;gap:18px;justify-content:center;margin:-6px 0 4px;font-size:clamp(12px,1.4vw,15px);color:var(--muted)}
+  .plegend span{display:inline-flex;align-items:center;gap:7px}
+  .plegend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .plegend .b{background:var(--blue)} .plegend .p{background:#8250df} .plegend .s{background:#475569} .plegend .g{background:var(--green)}
+
+  .prail{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin:14px 0 4px;position:relative}
+  .ptrack{position:absolute;left:5%;right:5%;top:19px;height:4px;background:var(--line);border-radius:4px;z-index:0}
+  #pfill{position:absolute;left:5%;top:19px;height:4px;width:0;background:var(--blue);border-radius:4px;
+         transition:width .5s ease;z-index:1}
+  .pchip{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;position:relative;z-index:2;min-width:0}
+  .pchip .dot{width:40px;height:40px;border-radius:50%;background:#fff;border:2px solid var(--line);position:relative;
+    display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--muted);transition:all .35s ease}
+  /* dashed purple ring = this stage uses the (optional) embedding model */
+  .pchip.usesmodel .dot::after{content:"";position:absolute;inset:-7px;border:2px dashed #8250df;
+    border-radius:50%;pointer-events:none}
+  .pchip .nm{font-size:clamp(10px,1.2vw,13.5px);color:var(--muted);font-weight:600;text-align:center;
+    line-height:1.15;transition:color .3s}
+  .pchip.on .dot{border-color:var(--blue);color:var(--blue);background:var(--info-bg)}
+  .pchip.on .nm{color:var(--ink)}
+  .pchip.cur .dot{background:var(--blue);color:#fff;border-color:var(--blue);transform:scale(1.22);
+    box-shadow:0 0 0 6px rgba(31,111,235,.16)}
+  .pchip.cur .nm{color:var(--blue-dk);font-weight:700}
+  .pchip.embed.on .dot{border-color:#8250df;color:#8250df;background:#faf2ff}
+  .pchip.embed.cur .dot{background:#8250df;border-color:#8250df;color:#fff;box-shadow:0 0 0 6px rgba(130,80,223,.16)}
+  .pchip.embed.on .nm{color:#6639b6} .pchip.embed.cur .nm{color:#6639b6}
+  .pchip.store.on .dot{border-color:#475569;color:#475569;background:#eceff3}
+  .pchip.store.cur .dot{background:#475569;border-color:#475569;color:#fff;box-shadow:0 0 0 6px rgba(71,85,105,.16)}
+  .pchip.store.on .nm{color:#334155} .pchip.store.cur .nm{color:#334155}
+  .pchip.search.on .dot{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+  .pchip.search.cur .dot{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 0 0 6px rgba(26,127,55,.16)}
+  .pchip.search.on .nm{color:#116329} .pchip.search.cur .nm{color:#116329;font-weight:700}
+
+  .pmodelnote{text-align:center;margin:10px auto 0;max-width:840px;font-size:clamp(12px,1.45vw,15.5px);
+    color:#5a3da8;background:#faf2ff;border:1px solid #e6d4ff;border-radius:10px;padding:7px 16px;line-height:1.4}
+  .pmodelnote b{color:#6639b6}
+  .pmodelnote .ring{display:inline-block;width:13px;height:13px;border:2px dashed #8250df;border-radius:50%;
+    vertical-align:-2px;margin-right:7px}
+
+  .pstage{position:relative;height:clamp(232px,37vh,300px);margin-top:14px;border:1px solid var(--line);
+    border-radius:16px;background:var(--panel);overflow:hidden}
+  .pscene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:12px;padding:16px 26px;opacity:0;transform:translateY(16px) scale(.985);
+    transition:opacity .4s ease,transform .4s ease;pointer-events:none}
+  .pscene.show{opacity:1;transform:none;pointer-events:auto}
+  .pscene .cap{font-size:clamp(14px,1.75vw,20px);color:var(--ink);text-align:center;max-width:820px;line-height:1.45}
+  .pscene .cap b{color:var(--blue-dk)} .pscene .cap code{background:#fff;border:1px solid var(--line);
+    border-radius:5px;padding:1px 6px;font-size:.92em}
+  .nomodel{background:var(--info-bg);border:1px solid var(--blue);color:var(--blue-dk);border-radius:20px;
+    padding:2px 11px;font-size:.82em;font-weight:600;white-space:nowrap}
+  .modeltag{background:#faf2ff;border:1px solid #8250df;color:#6639b6;border-radius:20px;
+    padding:2px 11px;font-size:.82em;font-weight:600;white-space:nowrap}
+
+  .pfile{display:flex;align-items:center;gap:16px;background:#fff;border:1px solid var(--line);border-radius:14px;
+    padding:16px 24px;box-shadow:0 2px 10px rgba(31,111,235,.08)}
+  .pfile .ic{font-size:42px}
+  .pfile .fn{font-weight:700;color:var(--ink);font-size:clamp(16px,2vw,22px)}
+  .pfile .fm{color:var(--muted);font-size:clamp(12px,1.5vw,16px);margin-top:2px}
+  .pmono{font-family:"Cascadia Code",Consolas,"Courier New",monospace;font-size:clamp(12px,1.55vw,16px);
+    background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 18px;line-height:1.7;
+    color:var(--ink);text-align:left}
+  .pmono b{color:var(--green)}
+  .ptree{font-family:"Cascadia Code",Consolas,monospace;font-size:clamp(13px,1.6vw,17px);background:#fff;
+    border:1px solid var(--line);border-radius:10px;padding:13px 20px;line-height:1.65;color:var(--ink);text-align:left}
+  .ptags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:760px}
+  .ptags .tag{margin:0}
+  .pchunks{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .pcard{background:#fff;border:1px solid var(--blue);border-radius:11px;padding:11px 15px;min-width:150px;
+    max-width:190px;text-align:left;font-size:clamp(11px,1.35vw,14px);box-shadow:0 2px 8px rgba(31,111,235,.08)}
+  .pcard .ct{font-size:.82em;color:var(--blue);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
+  .pcard.bad{border-color:var(--red);background:var(--red-bg)}
+  .pcard.bad .ct{color:var(--red)}
+  .pcard .gate{float:right;font-weight:800}
+  .pvec{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+  .pvec .arrowv{font-size:26px;color:#8250df}
+  .pvecbox{font-family:"Cascadia Code",Consolas,monospace;background:#faf2ff;border:1px solid #8250df;
+    color:#6639b6;border-radius:10px;padding:11px 16px;font-size:clamp(12px,1.5vw,16px)}
+  .pdb{display:flex;align-items:center;gap:16px}
+  .pdb .cyl{font-size:46px}
+  .pdb .meta{text-align:left;font-size:clamp(13px,1.6vw,17px);color:var(--ink)}
+  .pdb .meta .lock{color:var(--green);font-weight:700}
+  .psearch{display:flex;flex-direction:column;gap:9px;width:100%;max-width:720px}
+  .pquery{background:#fff;border:2px solid var(--green);border-radius:24px;padding:9px 18px;
+    font-size:clamp(13px,1.6vw,18px);color:var(--ink);display:flex;align-items:center;gap:10px}
+  .pquery .q{color:var(--green);font-weight:700}
+  .presult{background:#fff;border:1px solid var(--line);border-left:5px solid var(--green);border-radius:9px;
+    padding:7px 14px;text-align:left;font-size:clamp(12px,1.45vw,16px);line-height:1.4;
+    display:flex;justify-content:space-between;gap:12px}
+  .presult .cite{color:var(--muted);font-size:.85em} .presult .sc{color:var(--green);font-weight:700;white-space:nowrap}
+
+  .pscene.show .pop{animation:popin .5s both}
+  .pscene.show .d1{animation-delay:.08s}.pscene.show .d2{animation-delay:.18s}
+  .pscene.show .d3{animation-delay:.28s}.pscene.show .d4{animation-delay:.38s}
+  @keyframes popin{from{opacity:0;transform:translateY(12px) scale(.9)}to{opacity:1;transform:none}}
+
+  .pctrl{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:14px}
+  .pbtn{border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:22px;padding:7px 18px;
+    font-size:clamp(13px,1.6vw,16px);font-weight:600;cursor:pointer;transition:background .15s}
+  .pbtn:hover{background:var(--info-bg)} .pbtn:active{transform:scale(.96)}
+  .pctrl .tip{color:var(--muted);font-size:clamp(12px,1.4vw,15px)}
+
+  /* ===== roadmap / next steps ===== */
+  .roadmap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:14px}
+  .rphase{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;
+    display:flex;flex-direction:column}
+  .rphase .rhead{font-weight:700;color:#fff;padding:11px 18px;font-size:clamp(14px,1.8vw,20px)}
+  .rphase.now .rhead{background:var(--green)}
+  .rphase.next .rhead{background:var(--blue)}
+  .rphase.later .rhead{background:#6639b6}
+  .rphase ul{list-style:none;padding:13px 18px 16px;margin:0}
+  .rphase li{font-size:clamp(13px,1.55vw,17px);line-height:1.4;margin:0 0 13px;padding-left:20px;position:relative}
+  .rphase li:last-child{margin-bottom:0}
+  .rphase li:before{content:"›";position:absolute;left:3px;top:-1px;font-weight:800;color:var(--blue)}
+  .rphase.now li:before{color:var(--green)} .rphase.later li:before{color:#6639b6}
+  .rphase li b{color:var(--blue-dk)}
+
+  @media (max-width:760px){.roadmap{grid-template-columns:1fr}.cols{grid-template-columns:1fr}
+    .pchip .nm{display:none}.prail{gap:2px}.pchip .dot{width:32px;height:32px;font-size:15px}
+    .ptrack,#pfill{top:15px}
+    .pscene{overflow-y:auto}.pchunks{gap:8px}.pcard{min-width:118px;max-width:150px;padding:9px 12px}
+    .pdb .cyl,.pfile .ic{font-size:34px}}
+
+  /* honor OS reduced-motion: kill the click-triggered motion-bearing transitions/keyframes */
+  @media (prefers-reduced-motion: reduce){
+    .slide.active .inner,.pscene.show .pop{animation:none}
+    .pscene,.pchip .dot,#pfill,.frag{transition:none}
+    .pchip.cur .dot{transform:none}
+  }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 · TITLE + RAG INTENT -->
+  <section class="slide">
+    <div class="inner" style="text-align:center">
+      <h1>From SDD docs<br>to an AI that <span style="color:var(--blue-dk)">knows</span> them</h1>
+      <p class="sub frag">The intent — <b>RAG</b>: before our AI agents answer, they <b>retrieve our real SDD decisions and cite them</b>, instead of guessing.</p>
+      <p class="tiny frag" style="margin-top:30px">Software Design Documents · semantic search · grounded GitHub Copilot</p>
+      <p class="tiny frag" style="margin-top:24px;color:var(--blue)">▶ &nbsp;press → or space to advance</p>
+    </div>
+  </section>
+
+  <!-- 2 · BEFORE / AFTER -->
+  <section class="slide">
+    <div class="inner">
+      <h2>Before&nbsp; →&nbsp; After</h2>
+      <div class="cols">
+        <div class="panel before frag l">
+          <h3>✖ Before</h3>
+          <ul>
+            <li><span class="mk">•</span>SDD <b>decisions &amp; rationale trapped</b> in Confluence/Word</li>
+            <li><span class="mk">•</span>Copilot drafts ADRs with <b>zero grounding</b> → confident guesses</li>
+            <li><span class="mk">•</span>Find a past decision = <b>keyword-search &amp; scroll</b> across docs</li>
+          </ul>
+        </div>
+        <div class="panel after frag r">
+          <h3>✔ After</h3>
+          <ul>
+            <li><span class="mk">•</span>Confluence + Word → <b>one clean Markdown corpus</b>, provenance kept</li>
+            <li><span class="mk">•</span>Agents <b>retrieve &amp; cite the real decision</b> before they draft</li>
+            <li><span class="mk">•</span>Ask in plain language → the <b>exact section</b>, filtered to <i>just the decisions</i></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · THE JOURNEY (animated pipeline) -->
+  <section class="slide" id="pipeSlide">
+    <div class="inner">
+      <h2>The journey — from a dropped file to a cited answer</h2>
+      <div class="plegend">
+        <span><i class="b"></i> no AI model needed</span>
+        <span><i class="p"></i> embedding model (optional)</span>
+        <span><i class="s"></i> local store</span>
+        <span><i class="g"></i> query time</span>
+      </div>
+
+      <div class="prail">
+        <div class="ptrack"></div><div id="pfill"></div>
+        <div class="pchip"><div class="dot">📥</div><div class="nm">Drop</div></div>
+        <div class="pchip"><div class="dot">🧹</div><div class="nm">Convert</div></div>
+        <div class="pchip"><div class="dot">🌳</div><div class="nm">Parse</div></div>
+        <div class="pchip"><div class="dot">🏷️</div><div class="nm">Enrich</div></div>
+        <div class="pchip"><div class="dot">✂️</div><div class="nm">Chunk</div></div>
+        <div class="pchip"><div class="dot">🛡️</div><div class="nm">Gate</div></div>
+        <div class="pchip embed usesmodel"><div class="dot">🔢</div><div class="nm">Embed</div></div>
+        <div class="pchip store"><div class="dot">🗄️</div><div class="nm">Index</div></div>
+        <div class="pchip search usesmodel"><div class="dot">🔎</div><div class="nm">Search</div></div>
+      </div>
+
+      <div class="pmodelnote">
+        <span class="ring"></span><b>The AI model runs only at Embed &amp; Search</b> (dashed) — and it's <b>optional</b>: local (free) or Azure. Drop → Index all run <b>model-free</b>.
+      </div>
+
+      <div class="pstage">
+        <!-- 0 · Drop -->
+        <div class="pscene">
+          <div class="pfile pop"><span class="ic">📄</span>
+            <div><div class="fn">checkout-saga.docx</div><div class="fm">Word export · or Confluence HTML</div></div>
+          </div>
+          <div class="cap">A design doc lands in <code>inbox/</code> — exactly as exported from Word or Confluence.</div>
+        </div>
+        <!-- 1 · Convert -->
+        <div class="pscene">
+          <div class="pmono pop">## Decision: Saga compensation<br>The Order service publishes <b>order.created</b>&nbsp;…</div>
+          <div class="cap"><b>Convert</b> → clean Markdown. Confluence macros, layout cruft &amp; page chrome stripped. <span class="nomodel">no AI model</span></div>
+        </div>
+        <!-- 2 · Parse -->
+        <div class="pscene">
+          <div class="ptree pop">📐 Checkout Saga<br>&nbsp;&nbsp;├─ Decision<br>&nbsp;&nbsp;│&nbsp;&nbsp;├─ Compensation flow<br>&nbsp;&nbsp;│&nbsp;&nbsp;└─ Tradeoffs<br>&nbsp;&nbsp;└─ Consequences</div>
+          <div class="cap"><b>Parse</b> → a section tree. Headings become structure the pipeline can reason about.</div>
+        </div>
+        <!-- 3 · Enrich -->
+        <div class="pscene">
+          <div class="ptags">
+            <span class="tag pop d1">type: decision</span>
+            <span class="tag pop d2">Checkout › Decision</span>
+            <span class="tag k pop d3">entities: order.created</span>
+            <span class="tag k pop d4">depends_on · exposes</span>
+          </div>
+          <div class="cap"><b>Enrich</b> → every section tagged by <i>type · breadcrumb · entities</i>, and linked via <i>depends_on / exposes</i> read from its interface tables. This is what makes retrieval precise.</div>
+        </div>
+        <!-- 4 · Chunk -->
+        <div class="pscene">
+          <div class="pchunks">
+            <div class="pcard pop d1"><div class="ct">decision</div>Saga compensates by emitting <b>order.cancelled</b>…</div>
+            <div class="pcard pop d2"><div class="ct">consequence</div>Eventual consistency window of ~2s…</div>
+            <div class="pcard pop d3"><div class="ct">tradeoff</div>Chose choreography over orchestration…</div>
+          </div>
+          <div class="cap"><b>Chunk</b> → context-rich semantic chunks. Each carries its breadcrumb + tags, so it stands alone.</div>
+        </div>
+        <!-- 5 · Gate -->
+        <div class="pscene">
+          <div class="pchunks">
+            <div class="pcard pop d1"><span class="gate" style="color:var(--green)">✓</span><div class="ct">decision</div>clean prose, indexed</div>
+            <div class="pcard pop d2"><span class="gate" style="color:var(--green)">✓</span><div class="ct">consequence</div>clean prose, indexed</div>
+            <div class="pcard bad pop d3"><span class="gate" style="color:var(--red)">✗</span><div class="ct">blocked</div>leaked &lt;ac:macro&gt; / empty stub</div>
+          </div>
+          <div class="cap"><b>Quality gate</b> → junk (leaked HTML, empty stubs) is <b>blocked</b> before it can pollute the index.</div>
+        </div>
+        <!-- 6 · Embed -->
+        <div class="pscene">
+          <div class="pvec">
+            <div class="pcard pop d1" style="min-width:140px"><div class="ct">chunk</div>Saga compensates…</div>
+            <span class="arrowv pop d2">➜</span>
+            <div class="pvecbox pop d3">[ 0.12, −0.83, 0.05, 0.41, … ]</div>
+          </div>
+          <div class="cap"><b>Embed</b> → each chunk becomes a vector that captures its meaning. <span class="modeltag">embedding model</span> — local or Azure.</div>
+        </div>
+        <!-- 7 · Index -->
+        <div class="pscene">
+          <div class="pdb pop">
+            <span class="cyl">🗄️</span>
+            <div class="meta">Vectors stored in a <b>local vector database</b><br><span class="lock">🔒 never leaves our infrastructure</span></div>
+          </div>
+          <div class="cap"><b>Index</b> → searchable corpus, persisted on disk. No cloud API, no per-query fees.</div>
+        </div>
+        <!-- 8 · Search -->
+        <div class="pscene">
+          <div class="psearch">
+            <div class="pquery pop d1">🔎 <span class="q">"how does our checkout saga compensate?"</span></div>
+            <div class="presult pop d2"><span><b>Compensation flow</b> — emits order.cancelled, refunds…<br><span class="cite">checkout-saga.docx › Decision</span></span><span class="sc">0.91</span></div>
+            <div class="presult pop d3"><span><b>Consequences</b> — eventual-consistency window…<br><span class="cite">checkout-saga.docx › Consequences</span></span><span class="sc">0.84</span></div>
+          </div>
+          <div class="cap"><b>Semantic search</b> → ask in plain language, get the exact sections back — <b>ranked &amp; cited</b>. The agent grounds on this.</div>
+        </div>
+      </div>
+
+      <div class="pctrl">
+        <button class="pbtn" id="pReplay">↺ Restart</button>
+        <span class="tip">click / → / space to step through each stage</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · NEXT STEPS / ROADMAP -->
+  <section class="slide">
+    <div class="inner">
+      <h2>What's next — from broader ingest to decision intelligence</h2>
+      <div class="roadmap">
+        <div class="rphase now frag l">
+          <div class="rhead">▶ In progress</div>
+          <ul>
+            <li>Word <b>.docx → Markdown</b> converter — reusing the same clean-up layer</li>
+          </ul>
+        </div>
+        <div class="rphase next frag">
+          <div class="rhead">Next — widen the ingest</div>
+          <ul>
+            <li>Convert <b>embedded pictures</b> &amp; <b>PDF</b> sources</li>
+            <li><b>GitLab Wiki → Markdown</b> batch — pull ADR pages straight from the wiki</li>
+            <li><b>Transform · enrich · chunk</b> wired into the <b>existing SDD process</b> → auto-reindex on publish</li>
+          </ul>
+        </div>
+        <div class="rphase later frag r">
+          <div class="rhead">Then — decision intelligence</div>
+          <ul>
+            <li><b>SAD → ADR extraction</b> — surface the decisions buried in architecture docs</li>
+            <li><b>ADR ⇄ SAD linking</b> — every decision traces back to its SAD; every SAD lists its ADRs</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · THE ASK -->
+  <section class="slide">
+    <div class="inner">
+      <h2>The ask</h2>
+      <p class="frag">The pipeline is <b>proven and ready</b> — what we need is a decision, not more code.</p>
+      <div class="ask frag">
+        <div class="h">Two decisions:</div>
+        <p style="font-size:clamp(16px,1.9vw,22px)">1&nbsp;· choose the embedding engine — <b>self-hosted (free)</b> vs <b>Azure (no setup, per-call cost)</b><br>
+        2&nbsp;· give us the <b>full SDD corpus</b> to ingest.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<button class="nav" id="prev" aria-label="Previous">‹</button>
+<button class="nav" id="next" aria-label="Next">›</button>
+<div id="counter">1 / 5</div>
+<div id="hint">← → / space · click to advance</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var bar = document.getElementById('bar');
+  var counter = document.getElementById('counter');
+  var s = 0;            // current slide index
+  var f = 0;            // revealed fragments in current slide
+  function frags(i){ return Array.prototype.slice.call(slides[i].querySelectorAll('.frag')); }
+
+  /* ----- animated pipeline-journey slide controller ----- */
+  var Pipe = (function(){
+    var root = document.getElementById('pipeSlide');
+    if(!root) return null;
+    var chips  = Array.prototype.slice.call(root.querySelectorAll('.pchip'));
+    var scenes = Array.prototype.slice.call(root.querySelectorAll('.pscene'));
+    var fill   = root.querySelector('#pfill');
+    var N = scenes.length, i = 0;
+    function paint(){
+      chips.forEach(function(c,k){ c.classList.toggle('on', k<=i); c.classList.toggle('cur', k===i); });
+      scenes.forEach(function(sc,k){ sc.classList.toggle('show', k===i); });
+      fill.style.width = (N>1 ? (i/(N-1)*90) : 90) + '%';  /* track spans left:5%->95% = 90% of rail */
+    }
+    /* no autoplay: the walkthrough only advances on user input (click / arrow / space) */
+    function stopAuto(){}
+    return {
+      step:function(d){ i=Math.max(0,Math.min(N-1,i+d)); paint(); },
+      atStart:function(){ return i<=0; },
+      atEnd:function(){ return i>=N-1; },
+      stopAuto:stopAuto,
+      enterStart:function(){ i=0; paint(); },   /* land on stage 1, wait for the presenter */
+      enterEnd:function(){ i=N-1; paint(); }
+    };
+  })();
+  function isPipe(){ return slides[s].id === 'pipeSlide'; }
+  var replayBtn = document.getElementById('pReplay');
+  if(replayBtn && Pipe){ replayBtn.onclick = function(e){ e.stopPropagation(); Pipe.enterStart(); }; }
+
+  function render(reanimate){
+    slides.forEach(function(el,i){ el.classList.toggle('active', i===s); });
+    if(reanimate){ // re-trigger entrance animation
+      var inner = slides[s].querySelector('.inner');
+      inner.style.animation='none'; void inner.offsetWidth; inner.style.animation='';
+    }
+    var fr = frags(s);
+    fr.forEach(function(el,i){ el.classList.toggle('show', i<f); });
+    bar.style.width = ((s + 1)/slides.length*100) + '%';
+    counter.textContent = (s+1)+' / '+slides.length;
+  }
+  function next(){
+    if(isPipe() && Pipe && !Pipe.atEnd()){ Pipe.step(1); return; }
+    var fr = frags(s);
+    if(f < fr.length){ f++; render(false); }
+    else if(s < slides.length-1){ if(Pipe) Pipe.stopAuto(); s++; f=0; render(true); if(isPipe()) Pipe.enterStart(); }
+  }
+  function prev(){
+    if(isPipe() && Pipe && !Pipe.atStart()){ Pipe.step(-1); return; }
+    if(f > 0){ f--; render(false); }
+    else if(s > 0){ if(Pipe) Pipe.stopAuto(); s--; f = frags(s).length; render(true); if(isPipe()) Pipe.enterEnd(); }
+  }
+  document.getElementById('next').onclick = function(e){ e.stopPropagation(); next(); };
+  document.getElementById('prev').onclick = function(e){ e.stopPropagation(); prev(); };
+  document.addEventListener('keydown', function(e){
+    if(['ArrowRight','PageDown',' ','Spacebar'].indexOf(e.key)>-1){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp'].indexOf(e.key)>-1){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ if(Pipe) Pipe.stopAuto(); s=0;f=0;render(true); if(isPipe()) Pipe.enterStart(); }
+    else if(e.key==='End'){ if(Pipe) Pipe.stopAuto(); s=slides.length-1; f=frags(s).length; render(true); if(isPipe()) Pipe.enterEnd(); }
+  });
+  document.getElementById('deck').addEventListener('click', function(e){
+    if(e.target.closest('a,button')) return; next();
+  });
+  // basic touch swipe
+  var x0=null;
+  document.addEventListener('touchstart',function(e){ x0=e.touches[0].clientX; });
+  document.addEventListener('touchend',function(e){
+    if(x0===null) return; var dx=e.changedTouches[0].clientX-x0;
+    if(Math.abs(dx)>40){ dx<0?next():prev(); } x0=null;
+  });
+  render(true);
+})();
+</script>
+</body>
+</html>
