@@ -1,12 +1,13 @@
 """Contract test for the docs-sync skill ↔ doc-health battery wiring.
 
-The skill (``.claude/skills/docs-sync/SKILL.md``) is a thin local helper that drives
-``src/tools/scripts/check_docs.py`` and the CLI ``help``. ``.claude/`` is gitignored,
-so the skill is absent on a fresh clone / in CI — these checks **skip** when it is
-missing (the tracked, enforced guarantee is ``check_docs.py`` + the CI verify stage,
-covered by ``tests/test_check_docs.py``). When the skill is present (local dev), the
-checks guard the contract: valid frontmatter, and the tools it points at still exist.
-Fast + model-free.
+The skill (``.claude/skills/docs-sync/SKILL.md``) is a thin helper that drives
+``src/tools/scripts/check_docs.py`` and the CLI ``help``. It is a **tracked** portable
+Agent Skill (``.claude/skills/`` is the one carved-out exception to the gitignored
+``.claude/`` — read by both Claude Code and Copilot), so this contract now runs in CI
+too. The ``skipif`` below stays only as a guard for a checkout that lacks the subtree;
+normally the checks guard the contract: valid frontmatter, and the tools the skill
+points at still exist. The broader enforced guarantee remains ``check_docs.py`` + the
+CI verify stage (covered by ``tests/test_check_docs.py``). Fast + model-free.
 """
 
 from __future__ import annotations
