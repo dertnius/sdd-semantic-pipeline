@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -23,16 +24,20 @@ runner = CliRunner()
 
 _SKILL = Path(__file__).resolve().parents[1] / ".claude" / "skills" / "docToMd" / "SKILL.md"
 
+# ``.claude/`` is gitignored, so the skill is absent on a fresh clone / in CI. Skip the
+# skill-file checks there (the CLI-resolves check below still runs and is the part that
+# matters in CI); they guard the contract when the skill is present in local dev.
+_skill_only = pytest.mark.skipif(
+    not _SKILL.is_file(), reason="docToMd skill is a local helper (.claude/ is gitignored)"
+)
+
 
 def _frontmatter(text: str) -> dict:
     """Parse the leading ``---`` YAML block of a SKILL.md."""
     return yaml.safe_load(text.split("---")[1])
 
 
-def test_skill_file_exists():
-    assert _SKILL.is_file(), f"docToMd skill missing at {_SKILL}"
-
-
+@_skill_only
 def test_skill_frontmatter_is_valid():
     fm = _frontmatter(_SKILL.read_text(encoding="utf-8"))
     # name drives `/docToMd`; description is what the model matches on to trigger.
@@ -40,6 +45,7 @@ def test_skill_frontmatter_is_valid():
     assert (fm.get("description") or "").strip()
 
 
+@_skill_only
 def test_skill_documents_the_real_command():
     body = _SKILL.read_text(encoding="utf-8")
     assert "convert-docx" in body, "skill must document the command it drives"

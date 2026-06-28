@@ -17,8 +17,7 @@ an **animated pipeline walkthrough** (file → cited answer), and the project's
 | **[`sdd-pipeline-presentation.html`](sdd-pipeline-presentation.html)** | **Present this — full deck (9 slides).** Self-contained, with the **animated pipeline journey** (click-to-step). Just open it in a browser. |
 | **[`sdd-pipeline-presentation-short.html`](sdd-pipeline-presentation-short.html)** | **Short version (5 slides)** — title + RAG intent, Before/After, the animation, next steps, the ask. Same self-contained file. |
 | [`sdd-pipeline-overview.pdf`](sdd-pipeline-overview.pdf) | Static handout / screen-share fallback (no animation) |
-| [`sdd-pipeline-overview.md`](sdd-pipeline-overview.md) | Editable Marp source for the static PDF/HTML |
-| [`sdd-pipeline-overview.html`](sdd-pipeline-overview.html) | Static HTML render of the Marp source |
+| [`sdd-pipeline-overview.md`](sdd-pipeline-overview.md) | Editable Marp source for the static PDF/HTML (rendered as a page in the docs site; a standalone `sdd-pipeline-overview.html` render also sits beside it in the repo) |
 | [`sdd-pipeline-deep-dive.md`](sdd-pipeline-deep-dive.md) | **Technical appendix** (architecture, robustness gates, test detail) — for Q&A |
 | [`demo-script.md`](demo-script.md) | Live demo runbook — exact commands + real expected output |
 

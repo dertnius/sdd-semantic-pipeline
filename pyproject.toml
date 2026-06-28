@@ -48,6 +48,10 @@ lang = ["langdetect>=1.0.9"]      # per-document language auto-detection: --lang
 stem = ["snowballstemmer>=2.2"]   # snowball stemming for BM25 lexical recall: --stem
 download = ["requests>=2.31"]     # optional SiteMinder-aware ingestion: sdd-pipeline download
 raster = ["cairosvg>=2.7", "pillow>=10.0"]  # SVG->PNG pixel-diff regression (gliffy fidelity)
+docs = [                            # local MkDocs documentation site: mkdocs serve
+    "mkdocs-material>=9.5",         # theme + built-in client-side search
+    "mkdocs-include-markdown-plugin>=6.0",  # render root README.md / CLAUDE.md in-site
+]
 
 [project.scripts]
 sdd-pipeline = "sdd_pipeline.cli:app"

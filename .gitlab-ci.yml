@@ -18,6 +18,7 @@
 #   PIPELINE_AZURE_OPENAI_API_KEY  only if a semantic (provider=azure) index is built.
 
 stages:
+  - verify
   - download
   - convert
   - index
@@ -42,6 +43,46 @@ cache:
   paths:
     - .cache/pip
     - .cache/huggingface          # only populated by the semantic (model) path
+
+# ── verify: code + docs quality gate (lint, types, fast tests, doc-health) ────
+# Runs on merge requests and on branch pushes that touch code/docs. The doc-health
+# battery (src/tools/scripts/check_docs.py) + `mkdocs build --strict` guarantee the
+# docs are *not broken* (links/render) AND *updated* (CLI/config/citation coverage):
+# a stale or broken doc fails the pipeline and cannot merge. Model-free (no pandoc
+# needed for `-m "not slow"`; no embedding model).
+verify:quality:
+  stage: verify
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes: ["src/**/*", "tests/**/*", "docs/**/*", "README.md", "CLAUDE.md", "pyproject.toml", "mkdocs.yml"]
+  before_script:
+    - pip install -e ".[dev,docs]"
+  script:
+    - ruff format --check src/ tests/
+    - ruff check src/ tests/
+    - pytest -m "not slow"
+    - python src/tools/scripts/check_docs.py          # docs not broken AND updated
+    - python -m mkdocs build --strict                 # nav / render / orphans
+  artifacts:
+    when: on_failure
+    paths:
+      - site/
+    expire_in: 1 day
+
+# Type-check is informational for now (the core has pre-existing mypy debt unrelated
+# to docs); surfaced but non-blocking so it never red-gates the docs/quality pipeline.
+verify:types:
+  stage: verify
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes: ["src/**/*", "pyproject.toml"]
+  allow_failure: true
+  before_script:
+    - pip install -e ".[dev]"
+  script:
+    - mypy src/
 
 # ── download (OPTIONAL: scheduled refresh or manual only) ─────────────────────
 download:

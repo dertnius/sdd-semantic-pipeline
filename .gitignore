@@ -69,6 +69,10 @@ src/tools/eval/e2e_corpus/
 # Regenerated each eval run; holds machine-specific absolute-path doc_id hashes.
 src/tools/eval/corpus_manifest.json
 
+# ── Docs site (MkDocs build output) ──────────────────────────────────────────
+# `mkdocs build` renders ./site from docs/; the Markdown under docs/ is the source.
+/site/
+
 # ── Editors / OS ─────────────────────────────────────────────────────────────
 .idea/
 *.swp

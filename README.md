@@ -40,8 +40,8 @@ sdd-pipeline scan inbox/sample/                             # → outbox/vocab/
 
 > `convert` scans the input directory recursively for `*.html`, writes a `.md`
 > per file, and emits a JSON report with per-file and aggregate metrics. See
-> [docs/Convert.Linux.Readme.md](docs/Convert.Linux.Readme.md) /
-> [docs/Convert.Windows.Readme.md](docs/Convert.Windows.Readme.md) for details.
+> [docs/guides/convert-html-gitlab-markdown-linux.md](docs/guides/convert-html-gitlab-markdown-linux.md) /
+> [docs/guides/convert-html-gitlab-markdown-windows.md](docs/guides/convert-html-gitlab-markdown-windows.md) for details.
 
 See **[CLI reference](#cli-reference)** below for every command and flag. The
 full, always-current option list is `sdd-pipeline <command> --help`.
@@ -129,10 +129,17 @@ rebuild. The optional `download` and semantic-index stages are schedule/manual o
 
 ## CLI reference
 
-Commands: `index`, `search`, `convert`, `convert-docx`, `export`, `download`, `scan`,
-`scan-taxonomy`, `lint`, `tui`, `mcp`, `check`. Only semantic `index`/`search` load an
-embedding model; `convert`, `convert-docx`, `export`, `scan`, `scan-taxonomy`, and the
-**lexical** `index`/`search` paths are model-free, and `lint` is pure text.
+> **The complete, authoritative reference for all 17 commands and every flag is
+> [`docs/reference/cli.md`](docs/reference/cli.md)** (and `docs/reference/configuration.md`
+> for settings). The common commands are summarized below; that page is the source of
+> truth the CI doc-health check verifies against.
+
+Commands: `index`, `download`, `convert`, `convert-docx`, `resolve-gliffy`,
+`convert-drawio`, `export`, `lint`, `scan`, `scan-taxonomy`, `search`, `tui`, `mcp`,
+`report`, `check`, `pwsh-path`, `help`. Only semantic `index`/`search`/`tui`/`mcp` load
+an embedding model; the converters, `export`, `scan`, `scan-taxonomy`, `report`,
+`download`, and the **lexical** (`--lexical`) `index`/`search` paths are model-free, and
+`lint` is pure text.
 
 ### `index` — build the vector index
 
@@ -148,6 +155,8 @@ sdd-pipeline index [input_dir] [options]
 | `--output` / `-o` | `outbox/index` | Vector index persistence path (under the outbox) |
 | `--model` / `-m` | `BAAI/bge-large-en-v1.5` | Local embedding model (ignored when `--provider azure`) |
 | `--provider` | `local` | Embedding backend: `local` \| `azure` |
+| `--lang` | `en` | Enrichment language: `en\|de\|fr\|it`, or `auto` (needs `[lang]`) |
+| `--lexical` / `-L` | off | Build a **model-free** BM25 index (no embeddings stored; search ranks by BM25) |
 | `--backend` | `memory` | Vector store backend: `memory` \| `chroma` (chroma needs `pip install ".[chroma]"`) |
 | `--glob` / `-g` | `**/*.md` | File glob pattern |
 | `--merge-prose` | off | Pack each section's prose into one chunk (code/tables stay separate) |
@@ -181,7 +190,10 @@ sdd-pipeline search "<query>" [options]
 | `--top-k` / `-k` | `5` | Number of results |
 | `--section-type` / `-s` | — | Filter by type (see list below) |
 | `--space` | — | Filter by Confluence space key |
+| `--genre` / `-g` | — | Filter by prose genre: `glossary\|faq\|howto\|policy\|narrative` |
 | `--hybrid` / `-H` | off | Fuse dense + lexical (BM25) rankings via Reciprocal Rank Fusion |
+| `--lexical` / `-L` | off | **Model-free** BM25-only ranking (overrides `--hybrid`) |
+| `--lang` | `en` | Language for lexical tokenization/stemming: `en\|de\|fr\|it` |
 
 `--section-type` values: `overview`, `architecture`, `api`, `decision`,
 `alternative`, `tradeoff`, `consequence`, `done_criteria`, `deployment`,

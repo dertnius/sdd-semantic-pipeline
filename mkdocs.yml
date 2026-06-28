@@ -1,0 +1,143 @@
+site_name: SDD Semantic Pipeline
+site_description: >-
+  Confluence/HTML/docx → Markdown converter + local semantic search over SDD/ADR docs.
+docs_dir: docs
+# `mkdocs build` emits ./site (gitignored). `mkdocs serve` runs the local search site.
+# Emit real <page>.html files (not pretty <page>/ directory URLs) so the built site
+# is browsable by double-clicking over file:// — directory URLs only resolve under a
+# web server and otherwise render as a bare folder listing.
+use_directory_urls: false
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+  - search
+  - include-markdown
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.tabbed:
+      alternate_style: true
+
+# Kept in the repo for history / other workflows but out of the built site (so they
+# don't trip the orphan-page check below):
+#  - archive/  : superseded/working notes
+#  - inbox/    : the Copilot wiki-ingestion drop-zone (see .github/copilot-instructions.md)
+#  - notes/    : completed spike notes
+#  - the single superseded storage-format guide (the canonical spec is
+#    confluence-conversion-rules.md)
+exclude_docs: |
+  archive/
+  inbox/
+  notes/
+  guides/confluence-storage-format-gitlab-markdown.md
+  # Static renders that collide with their rendered .md page (use_directory_urls:false
+  # builds <name>.md -> <name>.html). The interactive decks (…-presentation*.html) have
+  # no .md twin and are kept as standalone static assets.
+  presentation/README.html
+  presentation/sdd-pipeline-overview.html
+
+# Link integrity is enforced by src/tools/scripts/check_docs.py (it resolves links
+# to source files on disk, which mkdocs can't). Relax mkdocs link validation so the
+# included repo-root README/CLAUDE source-file links don't fail --strict; keep nav /
+# orphan-page validation strict so `mkdocs build --strict` still guards site structure.
+validation:
+  links:
+    not_found: ignore
+    anchors: ignore
+    absolute_links: ignore
+    unrecognized_links: ignore
+  nav:
+    omitted_files: warn
+    not_found: warn
+
+nav:
+  - Home:
+      - Overview: index.md
+      - Project README: _root/readme.md
+  - Getting Started:
+      - Pipeline 101 (runbook): guides/pipeline-101.md
+      - Guides index: guides/index.md
+      - Convert HTML (Linux): guides/convert-html-gitlab-markdown-linux.md
+      - Convert HTML (Windows): guides/convert-html-gitlab-markdown-windows.md
+  - Reference:
+      - CLI commands: reference/cli.md
+      - Configuration: reference/configuration.md
+  - Design & Architecture:
+      - Architecture & guardrails (CLAUDE.md): _root/claude.md
+      - ADR-0001 Modular pipeline: adr/adr-0001-modular-semantic-pipeline.md
+      - Confluence conversion rules: confluence-conversion-rules.md
+      - Enrichment algorithm: enrichment-algorithm.md
+      - Processing mode & structural model: processing-mode-and-structural.md
+      - Technology selection: technology-selection.md
+  - Learn (curriculum):
+      - Curriculum index: learn/README.md
+      - Bridge — C# to Python:
+          - Project anatomy & tooling: learn/bridge/01-project-anatomy-and-tooling.md
+          - Dataclasses vs C# records: learn/bridge/02-dataclasses-vs-csharp-records.md
+          - Protocols, typing & unions: learn/bridge/03-protocols-typing-and-unions.md
+          - Iteration, comprehensions, generators: learn/bridge/04-iteration-comprehensions-generators.md
+          - Modules, imports & lazy patterns: learn/bridge/05-modules-imports-and-lazy-patterns.md
+          - Pydantic settings & typer: learn/bridge/06-pydantic-settings-and-typer.md
+          - Pytest for xUnit developers: learn/bridge/07-pytest-for-xunit-developers.md
+      - Tours — per-module reading guides:
+          - Models & config: learn/tours/01-models-and-config.md
+          - AST parser & structural: learn/tours/02-ast-parser-and-structural.md
+          - Enrichment: learn/tours/03-enrichment.md
+          - Vocabulary & two-pass scan: learn/tours/04-vocabulary-and-two-pass-scan.md
+          - Taxonomy modules: learn/tours/05-taxonomy-modules.md
+          - Inventory extraction modules: learn/tours/06-inventory-extraction-modules.md
+          - Chunking: learn/tours/07-chunking.md
+          - Embeddings & vector store: learn/tours/08-embeddings-and-vector-store.md
+          - Retrieval & hybrid search: learn/tours/09-retrieval-and-hybrid-search.md
+          - Pipeline orchestrator & CLI: learn/tours/10-pipeline-orchestrator-and-cli.md
+          - Quality linter: learn/tours/11-quality-linter.md
+      - Walkthroughs:
+          - Life of a document: learn/walkthroughs/01-life-of-a-document.md
+          - Architecture map: learn/walkthroughs/02-architecture-map.md
+          - Test-suite tour: learn/walkthroughs/03-test-suite-tour.md
+      - Exercises:
+          - Trace a document: learn/exercises/01-trace-a-document.md
+          - Add a section keyword: learn/exercises/02-add-a-section-keyword.md
+          - Parametrize header_norm: learn/exercises/03-parametrize-header-norm.md
+          - Add a config field: learn/exercises/04-add-a-config-field.md
+          - Extend an entity pattern: learn/exercises/05-extend-an-entity-pattern.md
+          - Add a CLI flag: learn/exercises/06-add-a-cli-flag.md
+          - Tune hybrid search & measure: learn/exercises/07-tune-hybrid-search-and-measure.md
+          - Use the library from scratch: learn/exercises/08-use-the-library-from-scratch.md
+  - Testing:
+      - Test suite & eval harness: testing/index.md
+  - Presentation:
+      - Decks & demo: presentation/README.md
+      - Demo script: presentation/demo-script.md
+      - Deep dive: presentation/sdd-pipeline-deep-dive.md
+      - Overview (Marp source): presentation/sdd-pipeline-overview.md
+  - Project / Meta:
+      - Docs changelog: guides/log.md
+      - SAD template (example): template/template.md
