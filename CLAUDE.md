@@ -97,6 +97,52 @@ so unit tests inject mocks for both without side effects. `parse_file` runs
 stages 2–4; `process_file` runs stages 2–6 (no indexing); `index_file`/
 `index_directory` add embedding + store.
 
+**Enrichment, retrieval & ingestion support modules** (also flow A, deterministic
+unless noted; keep them as unit-testable as the core):
+
+| Module | Role |
+|---|---|
+| `retrieval.py` | BM25 (Okapi) lexical index + Reciprocal Rank Fusion — powers `--hybrid` and model-free `--lexical` search; optional snowball stemming (`[stem]`) |
+| `lang_rules.py` | per-language enrichment rule packs (`LangPack` for en/de/fr/it) — **data only**, consumed by `enrichment.py` |
+| `detection.py` | per-document language auto-detection (langdetect wrapper, `[lang]` extra) for `--lang auto` |
+| `header_norm.py` | deterministic table header / column-label normalisation (lowercase, singularise, strip qualifiers) |
+| `template_taxonomy.py` | section→field taxonomy extracted from the SAD template's tables |
+| `corpus_taxonomy.py` | data-aligned section→field taxonomy derived from the **corpus** by document-frequency (`scan-taxonomy`) |
+| `doc_router.py` | detect a document's type (SAD fingerprint) and route it to the matching taxonomy |
+| `extract_structural.py` | table-cell entity records (confidence 1.0, field-routed) |
+| `extract_prose.py` | prose entity records (regex + optional spaCy NER/noun-chunks; `ner:*` facets are metadata-only, never embedded) |
+| `reconcile.py` | union + dedupe mixed-section entity records by confidence (table cells > ALLCAPS > prose) |
+| `direction.py` | field-name → dependency direction (`depends_on`/`exposes`) from `config/field_directions.yaml` |
+| `config.py` | `PipelineConfig` (pydantic-settings; **dual v2/v1 branches**) |
+| `report.py` | per-file diagnostic HTML report (`sdd-pipeline report`) — every stage's artifact, chunk quality, info-loss vs the original HTML, an SVG relationship graph |
+| `download.py` | optional SiteMinder-aware ingestion (`sdd-pipeline download`, `[download]` extra) — CLI-layer; the core never reads its secrets |
+| `dump.py` | debug export of intermediate stage artifacts |
+
+**Multilingual enrichment.** Enrichment is language-parameterised: `lang_rules.py`
+holds en/de/fr/it `LangPack`s (section/genre keywords, entity patterns) that
+`enrichment.py` compiles per language; `--lang <code>` selects one and `--lang auto`
+detects per file via `detection.py` (`[lang]`). Unsupported codes fall back to
+English. The `--lang` flag is on `index`/`export`/`search`/`tui`/`mcp`.
+
+**Data-aligned taxonomy.** `sdd-pipeline scan-taxonomy` derives a section→field
+taxonomy from the corpus's tables by document-frequency (`corpus_taxonomy.py`),
+normalising field names through `header_norm.py`; `template_taxonomy.py` does the
+same from the SAD template, and `doc_router.py` fingerprints a doc to pick which
+taxonomy applies. Outputs land in `outbox/taxonomy/`; promote a reviewed
+`taxonomy.json` into `config/` by hand. Pandoc-only, no model.
+
+**Entity inventory pipeline.** When `inventory_enrichment` is on (default),
+enrichment runs a three-source extraction — `extract_structural.py` (table cells),
+`extract_prose.py` (regex + optional spaCy) — and `reconcile.py` unions/dedupes them
+by confidence; `direction.py` routes each field into a section's `depends_on`/
+`exposes`/`metadata` (folded into the embed text as high-value retrieval cues).
+
+**Ingestion (`download`).** `sdd-pipeline download <manifest>` fetches manifest-listed
+Confluence HTML / SharePoint docx into the inbox behind SiteMinder SSO
+(cookie/form/bearer/none). Credentials are **secrets — env only** (`PIPELINE_DOWNLOAD_*`),
+never CLI flags; the deterministic core never touches them. Needs the `[download]`
+extra; exits non-zero on any failure so a CI ingest stage surfaces it.
+
 **Cross-corpus vocabulary (optional):** when `PIPELINE_ENTITY_VOCAB_PATH` is set,
 `index_directory` runs a two-pass flow — parse every doc, `scan_corpus` to discover
 an entity vocabulary across the whole set (seeded by `entity_terms` + the persisted
@@ -158,7 +204,10 @@ layer (`ConversionError`/`ConversionNotes`, `resolve_pandoc`/`_run_pandoc`, the
 the HTML path (BeautifulSoup pre-clean + handlers + `convert_file`);
 `convert/confluence_pf_filter.py` is the Stage-C panflute filter. Importing the
 package (`from sdd_pipeline.convert import convert_file`) never pulls in flow A.
-(A docx→MD path is planned to live here too, reusing `base.py` — not yet built.)
+A Word **docx→MD** path also lives here: `convert/docx_to_md.py` (`convert_docx_file`,
+reusing `base.py`) is pandoc-native with media extraction + frontmatter harvested
+from the docx core properties, exposed as the `sdd-pipeline convert-docx` command
+and driven by the `.claude/skills/docToMd` skill.
 4-stage flow (spec: `docs/confluence-conversion-rules.md`, rendered-HTML scope):
 BeautifulSoup pre-clean (rewrites Confluence constructs
 into PFI-HTML — `div`/`span` carriers with `data-*` attrs; the blanket
@@ -268,6 +317,19 @@ for editable native draw.io shapes of complex diagrams, use draw.io's own Gliffy
   trade-offs, consequences, and acceptance criteria are separately filterable.
   Rules are ordered (first match wins) and matched as plain substrings, so new
   keywords must not be substrings of unrelated words (`contra` ⊂ `contract`).
+- **`Genre`** (`models.py`, classified in `enrichment.py` via `lang_rules.py`): the
+  prose *shape* of a section — `glossary`/`faq`/`howto`/`policy`/`narrative` (`general`
+  is the null genre) — an axis **orthogonal** to `SectionType` (a Security FAQ is
+  `section_type=security` + `genre=faq`). Embedded as a `genre:` header token for
+  non-null genres and filterable via `search --genre`. `ContentType.DEFINITION`
+  (recovered from pandoc DefinitionList) signals a glossary section.
+- **Model-free lexical mode** (`--lexical`, config `lexical_only`): builds/searches a
+  BM25-only index with **no embedding model loaded** — works for every language, and
+  is the default for a lexical-built index. Distinct from `--hybrid` (which fuses dense
+  + BM25 and still needs the model). Both go through `retrieval.py`.
+- **`EMBED_FORMAT_VERSION`** (`models.py`, currently `4`): bump it in the same change
+  that alters `to_embed_text`'s composition; it is recorded in the index provenance so
+  a search over an index built with an older format warns to re-index.
 - **Entity scoping**: each chunk's `entities` are recomputed from its own content
   (`chunk_document(entity_fn=…)`), so a term mentioned once in a section no longer
   bleeds onto sibling chunks. `PIPELINE_ENTITY_TERMS` (a JSON array) injects a
@@ -414,7 +476,13 @@ Robustness gates: `PIPELINE_CHUNK_GATE` (default on — poison blocks the file),
 likely truncation), `PIPELINE_CONVERT_QUARANTINE` (default on) +
 `PIPELINE_CONVERT_MAX_UNRECOGNIZED` (default 8) for the converter confidence gate.
 New config fields must be added to **both** `PipelineConfig` branches
-(pydantic-settings v2 and the pydantic-v1 fallback).
+(pydantic-settings v2 and the pydantic-v1 fallback) **and** documented in
+`docs/reference/configuration.md` (the CI doc-health check enforces both). The full,
+authoritative field list lives there; other notable groups not called out above:
+`PIPELINE_LANGUAGE` + `PIPELINE_LEXICAL_ONLY` / `PIPELINE_LEXICAL_STEMMING`
+(multilingual / model-free), `PIPELINE_INVENTORY_ENRICHMENT`, the `PIPELINE_DOWNLOAD_*`
+ingestion secrets, and the advisory `PIPELINE_DOC_PROFILE_*` / `PIPELINE_PROSE_*`
+chunking knobs.
 
 ## Embedding providers
 
@@ -463,3 +531,24 @@ protocol. Both backend libraries are imported lazily, so `export`/`scan`/
   `index`/`search`, or `PIPELINE_VECTOR_STORE_BACKEND=chroma`. The backend a
   search uses must match the one that built the index. `sdd-pipeline check`
   reports `langchain_core` as required and `chromadb` informationally.
+
+## Documentation
+
+All human-facing docs live under `docs/` as Markdown (the single source) and render
+with **MkDocs Material** (the `[docs]` extra → `mkdocs serve` for a local searchable
+site; `mkdocs build` → `./site`). `README.md` + `CLAUDE.md` stay canonical at the repo
+root and are surfaced in-site via include-stubs (`docs/_root/`). The authoritative
+per-command and per-setting references are `docs/reference/cli.md` and
+`docs/reference/configuration.md` — **when you add or change a CLI command/flag or a
+`PipelineConfig` field, update the matching reference page** (the README CLI section
+and CLAUDE module map point at them rather than duplicating).
+
+Docs are kept honest by `src/tools/scripts/check_docs.py` (pure-stdlib, no
+LLM/model/pandoc): it asserts the docs are **not broken** (intra-docs + source-file
+links resolve, `mkdocs build --strict` for nav/render) **and updated** (every CLI
+command/flag is in `cli.md`, every `PIPELINE_*` field is in `configuration.md`, every
+`module.py::symbol` citation in `learn/` resolves). It runs in the CI `verify` stage
+alongside `mkdocs build --strict`, so a stale or broken doc cannot merge. The
+on-demand `.claude/skills/docs-sync` skill reconciles docs↔code and logs to
+`docs/guides/log.md`. (`.claude/` is gitignored — the skill is a local helper; the
+tracked, enforceable guarantee is `check_docs.py` + CI.)

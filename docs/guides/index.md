@@ -2,6 +2,12 @@
 
 _Last updated: 2026-06-12_
 
+> **Navigating the docs:** the full site map and search live in the MkDocs site
+> ([`docs/index.md`](../index.md) → run `mkdocs serve`). For commands and settings see
+> the [CLI reference](../reference/cli.md) and [Configuration reference](../reference/configuration.md).
+> The table below is the flat per-page index (the storage-format guide is **superseded**
+> by [confluence-conversion-rules](../confluence-conversion-rules.md) and kept only for history).
+
 | Page | Summary | Last Updated |
 |------|---------|--------------|
 | [pipeline-101](pipeline-101.md) | Step-by-step operator runbook: onboard a doc to chunks, update without full re-index, vocabulary/taxonomy (single + connected docs), evaluate semantic quality, and the troubleshooting loop | 2026-06-14 |

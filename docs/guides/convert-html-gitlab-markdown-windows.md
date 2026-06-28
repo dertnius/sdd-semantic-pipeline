@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-06-06
 **Sources:** `docs/inbox/Convert.Windows.Readme.md`
-**Related:** [confluence-storage-format-gitlab-markdown](confluence-storage-format-gitlab-markdown.md), [convert-html-gitlab-markdown-linux](convert-html-gitlab-markdown-linux.md)
+**Related:** [confluence-conversion-rules](../confluence-conversion-rules.md), [convert-html-gitlab-markdown-linux](convert-html-gitlab-markdown-linux.md)
 
 ---
 
