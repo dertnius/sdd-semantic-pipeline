@@ -15,13 +15,53 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
+from functools import cache
+from typing import Any
 
-_TOKEN_RE = re.compile(r"[a-z0-9]+")
+# ``[^\W_]`` is a Unicode word char excluding underscore — i.e. a letter or digit in ANY
+# script. This keeps the legacy identifier-splitting behaviour (split on ``_`` and
+# punctuation, like the old ``[a-z0-9]+``) while matching accented German/French/Italian
+# letters (ä ö ü ß é è à ì ò ù) so non-English lexical search is no longer silently broken.
+_TOKEN_RE = re.compile(r"[^\W_]+")
 
 
-def tokenize(text: str) -> list[str]:
-    """Lowercase and split into alphanumeric tokens (identifiers survive)."""
-    return _TOKEN_RE.findall(text.lower())
+@cache
+def _get_stemmer(language: str) -> Any | None:
+    """Return a cached snowball stemmer for *language*, or None if unavailable.
+
+    Import-guarded: ``snowballstemmer`` is an optional extra. When it (or the language)
+    is missing, returns None so ``tokenize`` falls back to unstemmed tokens — stemming is
+    a recall optimisation, never a hard dependency.
+    """
+    from .lang_rules import get_lang_pack
+
+    name = get_lang_pack(language).snowball_name
+    if not name:
+        return None
+    try:
+        import snowballstemmer
+    except ImportError:
+        return None
+    try:
+        return snowballstemmer.stemmer(name)
+    except Exception:  # unknown language name → no stemming
+        return None
+
+
+def tokenize(text: str, *, language: str = "en", stem: bool = False) -> list[str]:
+    """Lowercase and split into alphanumeric tokens (identifiers survive).
+
+    Unicode-aware, so accented letters are kept. When *stem* is true, tokens are reduced
+    to their snowball stem for *language* (both corpus and query must use the same
+    settings — :class:`BM25Index` guarantees this). Stemming is skipped silently if
+    ``snowballstemmer`` is not installed.
+    """
+    tokens = _TOKEN_RE.findall(text.lower())
+    if stem:
+        stemmer = _get_stemmer(language)
+        if stemmer is not None:
+            return list(stemmer.stemWords(tokens))
+    return tokens
 
 
 class BM25Index:
@@ -37,11 +77,20 @@ class BM25Index:
         documents: list[tuple[str, str]],
         k1: float = 1.5,
         b: float = 0.75,
+        *,
+        language: str = "en",
+        stem: bool = False,
     ) -> None:
         self.k1 = k1
         self.b = b
+        # Corpus and query MUST tokenize identically, so the language/stem settings are
+        # stored on the index and reused by ``scores``.
+        self.language = language
+        self.stem = stem
         self.ids = [doc_id for doc_id, _ in documents]
-        self.term_freqs = [Counter(tokenize(text)) for _, text in documents]
+        self.term_freqs = [
+            Counter(tokenize(text, language=language, stem=stem)) for _, text in documents
+        ]
         self.doc_len = [sum(tf.values()) for tf in self.term_freqs]
         self.n = len(documents)
         self.avgdl = (sum(self.doc_len) / self.n) if self.n else 0.0
@@ -56,7 +105,7 @@ class BM25Index:
 
     def scores(self, query: str) -> dict[str, float]:
         """Return {doc_id: bm25_score} for every document in the corpus."""
-        q_terms = tokenize(query)
+        q_terms = tokenize(query, language=self.language, stem=self.stem)
         avgdl = self.avgdl or 1.0
         out: dict[str, float] = {}
         for i, doc_id in enumerate(self.ids):

@@ -84,12 +84,55 @@ contract (used by tests and ad-hoc runs), or point the roots elsewhere with
 
 ---
 
+## Multilingual (EN/DE/FR/IT) & model-free search
+
+Enrichment is rule-based per language. Pass `--lang en|de|fr|it` to `index`/`export`, or
+`--lang auto` to detect each document's language automatically (needs the `[lang]` extra:
+`pip install ".[lang]"`). Adding a 5th language is a data-only change in
+[`lang_rules.py`](src/sdd_pipeline/lang_rules.py).
+
+Two search tiers, switchable by config:
+
+- **Model-free (lexical / BM25) — default, works for every language, no model download.**
+  Build a vectorless index with `index --lexical` and query it with `search --lexical`
+  (or just `search` — a lexical index is auto-detected from its provenance). The MCP server
+  and TUI also run model-free over a lexical index, so GitHub Copilot gets DE/FR/IT keyword
+  search with **no embedding model anywhere**. Optional `--stem` (extra `[stem]`) improves
+  recall on a single-language corpus.
+- **Semantic (dense) — optional, multilingual.** Set `PIPELINE_EMBEDDING_MODEL=BAAI/bge-m3`
+  (local) or `--provider azure` with a `text-embedding-3-large` deployment (no local
+  download), then re-index. The English default `bge-large-en-v1.5` can't embed DE/FR/IT.
+
+```powershell
+sdd-pipeline export --lang auto              # localized chunks, model-free
+sdd-pipeline index  --lang auto --lexical    # vectorless lexical index
+sdd-pipeline search "Authentifizierung"      # auto-routes to BM25; no model loaded
+```
+
+### Optional ingestion — `download`
+
+`sdd-pipeline download inbox/manifest.yaml` fetches Confluence (rendered HTML) and
+SharePoint (`.docx`) files behind SiteMinder into the inbox (extra `[download]`). It is
+**fully optional** — the inbox is normally populated by committed files or a CI artifact.
+Auth is a single SiteMinder session; the **primary** strategy is a pre-issued `SMSESSION`
+cookie supplied as a secret (`PIPELINE_DOWNLOAD_COOKIE`), with form-login as an opt-in
+fallback. Credentials come from env only, never CLI flags.
+
+### CI/CD & index delivery
+
+[`.gitlab-ci.yml`](.gitlab-ci.yml) runs convert → lint → `index --lexical` → publish on the
+existing container image, and publishes `outbox/index` as an artifact. Developers refresh
+their local Copilot index with `scripts/pull-index.ps1` / `.sh` — no SSO, no model, no
+rebuild. The optional `download` and semantic-index stages are schedule/manual only.
+
+---
+
 ## CLI reference
 
-Eight commands: `index`, `search`, `convert`, `export`, `scan`, `scan-taxonomy`,
-`lint`, `check`. Only `index` and `search` load an embedding model; `convert`,
-`export`, `scan`, and `scan-taxonomy` are **pandoc-only** (no model download),
-and `lint` is **pure text** (neither pandoc nor a model).
+Commands: `index`, `search`, `convert`, `convert-docx`, `export`, `download`, `scan`,
+`scan-taxonomy`, `lint`, `tui`, `mcp`, `check`. Only semantic `index`/`search` load an
+embedding model; `convert`, `convert-docx`, `export`, `scan`, `scan-taxonomy`, and the
+**lexical** `index`/`search` paths are model-free, and `lint` is pure text.
 
 ### `index` — build the vector index
 

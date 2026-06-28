@@ -565,3 +565,123 @@ class TestScanCorpus:
         # scan_corpus must not mutate section attributes (enrichment's job).
         assert section.entities == []
         assert section.tags == []
+
+
+class TestMultilingualSectionType:
+    @pytest.mark.parametrize(
+        "title, lang, expected",
+        [
+            # German
+            ("Überblick", "de", SectionType.OVERVIEW),
+            ("Sicherheitskonzept", "de", SectionType.SECURITY),
+            ("Authentifizierung", "de", SectionType.SECURITY),
+            ("Architektur", "de", SectionType.ARCHITECTURE),
+            ("Entscheidung", "de", SectionType.DECISION),
+            ("Bereitstellung", "de", SectionType.DEPLOYMENT),
+            ("Datenmodell", "de", SectionType.DATA_MODEL),
+            ("Zufälliger Abschnitt", "de", SectionType.CONTENT),
+            # leading-boundary protection: struktur ⊄ infrastruktur
+            ("Infrastruktur", "de", SectionType.DEPLOYMENT),
+            # French
+            ("Aperçu", "fr", SectionType.OVERVIEW),
+            ("Sécurité", "fr", SectionType.SECURITY),
+            ("Architecture du système", "fr", SectionType.ARCHITECTURE),
+            ("Décision", "fr", SectionType.DECISION),
+            ("Déploiement", "fr", SectionType.DEPLOYMENT),
+            ("Modèle de données", "fr", SectionType.DATA_MODEL),
+            # Italian
+            ("Panoramica", "it", SectionType.OVERVIEW),
+            ("Sicurezza", "it", SectionType.SECURITY),
+            ("Architettura", "it", SectionType.ARCHITECTURE),
+            ("Decisione", "it", SectionType.DECISION),
+            ("Distribuzione", "it", SectionType.DEPLOYMENT),
+            ("Modello dati", "it", SectionType.DATA_MODEL),
+        ],
+    )
+    def test_localized_titles(self, title, lang, expected):
+        result = classify_section_type(title, lang)
+        assert result == expected, f"[{lang}] {title!r} → {result.value!r}, want {expected.value!r}"
+
+    def test_english_default_unchanged_by_explicit_en(self):
+        # Passing language="en" explicitly must equal the default for every title.
+        for title in ("Overview", "Security", "API Contract", "Deployment", "Random"):
+            assert classify_section_type(title) == classify_section_type(title, "en")
+
+    def test_unknown_language_falls_back_to_english(self):
+        # An unsupported code uses English rules (graceful degradation).
+        assert classify_section_type("Security", "xx") == SectionType.SECURITY
+
+
+class TestMultilingualGenre:
+    def test_german_policy_via_modals(self):
+        s = _genre_section(
+            "Richtlinie",
+            [
+                (
+                    ContentType.PARAGRAPH,
+                    "Das System muss verschlüsselt sein. Benutzer dürfen nicht ohne "
+                    "Freigabe zugreifen. Schlüssel müssen rotiert werden.",
+                )
+            ],
+        )
+        assert classify_genre(s, "de") == Genre.POLICY
+
+    def test_french_howto_via_imperatives(self):
+        s = _genre_section(
+            "Mise en place",
+            [
+                (
+                    ContentType.LIST,
+                    "1. Installer le client\n2. Configurer le jeton\n3. Lancer la synchro",
+                )
+            ],
+        )
+        assert classify_genre(s, "fr") == Genre.HOWTO
+
+    def test_italian_glossary_title(self):
+        s = _genre_section(
+            "Glossario",
+            [(ContentType.PARAGRAPH, "Questa pagina raccoglie il vocabolario condiviso del team.")],
+        )
+        assert classify_genre(s, "it") == Genre.GLOSSARY
+
+
+class TestMultilingualKeyphrasesAndTags:
+    def test_german_umlaut_survives_as_one_token(self):
+        # The Unicode tokenizer must not split "Benutzerführung" at ü.
+        kps = extract_keyphrases(
+            "Die Benutzerführung und Datenverschlüsselung der Anwendung", language="de"
+        )
+        assert any("benutzerführung" in k for k in kps), kps
+
+    def test_french_accents_preserved(self):
+        kps = extract_keyphrases(
+            "La sécurité des données personnelles reste essentielle", language="fr"
+        )
+        joined = " ".join(kps)
+        assert "sécurité" in joined and "données" in joined
+
+    def test_localized_stopwords_drop_function_words(self):
+        # German function words must not surface as keyphrases.
+        assert extract_keyphrases("der die das und von zu für", language="de") == []
+
+    def test_german_admonition_label(self):
+        tags = extract_tags(
+            "Hinweise",
+            SectionType.DEPLOYMENT,
+            "> **Hinweis**: nach der Konfiguration neu starten.",
+            language="de",
+        )
+        assert "admonition:hinweis" in tags
+
+    def test_english_callout_still_works_in_german_doc(self):
+        # `> [!NOTE]` is folded into every pack, so it tags even in a de doc.
+        tags = extract_tags("X", SectionType.CONTENT, "> [!NOTE] etwas Wichtiges", language="de")
+        assert "admonition:note" in tags
+
+
+class TestEnrichDocumentLanguage:
+    def test_language_threads_to_sections(self):
+        doc = _doc("d1", "Sicherheit", "Die Authentifizierung erfolgt über Tokens.")
+        enrich_document(doc, language="de")
+        assert doc.root_sections[0].section_type == SectionType.SECURITY

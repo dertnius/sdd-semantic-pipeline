@@ -201,3 +201,78 @@ class TestLint:
         result = runner.invoke(app, ["lint", str(tmp_path)])
         assert result.exit_code == 0
         assert "No markdown files" in result.output
+
+
+class TestCheckPwshRow:
+    """The `check` command reports pwsh but never lets it change the exit code."""
+
+    def test_reports_pwsh_row(self, monkeypatch: pytest.MonkeyPatch):
+        from sdd_pipeline import cli
+        from sdd_pipeline.shell import PwshInfo
+
+        monkeypatch.setattr(
+            cli,
+            "resolve_pwsh",
+            lambda config=None, **kw: PwshInfo("/usr/bin/pwsh", "7.4.1", 7, "which"),
+        )
+        result = runner.invoke(app, ["check"])
+        assert "pwsh" in result.output
+        assert "7.4.1" in result.output
+
+    def test_missing_pwsh_does_not_gate(self, monkeypatch: pytest.MonkeyPatch):
+        from sdd_pipeline import cli
+        from sdd_pipeline.shell import PwshInfo
+
+        # The exit code must be identical whether pwsh is present or absent — the
+        # pwsh row is informational. (Equal regardless of whether pandoc is on PATH.)
+        monkeypatch.setattr(
+            cli,
+            "resolve_pwsh",
+            lambda config=None, **kw: PwshInfo("/usr/bin/pwsh", "7.4.1", 7, "which"),
+        )
+        rc_present = runner.invoke(app, ["check"]).exit_code
+        monkeypatch.setattr(cli, "resolve_pwsh", lambda config=None, **kw: None)
+        rc_absent = runner.invoke(app, ["check"]).exit_code
+        assert rc_present == rc_absent
+
+
+class TestPwshPathCommand:
+    def test_prints_path_for_usable_v7(self, monkeypatch: pytest.MonkeyPatch):
+        from sdd_pipeline import cli
+        from sdd_pipeline.shell import PwshInfo
+
+        monkeypatch.setattr(
+            cli,
+            "resolve_pwsh",
+            lambda config=None, **kw: PwshInfo("/usr/bin/pwsh", "7.4.1", 7, "which"),
+        )
+        result = runner.invoke(app, ["pwsh-path"])
+        assert result.exit_code == 0
+        assert "/usr/bin/pwsh" in result.output
+
+    def test_exit_one_when_none(self, monkeypatch: pytest.MonkeyPatch):
+        from sdd_pipeline import cli
+
+        monkeypatch.setattr(cli, "resolve_pwsh", lambda config=None, **kw: None)
+        result = runner.invoke(app, ["pwsh-path"])
+        assert result.exit_code == 1
+
+    def test_default_floor_is_seven_allow_any_is_one(self, monkeypatch: pytest.MonkeyPatch):
+        from sdd_pipeline import cli
+        from sdd_pipeline.shell import PwshInfo
+
+        calls: list[int] = []
+
+        def fake(config=None, *, min_major=0, **kw):
+            calls.append(min_major)
+            info = PwshInfo("/usr/bin/powershell", "5.1.0", 5, "windows-powershell")
+            return info if info.major >= min_major else None
+
+        monkeypatch.setattr(cli, "resolve_pwsh", fake)
+        # Default demands v7 → a 5.1-only box fails.
+        assert runner.invoke(app, ["pwsh-path"]).exit_code == 1
+        # --allow-any drops the floor to 1 → the 5.1 path is printed.
+        any_result = runner.invoke(app, ["pwsh-path", "--allow-any"])
+        assert any_result.exit_code == 0
+        assert "/usr/bin/powershell" in any_result.output
+        assert calls == [7, 1]

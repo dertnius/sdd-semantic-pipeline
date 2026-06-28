@@ -35,11 +35,19 @@ dev = [
     "chromadb>=0.5",       # keeps the chroma-backend tests runnable in CI
     "textual>=0.50",       # interactive search TUI (sdd-pipeline tui) + its tests
     "mcp>=1.27",           # MCP stdio server (sdd-pipeline mcp) + its tests
+    "langdetect>=1.0.9",   # auto language detection (--lang auto) + its tests
+    "snowballstemmer>=2.2",  # optional BM25 stemming (--stem) + its tests
+    "cairosvg>=2.7",       # SVG->PNG for the gliffy fidelity PNG-regression tests
+    "pillow>=10.0",        # pixel-diff for the gliffy fidelity PNG-regression tests
 ]
 azure = ["openai>=1.0"]
 chroma = ["chromadb>=0.5"]
 tui = ["textual>=0.50"]    # interactive search browser: sdd-pipeline tui
 mcp = ["mcp>=1.27"]        # MCP stdio server for GitHub Copilot: sdd-pipeline mcp
+lang = ["langdetect>=1.0.9"]      # per-document language auto-detection: --lang auto
+stem = ["snowballstemmer>=2.2"]   # snowball stemming for BM25 lexical recall: --stem
+download = ["requests>=2.31"]     # optional SiteMinder-aware ingestion: sdd-pipeline download
+raster = ["cairosvg>=2.7", "pillow>=10.0"]  # SVG->PNG pixel-diff regression (gliffy fidelity)
 
 [project.scripts]
 sdd-pipeline = "sdd_pipeline.cli:app"

@@ -48,6 +48,65 @@ try:
             description="Azure OpenAI API version for the embeddings endpoint.",
         )
 
+        # ── Language ──────────────────────────────────────────────────────────
+        language: str = Field(
+            default="en",
+            description="Document language for enrichment rules: en|de|fr|it, or 'auto' "
+            "to detect per document (auto needs the [lang] extra). Unsupported codes fall "
+            "back to English.",
+        )
+        lexical_only: bool = Field(
+            default=False,
+            description="Model-free search: skip dense embedding and rank by BM25 lexical "
+            "score only. No embedding model is loaded — works for every language.",
+        )
+        lexical_stemming: bool = Field(
+            default=False,
+            description="Apply snowball stemming (en/de/fr/it) during BM25 tokenization for "
+            "better recall. Needs the [stem] extra; only safe on a single-language index.",
+        )
+
+        # ── Downloader (optional SiteMinder-protected ingestion) ──────────────
+        # Used only by the `download` command. Credentials are SECRETS — set via env
+        # (PIPELINE_DOWNLOAD_*), never CLI args. The deterministic core never reads these.
+        download_auth: str = Field(
+            default="cookie",
+            description="SiteMinder auth strategy: cookie (pre-issued SMSESSION, primary) | "
+            "form (headless username/password login) | bearer (token) | none (plain GET).",
+        )
+        download_cookie: str = Field(
+            default="",
+            description="SECRET: pre-issued SMSESSION cookie value (PIPELINE_DOWNLOAD_COOKIE).",
+        )
+        download_cookie_name: str = Field(
+            default="SMSESSION", description="Session cookie name (SiteMinder default SMSESSION)."
+        )
+        download_bearer: str = Field(
+            default="",
+            description="SECRET: bearer token for download_auth=bearer (PIPELINE_DOWNLOAD_BEARER).",
+        )
+        download_login_url: str = Field(
+            default="", description="SiteMinder form-login POST URL (download_auth=form)."
+        )
+        download_username: str = Field(
+            default="", description="Service-account username (download_auth=form)."
+        )
+        download_password: str = Field(
+            default="", description="SECRET: service-account password (PIPELINE_DOWNLOAD_PASSWORD)."
+        )
+        download_user_field: str = Field(
+            default="USER", description="Login form field name carrying the username."
+        )
+        download_pass_field: str = Field(
+            default="PASSWORD", description="Login form field name carrying the password."
+        )
+        download_timeout: int = Field(
+            default=60, description="Per-request download timeout in seconds."
+        )
+        download_verify_tls: bool = Field(
+            default=True, description="Verify TLS certs; --insecure sets this false."
+        )
+
         # ── Chunking ──────────────────────────────────────────────────────────
         max_chunk_chars: int = Field(
             default=2000,
@@ -202,6 +261,15 @@ try:
             description="Reciprocal Rank Fusion constant (higher = flatter weighting).",
         )
 
+        # ── Shell tooling (PowerShell 7 discovery) ────────────────────────────
+        pwsh_path: str = Field(
+            default="",
+            description="Explicit path to a PowerShell 7 (pwsh) executable. When set "
+            "(PIPELINE_PWSH_PATH) the shell resolver commits to it verbatim (sticky) "
+            "instead of auto-discovering pwsh — non-intrusive, never edits PATH. "
+            "Empty = auto-discover. Surfaced by `check`; consumed by `pwsh-path`.",
+        )
+
         model_config = SettingsConfigDict(
             env_prefix="PIPELINE_",
             env_file=".env",
@@ -222,6 +290,20 @@ except ImportError:
         azure_openai_api_key: str = ""
         azure_openai_deployment: str = ""
         azure_openai_api_version: str = "2024-10-21"
+        language: str = "en"
+        lexical_only: bool = False
+        lexical_stemming: bool = False
+        download_auth: str = "cookie"
+        download_cookie: str = ""
+        download_cookie_name: str = "SMSESSION"
+        download_bearer: str = ""
+        download_login_url: str = ""
+        download_username: str = ""
+        download_password: str = ""
+        download_user_field: str = "USER"
+        download_pass_field: str = "PASSWORD"
+        download_timeout: int = 60
+        download_verify_tls: bool = True
         max_chunk_chars: int = 2000
         chunk_merge_prose: bool = False
         chunk_merge_definitions: bool = False
@@ -248,6 +330,7 @@ except ImportError:
         hybrid_search: bool = False
         hybrid_candidate_pool: int = 50
         rrf_k: int = 60
+        pwsh_path: str = ""
 
         class Config:
             env_prefix = "PIPELINE_"

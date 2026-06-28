@@ -1,0 +1,132 @@
+# ── GitLab CI/CD for the SDD semantic pipeline ───────────────────────────────
+#
+# Flow: (download) → convert → lint → export | index --lexical → publish.
+# The DEFAULT pipeline is MODEL-FREE: it converts, lints, and builds a vectorless
+# lexical index that developers pull for Copilot's local MCP server (no embedding model
+# anywhere). The download stage is OPTIONAL and only runs on the scheduled "refresh"
+# pipeline or when triggered manually — commit/MR pipelines operate on files already
+# in inbox/ and never touch SiteMinder.
+#
+# Inbox is populated three ways (see `before_script` of `download` / per-job notes):
+#   1. committed under inbox/**          (default for commit/MR)
+#   2. uploaded as an upstream artifact  (artifacts:paths: [inbox/])
+#   3. fetched by `sdd-pipeline download` behind SiteMinder (scheduled/manual only)
+#
+# Secrets (masked CI/CD variables, never in this file):
+#   PIPELINE_DOWNLOAD_COOKIE   pre-issued SMSESSION cookie (primary auth)
+#   (or PIPELINE_DOWNLOAD_USERNAME/_PASSWORD/_LOGIN_URL for form login)
+#   PIPELINE_AZURE_OPENAI_API_KEY  only if a semantic (provider=azure) index is built.
+
+stages:
+  - download
+  - convert
+  - index
+  - publish
+
+# Built + pushed separately (see k8s/job.yaml header): az acr build ... -f Containerfile .
+# The image bakes pandoc + the package; ENTRYPOINT is `sdd-pipeline`.
+image: "$CI_REGISTRY_IMAGE/sdd-pipeline:latest"
+
+variables:
+  PIPELINE_INBOX_DIR: "$CI_PROJECT_DIR/inbox"
+  PIPELINE_OUTBOX_DIR: "$CI_PROJECT_DIR/outbox"
+  PIPELINE_ENFORCE_WORKSPACE: "true"
+  PIPELINE_LANGUAGE: "auto"            # per-document EN/DE/FR/IT detection ([lang] extra)
+  PYTHONUTF8: "1"                      # Windows-safe; harmless on Linux runners
+  ANONYMIZED_TELEMETRY: "false"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  HF_HOME: "$CI_PROJECT_DIR/.cache/huggingface"
+
+cache:
+  key: "sdd-${CI_COMMIT_REF_SLUG}"
+  paths:
+    - .cache/pip
+    - .cache/huggingface          # only populated by the semantic (model) path
+
+# ── download (OPTIONAL: scheduled refresh or manual only) ─────────────────────
+download:
+  stage: download
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'      # manual "Run pipeline"
+      when: manual
+      allow_failure: false
+  script:
+    # PIPELINE_DOWNLOAD_COOKIE (or form-login vars) come from masked CI/CD variables.
+    - sdd-pipeline download inbox/manifest.yaml --auth cookie
+    # Plain un-gated URL alternative:
+    #   curl -fsSL "$SOME_URL" -o inbox/confluence/page.html
+  artifacts:
+    paths:
+      - inbox/
+    expire_in: 1 day
+
+# ── convert: HTML + docx → Markdown (model-free, parallel) ────────────────────
+convert:
+  stage: convert
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - changes: [inbox/**/*, config/**/*, .gitlab-ci.yml]
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+  script:
+    - sdd-pipeline convert                    # HTML → md (per-file; pandoc-bound)
+    - sdd-pipeline convert-docx               # docx → md
+    - sdd-pipeline lint outbox/md --strict    # quality gate over the converted corpus
+  artifacts:
+    paths:
+      - outbox/md/
+      - outbox/reports/
+    expire_in: 1 week
+
+# ── index: MODEL-FREE lexical index (DEFAULT) ─────────────────────────────────
+# Builds a vectorless index Copilot can search via the local MCP server in lexical mode.
+index:lexical:
+  stage: index
+  needs: ["convert"]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - changes: [inbox/**/*, config/**/*, .gitlab-ci.yml]
+  script:
+    - sdd-pipeline export outbox/md --lang auto --jobs 0       # portable .chunks.json artifacts
+    - sdd-pipeline index outbox/md --lexical --lang auto       # vectorless index → outbox/index
+  artifacts:
+    paths:
+      - outbox/index/      # devs pull this for the local MCP server (scripts/pull-index.*)
+      - outbox/chunks/
+    expire_in: 1 week
+
+# ── index: SEMANTIC (OPTIONAL, manual) — Azure multilingual embeddings ────────
+# Flip to dense multilingual search. Needs PIPELINE_AZURE_OPENAI_* masked variables and
+# an Azure text-embedding-3-large deployment. bge-m3 (local) is the air-gapped alternative.
+index:semantic:
+  stage: index
+  needs: ["convert"]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+      allow_failure: true
+  variables:
+    PIPELINE_EMBEDDING_PROVIDER: "azure"
+  script:
+    - sdd-pipeline index outbox/md --provider azure --lang auto
+  artifacts:
+    paths:
+      - outbox/index/
+    expire_in: 1 week
+
+# ── publish: expose the index + reports for consumers ─────────────────────────
+publish:
+  stage: publish
+  needs: ["index:lexical"]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - changes: [inbox/**/*, config/**/*, .gitlab-ci.yml]
+  script:
+    - echo "Index + reports published as artifacts; pull with scripts/pull-index.*"
+  artifacts:
+    name: "sdd-index-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - outbox/index/
+      - outbox/reports/
+    expire_in: 30 days

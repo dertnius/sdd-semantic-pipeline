@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
+from functools import cache
 
 from .direction import Direction, load_field_directions, resolve_direction
+from .lang_rules import get_lang_pack
 from .models import (
     ContentType,
     DocumentModel,
@@ -24,163 +26,30 @@ from .models import (
 from .reconcile import reconcile
 
 # ── Section-type classification rules ────────────────────────────────────────
-# ORDER MATTERS: the first matching rule wins.
-# More specific / collision-prone types must appear before general ones.
-# NB: matching is plain substring (``kw in title_lower``), so keywords must not
-# be substrings of unrelated words — e.g. bare "contra" would match "contract",
-# "cons" would match "considerations". Keep them specific.
+# The keyword lists per language live in ``lang_rules.LangPack.section_rules``.
+# ORDER MATTERS: the first matching rule wins, so collision-prone types appear
+# before general ones (the ordering is identical across languages).
+# Each compiled pattern uses a *leading* word boundary only (``\b`` before the
+# keyword, none after), so a keyword matches at a word start — killing suffix/
+# mid-word collisions such as "structure" ⊂ "infrastructure" / German
+# "struktur" ⊂ "infrastruktur" — while still matching plural / inflected forms
+# and German compounds ("sicherheit" → "Sicherheitskonzept"). Matching substring
+# would be more permissive; full ``\b…\b`` would drop the inflections.
 
-_SECTION_RULES: dict[SectionType, list[str]] = {
-    # "Design Decision" must beat "design" (architecture) → DECISION first.
-    # The *chosen* decision / proposed change.
-    SectionType.DECISION: [
-        "decision",
-        "adr",
-        "rationale",
-        "reasoning",
-        "propose",
-        "proposal",
-        "chosen",
-        "why",
-    ],
-    # Options weighed / rejected approaches. "Options considered", "Considerations".
-    SectionType.ALTERNATIVE: [
-        "alternative",
-        "options considered",
-        "option considered",
-        "consideration",
-        "considered",
-        "other options",
-        "rejected",
-    ],
-    # Explicit pro/contra weighing. Keywords kept multi-word to avoid the
-    # "contra" ⊂ "contract" / "cons" ⊂ "considerations" collisions.
-    SectionType.TRADEOFF: [
-        "pro argument",
-        "con argument",
-        "pros and cons",
-        "pros/cons",
-        "trade-off",
-        "tradeoff",
-    ],
-    # Resulting impact / downsides / who-is-affected. "migration effort" here
-    # so it beats OVERVIEW's "context" ("...in context of...").
-    SectionType.CONSEQUENCE: [
-        "consequence",
-        "downside",
-        "drawback",
-        "impact",
-        "affected",
-        "side effect",
-        "migration effort",
-        "risk",
-    ],
-    # Acceptance / definition-of-done criteria.
-    SectionType.DONE_CRITERIA: [
-        "definition of done",
-        "defines this",
-        "acceptance criteria",
-        "success criteria",
-    ],
-    # "JWT Configuration" must beat "config" (deployment) → SECURITY before it.
-    SectionType.SECURITY: [
-        "security",
-        "auth",
-        "authentication",
-        "authorization",
-        "permission",
-        "rbac",
-        "token",
-        "encryption",
-        "tls",
-        "certificate",
-        "secret",
-        "credentials",
-        "jwt",
-        "oauth",
-        "saml",
-    ],
-    # "Entity Schema" must beat "schema" (api) → DATA_MODEL before API
-    SectionType.DATA_MODEL: [
-        "data model",
-        "entity schema",
-        "entity",
-        "database",
-        "table",
-        "field",
-        "dto",
-        "event schema",
-        "message format",
-        "payload schema",
-    ],
-    SectionType.OVERVIEW: [
-        "overview",
-        "introduction",
-        "purpose",
-        "summary",
-        "background",
-        "context",
-        "about",
-        "scope",
-        "goals",
-        "objectives",
-        "motivation",
-        "problem",
-    ],
-    SectionType.ARCHITECTURE: [
-        "architecture",
-        "system design",
-        "components",
-        "structure",
-        "high level",
-        "high-level",
-        "diagram",
-        "topology",
-        "modules",
-    ],
-    SectionType.API: [
-        "api",
-        "interface",
-        "endpoint",
-        "contract",
-        "schema",
-        "rest",
-        "grpc",
-        "openapi",
-        "swagger",
-        "request",
-        "response",
-        "payload",
-        "routes",
-        "operations",
-    ],
-    SectionType.DEPLOYMENT: [
-        "deployment",
-        "infrastructure",
-        "config",
-        "configuration",
-        "environment",
-        "kubernetes",
-        "docker",
-        "helm",
-        "ci/cd",
-        "pipeline",
-        "release",
-        "rollout",
-    ],
-}
 
-# Precompiled per-type matchers, in rule order (first match wins). Each pattern
-# uses a *leading* word boundary only (``\b`` before the keyword, none after), so
-# a keyword matches at a word start — killing suffix/mid-word collisions such as
-# "structure" ⊂ "infrastructure" or "api" ⊂ "rapid" — while still matching plural
-# / inflected forms like "considerations" ("consideration") or "configuration"
-# ("config"). Matching substring would be more permissive; full ``\b…\b`` would
-# drop the inflections the rules depend on.
-_SECTION_PATTERNS: list[tuple[SectionType, re.Pattern[str]]] = [
-    (st, re.compile(r"\b(" + "|".join(re.escape(kw) for kw in keywords) + r")", re.IGNORECASE))
-    for st, keywords in _SECTION_RULES.items()
-]
+@cache
+def _section_patterns(language: str) -> tuple[tuple[SectionType, re.Pattern[str]], ...]:
+    """Compiled (SectionType, pattern) pairs for *language*, in rule order.
+
+    Cached per language so the compile cost is paid once per process (mirroring the
+    legacy module-level precompilation).
+    """
+    pack = get_lang_pack(language)
+    return tuple(
+        (st, re.compile(r"\b(" + "|".join(re.escape(kw) for kw in keywords) + r")", re.IGNORECASE))
+        for st, keywords in pack.section_rules.items()
+    )
+
 
 # ── Entity extraction patterns ────────────────────────────────────────────────
 
@@ -304,16 +173,16 @@ _ALLCAPS_STOPLIST: frozenset[str] = frozenset(
 )
 
 
-def classify_section_type(title: str) -> SectionType:
+def classify_section_type(title: str, language: str = "en") -> SectionType:
     """
     Return the best-matching :class:`SectionType` for a section heading.
 
-    The first matching rule in :data:`_SECTION_RULES` wins (order matters).
-    Keywords match at a word start (leading word boundary), so they no longer
-    bleed into unrelated words (e.g. "structure" ⊄ "infrastructure").
-    Returns :attr:`SectionType.CONTENT` when nothing matches.
+    The first matching rule for *language* wins (order matters). Keywords match at
+    a word start (leading word boundary), so they no longer bleed into unrelated
+    words (e.g. "structure" ⊄ "infrastructure"). An unsupported *language* falls
+    back to English rules. Returns :attr:`SectionType.CONTENT` when nothing matches.
     """
-    for section_type, pattern in _SECTION_PATTERNS:
+    for section_type, pattern in _section_patterns(language):
         if pattern.search(title):
             return section_type
     return SectionType.CONTENT
@@ -336,113 +205,33 @@ _GLOSSARY_DEF_RATIO = 0.5  # definition blocks ≥ this fraction of prose → gl
 _FAQ_QUESTION_MIN = 2  # this many question paragraphs → faq
 _POLICY_MODAL_MIN = 2  # this many strong obligation modals → policy
 
-# Strong obligation modals (governance prose). "should" is intentionally excluded
-# — too weak/common in ordinary explanation to signal a policy.
-_MODAL_RE = re.compile(
-    r"\b(?:must(?:\s+not)?|shall(?:\s+not)?|may\s+not|required|prohibited|mandatory|forbidden)\b",
-    re.IGNORECASE,
-)
-# Common imperative step verbs that open how-to list items.
-_IMPERATIVE_VERBS = frozenset(
-    {
-        "install",
-        "run",
-        "click",
-        "open",
-        "create",
-        "set",
-        "configure",
-        "add",
-        "remove",
-        "select",
-        "enter",
-        "navigate",
-        "choose",
-        "download",
-        "save",
-        "deploy",
-        "build",
-        "start",
-        "stop",
-        "restart",
-        "copy",
-        "paste",
-        "update",
-        "verify",
-        "check",
-        "ensure",
-        "define",
-        "call",
-        "import",
-        "export",
-        "execute",
-        "launch",
-        "type",
-        "press",
-        "go",
-        "visit",
-        "enable",
-        "disable",
-        "apply",
-        "edit",
-        "delete",
-        "push",
-        "pull",
-        "commit",
-        "clone",
-        "login",
-        "register",
-        "upload",
-        "submit",
-        "review",
-        "confirm",
-        "repeat",
-        "close",
-        "find",
-        "replace",
-    }
-)
+
+# Strong obligation modals (governance prose) per language live in
+# ``lang_rules.LangPack.modal_pattern``; weak modals (en "should", de "soll") are
+# intentionally excluded — too common in ordinary explanation to signal a policy.
+@cache
+def _modal_re(language: str) -> re.Pattern[str]:
+    return re.compile(r"\b(?:" + get_lang_pack(language).modal_pattern + r")\b", re.IGNORECASE)
+
+
 # An ordered-list item line ("1. text") as serialized by structural._serialize_list.
 _ORDERED_ITEM_RE = re.compile(r"^\s*\d+\.\s+(.*)$")
 
-# Title keyword → genre (leading word boundary, mirroring _SECTION_RULES).
-_GENRE_TITLE_RULES: dict[Genre, list[str]] = {
-    Genre.GLOSSARY: ["glossary", "definitions", "terminology", "terms", "nomenclature"],
-    Genre.FAQ: ["faq", "frequently asked", "q&a", "questions and answers"],
-    Genre.HOWTO: [
-        "how to",
-        "how-to",
-        "howto",
-        "tutorial",
-        "walkthrough",
-        "step-by-step",
-        "step by step",
-        "getting started",
-        "installation",
-        "setup",
-        "procedure",
-        "runbook",
-    ],
-    Genre.POLICY: [
-        "policy",
-        "policies",
-        "guideline",
-        "guidelines",
-        "compliance",
-        "code of conduct",
-        "terms of service",
-        "acceptable use",
-    ],
-}
-_GENRE_TITLE_PATTERNS: list[tuple[Genre, re.Pattern[str]]] = [
-    (g, re.compile(r"\b(" + "|".join(re.escape(k) for k in kws) + r")", re.IGNORECASE))
-    for g, kws in _GENRE_TITLE_RULES.items()
-]
+
+# Title keyword → genre (leading word boundary, mirroring section rules). The keyword
+# lists per language live in ``lang_rules.LangPack.genre_title_rules``.
+@cache
+def _genre_title_patterns(language: str) -> tuple[tuple[Genre, re.Pattern[str]], ...]:
+    pack = get_lang_pack(language)
+    return tuple(
+        (g, re.compile(r"\b(" + "|".join(re.escape(k) for k in kws) + r")", re.IGNORECASE))
+        for g, kws in pack.genre_title_rules.items()
+    )
 
 
-def _genre_from_title(title: str) -> Genre | None:
+def _genre_from_title(title: str, language: str = "en") -> Genre | None:
     """First title-keyword genre match (confirmer/promoter), or None."""
-    for genre, pattern in _GENRE_TITLE_PATTERNS:
+    for genre, pattern in _genre_title_patterns(language):
         if pattern.search(title):
             return genre
     return None
@@ -462,8 +251,9 @@ def _is_faq(blocks: list) -> bool:
     return questions >= _FAQ_QUESTION_MIN
 
 
-def _is_howto(blocks: list) -> bool:
+def _is_howto(blocks: list, language: str = "en") -> bool:
     """An ordered list with ≥2 items that lead with an imperative verb."""
+    imperatives = get_lang_pack(language).imperative_verbs
     for b in blocks:
         if b.content_type != ContentType.LIST:
             continue
@@ -475,20 +265,21 @@ def _is_howto(blocks: list) -> bool:
             total += 1
             words = m.group(1).strip().lower().split()
             first = words[0].strip(".,:;)") if words else ""
-            if first in _IMPERATIVE_VERBS:
+            if first in imperatives:
                 imperative += 1
         if total >= 2 and imperative >= 2:
             return True
     return False
 
 
-def classify_genre(section: Section) -> Genre:
+def classify_genre(section: Section, language: str = "en") -> Genre:
     """Return the prose :class:`Genre` of *section* (see module comment above).
 
-    Orthogonal to :func:`classify_section_type`; both run during enrichment.
+    Orthogonal to :func:`classify_section_type`; both run during enrichment. The
+    title/imperative/modal detectors use *language*'s rules (English fallback).
     """
     blocks = section.blocks
-    title_genre = _genre_from_title(section.title)
+    title_genre = _genre_from_title(section.title, language)
     if not blocks:
         return title_genre or Genre.GENERAL
 
@@ -506,9 +297,9 @@ def classify_genre(section: Section) -> Genre:
         body_genre: Genre | None = Genre.GLOSSARY
     elif _is_faq(blocks):
         body_genre = Genre.FAQ
-    elif _is_howto(blocks):
+    elif _is_howto(blocks, language):
         body_genre = Genre.HOWTO
-    elif len(_MODAL_RE.findall(prose_text)) >= _POLICY_MODAL_MIN:
+    elif len(_modal_re(language).findall(prose_text)) >= _POLICY_MODAL_MIN:
         body_genre = Genre.POLICY
     else:
         body_genre = None
@@ -572,150 +363,33 @@ def classify_document(
 # sections, where the casing-based entity patterns find little. Pipeline-injected
 # into chunking via the entity_fn seam, gated to prose-genre chunks.
 
-# Compact English stopword set — phrase boundaries for RAKE. Kept small and generic
-# (articles, prepositions, conjunctions, pronouns, auxiliaries) so domain nouns are
-# never dropped.
-_RAKE_STOPWORDS = frozenset(
-    {
-        "a",
-        "an",
-        "the",
-        "and",
-        "or",
-        "but",
-        "nor",
-        "so",
-        "yet",
-        "for",
-        "of",
-        "to",
-        "in",
-        "on",
-        "at",
-        "by",
-        "as",
-        "is",
-        "are",
-        "was",
-        "were",
-        "be",
-        "been",
-        "being",
-        "am",
-        "it",
-        "its",
-        "this",
-        "that",
-        "these",
-        "those",
-        "with",
-        "from",
-        "into",
-        "onto",
-        "about",
-        "over",
-        "under",
-        "between",
-        "through",
-        "during",
-        "before",
-        "after",
-        "above",
-        "below",
-        "up",
-        "down",
-        "out",
-        "off",
-        "if",
-        "then",
-        "else",
-        "than",
-        "when",
-        "while",
-        "where",
-        "which",
-        "who",
-        "whom",
-        "whose",
-        "what",
-        "why",
-        "how",
-        "all",
-        "any",
-        "both",
-        "each",
-        "few",
-        "more",
-        "most",
-        "other",
-        "some",
-        "such",
-        "no",
-        "not",
-        "only",
-        "own",
-        "same",
-        "too",
-        "very",
-        "can",
-        "will",
-        "just",
-        "should",
-        "now",
-        "also",
-        "we",
-        "you",
-        "they",
-        "he",
-        "she",
-        "i",
-        "our",
-        "your",
-        "their",
-        "his",
-        "her",
-        "them",
-        "us",
-        "me",
-        "my",
-        "do",
-        "does",
-        "did",
-        "done",
-        "have",
-        "has",
-        "had",
-        "having",
-        "would",
-        "could",
-        "may",
-        "might",
-        "must",
-        "shall",
-        "there",
-        "here",
-        "because",
-        "via",
-        "per",
-        "etc",
-    }
-)
-# A word token or a run of other chars. Internal -, _, ., + are allowed only
-# *between* alphanumerics (so identifiers like ``v1.2``/``well-known`` survive),
-# but a trailing period/comma is NOT absorbed — it stays a boundary so phrases do
-# not run across sentence ends ("quarterly. access").
-_RAKE_TOKEN = re.compile(r"[A-Za-z0-9]+(?:[._+\-][A-Za-z0-9]+)*|[^A-Za-z0-9]+")
+# Per-language stopword sets (phrase boundaries for RAKE) live in
+# ``lang_rules.LangPack.rake_stopwords`` — kept small and generic (articles,
+# prepositions, conjunctions, pronouns, auxiliaries) so domain nouns are never dropped.
+#
+# Token grammar: a word token or a run of other chars. ``\w`` is Unicode-aware, so
+# German/French/Italian letters (ä ö ü ß é è à ì ò ù) are part of a word and no longer
+# split a phrase mid-word ("Benutzerführung" stays one token). Internal -, ., +, _ are
+# allowed only *between* word chars (so identifiers like ``v1.2``/``well-known`` survive),
+# but a trailing period/comma is NOT absorbed — it stays a boundary so phrases do not run
+# across sentence ends ("quarterly. access").
+_RAKE_TOKEN = re.compile(r"\w+(?:[._+\-]\w+)*|\W+")
 
 
-def extract_keyphrases(text: str, *, top_n: int = 6, max_phrase_words: int = 4) -> list[str]:
+def extract_keyphrases(
+    text: str, *, top_n: int = 6, max_phrase_words: int = 4, language: str = "en"
+) -> list[str]:
     """Return up to *top_n* RAKE keyphrases from *text* (deterministic, model-free).
 
-    Candidate phrases are runs of content words bounded by stopwords / punctuation;
-    each word scores ``degree/frequency`` (RAKE), and a phrase scores the sum of its
-    words — favouring distinctive multi-word phrases. Output is lowercased and
-    deterministically ranked (score desc, then phrase text), so identical input
-    always yields identical keyphrases (and identical vectors).
+    Candidate phrases are runs of content words bounded by *language*'s stopwords /
+    punctuation (English fallback); each word scores ``degree/frequency`` (RAKE), and a
+    phrase scores the sum of its words — favouring distinctive multi-word phrases. Output
+    is lowercased and deterministically ranked (score desc, then phrase text), so identical
+    input always yields identical keyphrases (and identical vectors). Keyphrases are NOT
+    stemmed — they are surfaced verbatim into the embed header; stemming is a lexical-search
+    concern handled in ``retrieval.tokenize``.
     """
+    stopwords = get_lang_pack(language).rake_stopwords
     phrases: list[list[str]] = []
     current: list[str] = []
 
@@ -726,9 +400,11 @@ def extract_keyphrases(text: str, *, top_n: int = 6, max_phrase_words: int = 4) 
             current = []
 
     for tok in _RAKE_TOKEN.findall(text):
-        if tok[0].isalnum():
+        # A word token starts with a word char (Unicode letter/digit, or "_" which
+        # isalnum() reports False); a "\\W+" boundary run starts with a non-word char.
+        if tok[0].isalnum() or tok[0] == "_":
             w = tok.lower()
-            if w in _RAKE_STOPWORDS or w.isdigit() or len(w) < 3:
+            if w in stopwords or w.isdigit() or len(w) < 3:
                 flush()
             else:
                 current.append(w)
@@ -799,17 +475,20 @@ def extract_entities(text: str, extra_terms: Iterable[str] | None = None) -> lis
 
 
 # Admonition label at the start of a blockquote line: ``> **Note**``, ``> [!TIP]``,
-# ``> WARNING:`` — optional bold/underscore emphasis or ``[!...]`` callout syntax.
-_ADMONITION_RE = re.compile(
-    r"(?im)^\s*>\s*(?:\[!\s*)?(?:\*\*|__)?\s*"
-    r"(note|warning|tip|important|caution|info|danger|attention)\b"
-)
+# ``> WARNING:`` — optional bold/underscore emphasis or ``[!...]`` callout syntax. The
+# label set per language lives in ``lang_rules.LangPack.admonition_labels`` (each language
+# folds the English callout words in, since ``> [!NOTE]`` is used verbatim across locales).
+@cache
+def _admonition_re(language: str) -> re.Pattern[str]:
+    labels = "|".join(re.escape(lbl) for lbl in get_lang_pack(language).admonition_labels)
+    return re.compile(r"(?im)^\s*>\s*(?:\[!\s*)?(?:\*\*|__)?\s*(" + labels + r")\b")
 
 
 def extract_tags(
     title: str,
     section_type: SectionType,
     blocks_text: str,
+    language: str = "en",
 ) -> list[str]:
     """Generate semantic tags for a section from its type, title, and content."""
     tags: list[str] = [section_type.value]
@@ -826,7 +505,7 @@ def extract_tags(
     # a known label (``> **Note**``, ``> [!WARNING]``, ``> CAUTION:`` …). Emitted as
     # an ``admonition:<kind>`` tag so a warning/caution passage is filterable and the
     # signal reaches the embed header — no new ContentType or model change needed.
-    for kind in {m.lower() for m in _ADMONITION_RE.findall(blocks_text)}:
+    for kind in {m.lower() for m in _admonition_re(language).findall(blocks_text)}:
         tag = f"admonition:{kind}"
         if tag not in tags:
             tags.append(tag)
@@ -841,21 +520,23 @@ def enrich_section(
     inventory: EntityInventory | None = None,
     directions: dict[str, Direction] | None = None,
     confidence_threshold: float = 0.6,
+    language: str = "en",
 ) -> None:
     """Mutate *section* in place.
 
-    Always applies the legacy enrichment (section_type, entities, tags). When an
-    *inventory* is supplied, the records for this section are *additionally* routed
-    into depends_on/exposes/metadata by field name (see :func:`_apply_inventory`).
-    The inventory path is additive — legacy enrichment is orthogonal and always
-    runs — so existing callers that pass no inventory behave exactly as before.
+    Always applies the legacy enrichment (section_type, entities, tags) using
+    *language*'s rules (English fallback). When an *inventory* is supplied, the records
+    for this section are *additionally* routed into depends_on/exposes/metadata by field
+    name (see :func:`_apply_inventory`). The inventory path is additive — legacy
+    enrichment is orthogonal and always runs — so existing callers that pass no inventory
+    behave exactly as before.
     """
-    section.section_type = classify_section_type(section.title)
-    section.genre = classify_genre(section)
+    section.section_type = classify_section_type(section.title, language)
+    section.genre = classify_genre(section, language)
 
     all_text = section.title + "\n" + "\n".join(b.text for b in section.blocks)
     section.entities = extract_entities(all_text, entity_terms)
-    section.tags = extract_tags(section.title, section.section_type, all_text)
+    section.tags = extract_tags(section.title, section.section_type, all_text, language)
 
     if inventory:
         records = inventory.get(section.section_id, [])
@@ -869,6 +550,7 @@ def enrich_section(
             inventory=inventory,
             directions=directions,
             confidence_threshold=confidence_threshold,
+            language=language,
         )
 
 
@@ -879,14 +561,16 @@ def enrich_document(
     inventory: EntityInventory | None = None,
     directions: dict[str, Direction] | None = None,
     confidence_threshold: float = 0.6,
+    language: str = "en",
 ) -> DocumentModel:
     """
     Apply semantic enrichment to all sections of *doc* and return it.
 
     *entity_terms* is an optional project vocabulary folded into entity
-    extraction (see :func:`extract_entities`). When *inventory* is supplied (and
-    *directions* is not), the reviewed ``config/field_directions.yaml`` is loaded
-    once to route directional fields. The mutation is in-place for performance;
+    extraction (see :func:`extract_entities`). *language* selects the rule pack for
+    section-type/genre/tag classification (English fallback). When *inventory* is
+    supplied (and *directions* is not), the reviewed ``config/field_directions.yaml`` is
+    loaded once to route directional fields. The mutation is in-place for performance;
     the same object is returned to allow chaining.
     """
     if inventory is not None and directions is None:
@@ -898,6 +582,7 @@ def enrich_document(
             inventory=inventory,
             directions=directions,
             confidence_threshold=confidence_threshold,
+            language=language,
         )
     return doc
 

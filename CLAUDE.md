@@ -20,7 +20,9 @@ deterministic core). Out-of-zone paths are rejected (exit 2) unless
 `PIPELINE_ENFORCE_WORKSPACE=false`. Standard outbox sub-layout: `outbox/index/`
 (vector index), `outbox/md/` (converted markdown), `outbox/chunks/` (exported
 chunks), `outbox/reports/` (convert/lint reports), `outbox/vocab/` (entity
-vocabulary), `outbox/taxonomy/` (taxonomy + field vocabulary), `outbox/dump/`.
+vocabulary), `outbox/taxonomy/` (taxonomy + field vocabulary), `outbox/media/`
+(resolved diagram SVGs), `outbox/drawio/` (converted draw.io diagrams),
+`outbox/dump/`.
 The `scan`/`scan-taxonomy` outputs land in `outbox/`; promote a reviewed copy
 into committed `config/` by hand (`config/` is configuration, not an output
 zone). Tests bypass the guard via an autouse `PIPELINE_ENFORCE_WORKSPACE=false`
@@ -195,6 +197,51 @@ than `convert_max_unrecognized` leftover `dropped_tag`s — the file is written 
 in the report, and the command exits non-zero. Tunable via `--quarantine/--no-quarantine`
 and `--max-unrecognized` (config: `convert_quarantine`, `convert_max_unrecognized`).
 
+**Gliffy → SVG resolver (`convert/gliffy_to_svg.py`).** A Confluence-embedded Gliffy
+diagram is **JSON, not SVG**, and in a *rendered* HTML export it appears only as a
+raster `<img>` — the editable vector data lives in a sibling page **attachment**
+(`<name>.gliffy`, sometimes `<name>.svg`), never in the HTML the converter consumes
+(which deliberately drops diagrams to a caption — see `_normalise_diagrams`). This
+out-of-band resolver turns the on-disk attachment into editable SVG: `resolve_gliffy_file`
+prefers an existing sibling `<name>.svg` (Gliffy's own export — exact fidelity), else
+`render_gliffy` walks `stage.objects` and emits primitives. Coverage is **best-effort
+basic-shape** (rectangle/round-rectangle/ellipse/diamond, poly-lines with arrowheads,
+text labels, embedded raster/SVG); unknown stencils become dashed placeholders and bump
+an `unsupported` count. It is independent of flow A *and* of the HTML/docx engine deps
+(stdlib `json`/`re`/`html` only; reuses only `base.ConversionError`). The
+`sdd-pipeline resolve-gliffy <dir>` CLI batches `inbox/**/*.gliffy` → `outbox/media/`
+(mirroring the tree) and writes `outbox/reports/gliffy-report.json` whose `diagrams`
+map (stem → svg path + method) is the manifest a future opt-in branch in
+`_normalise_diagrams` would consume to emit `![caption](media/<name>.svg)` instead of
+dropping the diagram. For complex stencil-heavy diagrams the high-fidelity route is
+Gliffy's own SVG export or a draw.io import/export.
+
+**Gliffy → draw.io emitter + fidelity harness (`convert/diagram_model.py`,
+`convert/drawio.py`, `convert/fidelity.py`).** draw.io imports `.gliffy` natively but
+**only in the online app** (no headless/CLI path), so it can't run in this pipeline
+or CI. These modules give a reproducible, testable `.gliffy → .drawio` route plus a
+way to prove it faithful. The shared **semantic model** (`diagram_model.DiagramModel`
+— pure `Node`/`Edge` dataclasses + a canonical `to_dict()`: 2-dp floats, lowercased
+colors, sorted-by-id, embedded-svg hashed) is the currency between three pieces:
+`gliffy_to_svg.parse_gliffy` (Gliffy JSON → model; a **separate** walk from the SVG
+renderer's `_walk`, sharing only `_object_geometry`, so the SVG path is byte-for-byte
+unchanged), `drawio.model_to_drawio`/`drawio_to_model` (model ⇄ mxGraph XML; both
+y-down/top-left so **no axis flip**; ids carried through so the round-trip matches by
+id; the `placeholder` kind round-trips via a private `sddType=placeholder` style
+marker), and `fidelity.compare_models`/`roundtrip_check`. **The fidelity oracle is
+`roundtrip_check`** (parse → emit → re-parse → compare): it proves emitter⇄parser
+*self-consistency*, **not** that draw.io-the-app renders the file (needs a human /
+headless export) nor that `parse_gliffy` read Gliffy correctly (covered by separate
+gliffy→model unit tests). A **secondary, optional** `png_regression_check`
+(`[raster]` extra → cairosvg + pillow; lazy-imported, `slow`/`importorskip`-gated)
+rasterizes the SVG renderer's output and pixel-diffs it against a golden — a drift
+tripwire on `render_gliffy`, *not* cross-tool Gliffy-vs-draw.io equality. The
+`sdd-pipeline convert-drawio <dir> [--check]` CLI batches `inbox/**/*.gliffy` →
+`outbox/drawio/` and writes `outbox/reports/drawio-report.json`; `--check` runs the
+round-trip per file and exits non-zero on any mismatch. Coverage is the same
+best-effort basic-shape set as the SVG renderer (icon stencils → dashed placeholders);
+for editable native draw.io shapes of complex diagrams, use draw.io's own Gliffy import.
+
 ### Key design points
 
 - **Embed-text format** (`SemanticChunk.to_embed_text`): chunks are embedded with
@@ -289,6 +336,9 @@ request seems to require breaking one, flag the conflict and confirm first.
 - Keep `structural.py`, `enrichment.py`, `chunking.py` deterministic/unit-testable.
 - `workspace.py` (inbox/outbox path contract) is a CLI-layer concern — keep it
   imported only by `cli.py`/`dump.py`; never wire it into the deterministic core.
+- `shell.py` (PowerShell 7 discovery) is a stdlib-only CLI-layer util (like
+  `convert.base.resolve_pandoc`) — keep it imported only by `cli.py`; never wire it
+  into the deterministic core.
 
 ## Known pitfalls
 
@@ -315,6 +365,31 @@ request seems to require breaking one, flag the conflict and confirm first.
   `_run_pandoc`, so non-ASCII page content no longer crashes the AST step on
   Windows — this was a real latent bug.)
 
+## Shell tooling (PowerShell 7 discovery)
+
+`shell.py` is the **single canonical** PowerShell-7 resolver — a stdlib-only,
+**non-intrusive** CLI-layer util (mirrors `convert.base.resolve_pandoc`; imported by
+`cli.py` only). `resolve_pwsh(config, *, min_major=0)` discovers `pwsh` without ever
+editing `PATH`: an explicit `PIPELINE_PWSH_PATH` pin (**sticky** — if set it commits
+to that path and never falls through; a missing pin surfaces as
+`source="config-missing"`), then `which pwsh` → `which pwsh-preview` → well-known
+install dirs → Windows PowerShell 5.1 (**Windows only**). It confirms a candidate by
+*invoking* it (`pwsh -NoProfile -NoLogo -Command $PSVersionTable…`, arg-list, no
+shell) and returns a frozen `PwshInfo(path, version, major, source)` with `is_v7` /
+`usable` properties. `min_major` *filters* (skip-and-continue): `0` returns the first
+existing candidate (so the diagnostic can show a broken/old/5.1 install), `7` returns
+only v7+, `1` the first usable of any version.
+
+The Python core never *needs* pwsh today (pandoc is the only subprocess); this is a
+**diagnostic + groundwork** layer that any future pwsh-launching code routes through.
+Two surfaces consume it:
+- **`sdd-pipeline check`** appends an *informational* pwsh row (`version @ path
+  (source)`, or `not v7` / `not found` / broken-pin) — `ok=True` always, so it never
+  changes the exit code (the optional-row convention).
+- **`sdd-pipeline pwsh-path`** prints just the resolved path for scripts to capture
+  (`$env:PWSH = (sdd-pipeline pwsh-path)`): enforces v7 by default (exit 1 + a stderr
+  diagnostic + empty stdout when none), `--allow-any` accepts any usable version.
+
 ## Configuration
 
 Settings load from env vars (prefix `PIPELINE_`) or `.env` via
@@ -330,7 +405,10 @@ vocabulary), `PIPELINE_ENTITY_VOCAB_PATH` (JSON vocabulary file; enables the
 two-pass cross-corpus scan in `index`/`export` — `config/entity-vocab.json` is a
 committed seed example with project terms like `XCom`/`triggerer`/`KPO`),
 `PIPELINE_EMBED_CHAR_BUDGET`, `PIPELINE_CHUNK_MERGE_DEFINITIONS`,
-`PIPELINE_HYBRID_SEARCH` (+ `PIPELINE_HYBRID_CANDIDATE_POOL`, `PIPELINE_RRF_K`).
+`PIPELINE_HYBRID_SEARCH` (+ `PIPELINE_HYBRID_CANDIDATE_POOL`, `PIPELINE_RRF_K`),
+`PIPELINE_PWSH_PATH` (explicit PowerShell 7 path for the shell resolver; *sticky*
+when set, empty = auto-discover; non-intrusive, never edits PATH — see *Shell
+tooling*).
 Robustness gates: `PIPELINE_CHUNK_GATE` (default on — poison blocks the file),
 `PIPELINE_EMBED_CHAR_HARD_CAP` (default 2048 — over it the chunk gate warns of
 likely truncation), `PIPELINE_CONVERT_QUARANTINE` (default on) +

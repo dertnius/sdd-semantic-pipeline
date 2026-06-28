@@ -42,6 +42,12 @@ htmlcov/
 !/inbox/**/
 !/inbox/**/.gitkeep
 
+# ── Side-loaded embedding models (offline / restricted network) ──────────────
+# Model weights copied in by hand for the local sentence-transformers provider
+# when HuggingFace is unreachable. Large binaries — never commit; point
+# PIPELINE_EMBEDDING_MODEL at a path under here (see .env.example).
+/models/
+
 # ── Generated pipeline artifacts (belt-and-braces) ───────────────────────────
 # build/ is still produced by setuptools (build/lib, build/bdist); keep ignored.
 build/

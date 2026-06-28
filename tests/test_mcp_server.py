@@ -277,3 +277,29 @@ def test_build_server_exposes_four_tools(sample_document_model, hashing_embedder
         "list_section_types",
         "list_spaces",
     }
+
+
+# ── model-free (lexical) MCP path ──────────────────────────────────────────────
+
+
+class _ExplodingEmbedder:
+    """Fails if used — proves the MCP lexical path never loads an embedding model."""
+
+    def embed_chunks(self, chunks):  # pragma: no cover - must never run
+        raise AssertionError("embed_chunks called for a lexical MCP server")
+
+    def embed_query(self, query):  # pragma: no cover - must never run
+        raise AssertionError("embed_query called for a lexical MCP server")
+
+
+def test_run_search_model_free_over_lexical_index(sample_document_model, tmp_path):
+    # A lexical index is built with no model, and the MCP search worker answers via BM25
+    # without ever touching the embedder — Copilot gets multilingual search, no model.
+    pipe = _indexed_pipeline(
+        tmp_path, sample_document_model, _ExplodingEmbedder(), lexical_only=True
+    )
+    assert pipe.store.get_provenance().get("embedding_provider") == "lexical"
+
+    results = run_search(pipe, "kubernetes deployment", top_k=5, section_type=None, space=None)
+    assert results
+    assert all(_RESULT_KEYS <= set(r) for r in results)

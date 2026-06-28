@@ -18,6 +18,20 @@ class TestTokenize:
     def test_empty(self):
         assert tokenize("") == []
 
+    def test_unicode_accents_preserved(self):
+        # The ASCII-only [a-z0-9] tokenizer used to split these mid-word.
+        assert tokenize("Die Authentifizierung") == ["die", "authentifizierung"]
+        assert tokenize("la sécurité du système") == ["la", "sécurité", "du", "système"]
+        assert tokenize("Benutzerführung perché") == ["benutzerführung", "perché"]
+
+    def test_splits_on_underscore_like_before(self):
+        # [^\W_] keeps the legacy identifier-splitting behaviour on underscores.
+        assert tokenize("x_forwarded_for") == ["x", "forwarded", "for"]
+
+    def test_stemming_is_optional_and_safe_without_dependency(self):
+        # With stem=False, output is unstemmed regardless of snowballstemmer.
+        assert tokenize("running systems", stem=False) == ["running", "systems"]
+
 
 class TestBM25Index:
     def _corpus(self) -> list[tuple[str, str]]:
@@ -57,6 +71,24 @@ class TestBM25Index:
     def test_top_respects_n(self):
         index = BM25Index(self._corpus())
         assert len(index.top("vscode code editor remote", n=1)) == 1
+
+    def test_german_literal_phrase_ranks_containing_doc(self):
+        # Model-free German lexical search must find the doc that contains the term.
+        corpus = [
+            ("sec", "Die Authentifizierung erfolgt über Tokens und Verschlüsselung."),
+            ("arch", "Die Architektur besteht aus mehreren Modulen."),
+            ("deploy", "Die Bereitstellung erfolgt über Kubernetes."),
+        ]
+        index = BM25Index(corpus, language="de")
+        assert index.top("authentifizierung verschlüsselung", n=3)[0] == "sec"
+
+    def test_french_accented_query_matches(self):
+        corpus = [
+            ("a", "La sécurité des données est primordiale."),
+            ("b", "Le déploiement utilise des conteneurs."),
+        ]
+        index = BM25Index(corpus, language="fr")
+        assert index.top("sécurité données", n=2)[0] == "a"
 
 
 class TestReciprocalRankFusion:

@@ -52,6 +52,20 @@ def _stable_doc_id(path: Path) -> str:
     return hashlib.md5(str(path.resolve()).encode()).hexdigest()[:12]
 
 
+# Sentinel provenance + vectors for a model-free (lexical/BM25) index. Chunks are stored
+# with a constant unit vector so the backend accepts them; dense search never runs against
+# a lexical index — ``search`` reads ``provider="lexical"`` from provenance and auto-routes
+# to BM25, so no real embedding model is ever loaded for a lexical index.
+_LEXICAL_PROVIDER = "lexical"
+_LEXICAL_MODEL = "none"
+_LEXICAL_DIM = 1
+
+
+def _lexical_vectors(n: int) -> list[list[float]]:
+    """Return *n* sentinel unit vectors for a vectorless (lexical) index."""
+    return [[1.0] for _ in range(n)]
+
+
 class SemanticPipeline:
     """
     Full Confluence-MD → semantic-search pipeline.
@@ -99,12 +113,39 @@ class SemanticPipeline:
         """Run stages 2–4: pandoc AST → structural :class:`DocumentModel`.
 
         No enrichment yet, so the result can feed a cross-corpus scan before
-        Stage 5.
+        Stage 5. When ``config.language == "auto"``, the document's language is
+        detected here and stashed on ``metadata.extra['language']`` so the later
+        enrichment uses the right rule pack.
         """
         logger.info("Processing %s", md_path.name)
         doc_id = _stable_doc_id(md_path)
         ast = generate_ast(md_path, self.config.pandoc_from_format)
-        return build_structural_model(ast, doc_id=doc_id, source_path=str(md_path))
+        model = build_structural_model(ast, doc_id=doc_id, source_path=str(md_path))
+        if self.config.language == "auto":
+            from .detection import detect_language
+
+            model.metadata.extra["language"] = detect_language(self._language_sample(model))
+        return model
+
+    @staticmethod
+    def _language_sample(doc: DocumentModel, *, max_chars: int = 2000) -> str:
+        """Build a representative text sample (title + leading prose) for detection."""
+        parts: list[str] = [doc.metadata.title]
+        for section in doc.iter_sections():
+            parts.append(section.title)
+            parts.extend(b.text for b in section.blocks)
+            if sum(len(p) for p in parts) >= max_chars:
+                break
+        return "\n".join(p for p in parts if p)[:max_chars]
+
+    def _resolve_language(self, doc: DocumentModel) -> str:
+        """Pick the enrichment language for *doc*: detected (auto) else configured."""
+        detected = doc.metadata.extra.get("language")
+        if detected:
+            return str(detected)
+        # No per-doc detection: an explicit code is used verbatim; bare "auto" with no
+        # detection available degrades to English.
+        return "en" if self.config.language == "auto" else self.config.language
 
     def _build_inventory(self, doc: DocumentModel):
         """Stage 3.5: merge structural (table) + prose entity records per section."""
@@ -127,10 +168,17 @@ class SemanticPipeline:
         entities share *entity_terms*. An inventory of structural + prose records
         (stage 3.5) drives depends_on/exposes/metadata field routing, unless
         ``config.inventory_enrichment`` is disabled (legacy enrichment only)."""
+        language = self._resolve_language(doc)
         inventory = self._build_inventory(doc) if self.config.inventory_enrichment else None
-        doc = enrich_document(doc, entity_terms=entity_terms, inventory=inventory)
+        doc = enrich_document(
+            doc, entity_terms=entity_terms, inventory=inventory, language=language
+        )
         merge_prose, merge_definitions = self._resolve_merge_strategy(doc)
-        keyphrase_fn = extract_keyphrases if self.config.prose_keyphrases else None
+        keyphrase_fn = (
+            (lambda t: extract_keyphrases(t, language=language))
+            if self.config.prose_keyphrases
+            else None
+        )
         chunks = chunk_document(
             doc,
             self.config.max_chunk_chars,
@@ -221,6 +269,9 @@ class SemanticPipeline:
         """Enrich, chunk, embed, and index an already-parsed *doc*.
 
         Returns the number of chunks indexed (0 if the doc produced no content).
+        In ``config.lexical_only`` mode the chunks are stored **without an embedding
+        model** (sentinel vectors + ``provider="lexical"`` provenance) so search can run
+        BM25-only — a fully model-free index for any language.
 
         Raises:
             ChunkQualityError: when ``config.chunk_gate`` is on and a chunk is
@@ -230,6 +281,10 @@ class SemanticPipeline:
         if not chunks:
             return 0
         self._enforce_chunk_gate(chunks)
+        if self.config.lexical_only:
+            self.store.add_chunks(chunks, _lexical_vectors(len(chunks)))
+            self.store.set_provenance(_LEXICAL_PROVIDER, _LEXICAL_MODEL, dimension=_LEXICAL_DIM)
+            return len(chunks)
         embeddings = self.embedder.embed_chunks(chunks)
         self.store.add_chunks(chunks, embeddings)
         if embeddings:
@@ -321,6 +376,19 @@ class SemanticPipeline:
 
     # ── Search ────────────────────────────────────────────────────────────────
 
+    def _index_is_lexical(self) -> bool:
+        """True when the index was built model-free (``provider="lexical"``).
+
+        Read-only and tolerant: a missing/legacy/non-dict provenance returns False, so a
+        normal semantic index follows the dense path unchanged.
+        """
+        stored = self.store.get_provenance()
+        return bool(
+            stored
+            and isinstance(stored, dict)
+            and stored.get("embedding_provider") == _LEXICAL_PROVIDER
+        )
+
     def _verify_provenance(self) -> None:
         """
         Fail fast if the configured embedder differs from the one that built the
@@ -374,6 +442,21 @@ class SemanticPipeline:
         Optional filters narrow results by section type, content type, Confluence
         space key, or prose ``genre`` (glossary/faq/howto/policy/narrative).
         """
+        # Model-free path: rank by BM25 only, never touching the embedder or its
+        # provenance — so German/French/Italian (and English) search works with no model.
+        # Triggered explicitly (config.lexical_only / --lexical) OR auto-detected when the
+        # index itself was built lexical (provider="lexical"); the latter means a plain
+        # `search` over a lexical index is steered to BM25 instead of raising a mismatch.
+        if self.config.lexical_only or self._index_is_lexical():
+            return self._lexical_search(
+                query=query,
+                n_results=n_results,
+                section_type=section_type,
+                content_type=content_type,
+                space=space,
+                genre=genre,
+            )
+
         self._verify_provenance()
         use_hybrid = self.config.hybrid_search if hybrid is None else hybrid
         query_embedding = self.embedder.embed_query(query)
@@ -432,7 +515,9 @@ class SemanticPipeline:
             genre=genre,
         )
         index = BM25Index(
-            [(c.chunk_id, f"{c.metadata.get('breadcrumb', '')} {c.content}") for c in corpus]
+            [(c.chunk_id, f"{c.metadata.get('breadcrumb', '')} {c.content}") for c in corpus],
+            language=self.config.language,
+            stem=self.config.lexical_stemming,
         )
         lexical_ids = index.top(query, pool)
 
@@ -451,4 +536,52 @@ class SemanticPipeline:
             out.append(
                 SearchResult(base.chunk_id, base.content, base.metadata, base.distance, fused_score)
             )
+        return out
+
+    def _lexical_search(
+        self,
+        query: str,
+        n_results: int,
+        section_type: SectionType | None,
+        content_type: ContentType | None,
+        space: str | None,
+        genre: Genre | None = None,
+    ) -> list[SearchResult]:
+        """Rank the (filtered) corpus by BM25 alone — no embedding model is loaded.
+
+        The model-free counterpart of :meth:`search`. Returns the top BM25 matches with the
+        raw BM25 score exposed via ``SearchResult.score`` (``fused_score``). Zero-score docs
+        are dropped. Returns ``[]`` when the index is empty.
+        """
+        from .retrieval import BM25Index
+
+        corpus = self.store.get_corpus(
+            section_type=section_type,
+            content_type=content_type,
+            space=space,
+            genre=genre,
+        )
+        if not corpus:
+            return []
+        index = BM25Index(
+            [(c.chunk_id, f"{c.metadata.get('breadcrumb', '')} {c.content}") for c in corpus],
+            language=self.config.language,
+            stem=self.config.lexical_stemming,
+        )
+        scores = index.scores(query)
+        by_id = {c.chunk_id: c for c in corpus}
+        ranked = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)
+
+        out: list[SearchResult] = []
+        for chunk_id, score in ranked:
+            if score <= 0.0:
+                continue
+            base = by_id.get(chunk_id)
+            if base is None:
+                continue
+            out.append(
+                SearchResult(base.chunk_id, base.content, base.metadata, base.distance, score)
+            )
+            if len(out) >= n_results:
+                break
         return out
