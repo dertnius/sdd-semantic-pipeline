@@ -8,7 +8,10 @@ end-to-end tests in ``test_html_to_gitlab_md_v3.py``.
 
 from __future__ import annotations
 
+import shutil
+
 import panflute as pf
+import pytest
 
 from sdd_pipeline.convert import ConversionNotes
 from sdd_pipeline.convert.confluence_pf_filter import (
@@ -26,6 +29,12 @@ def _run(*blocks: pf.Element) -> tuple[pf.Doc, ConversionNotes]:
 
 
 def _md(doc: pf.Doc) -> str:
+    # The element-tree filtering above is pandoc-free; only this assertion helper
+    # (panflute -> gfm) shells out to pandoc. Skip — rather than fail — when the
+    # binary is absent, matching the repo's `requires_pandoc` convention so the fast
+    # lane stays pandoc-free (the full round-trip lives in the slow e2e tests).
+    if shutil.which("pandoc") is None:
+        pytest.skip("pandoc not on PATH (panflute -> gfm rendering needs it)")
     return pf.convert_text(doc, input_format="panflute", output_format="gfm")
 
 
