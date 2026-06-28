@@ -532,12 +532,41 @@ protocol. Both backend libraries are imported lazily, so `export`/`scan`/
   search uses must match the one that built the index. `sdd-pipeline check`
   reports `langchain_core` as required and `chromadb` informationally.
 
+## GitHub Copilot integration
+
+The Claude Code skills are **ported to GitHub Copilot** as native assets under
+`.github/` (which is intentionally tracked, unlike the gitignored `.claude/`). Copilot
+can't run Claude's Skill tool, so each skill's behaviour is reproduced as a Copilot
+prompt file, with the architecture guardrails as scoped instruction files:
+
+| Asset | Path | Role |
+|---|---|---|
+| Prompt files | `.github/prompts/*.prompt.md` | the ported skills, invoked as `/<name>` in Copilot Chat (`doc-to-md`, `convert-confluence`, `index-corpus`, `docs-sync`, `code-review`, `simplify`, `security-review`, `verify-change`, `grill-me`, `gitlab-mr`, `copilot-context`). `.github/prompts/README.md` lists the port + the Claude-Code-only skills deliberately **not** ported. |
+| Instruction files | `.github/instructions/*.instructions.md` | scoped guardrails auto-applied by `applyTo` glob — `python` (module boundaries/determinism), `tests` (markers/fixtures), `docs` (doc-health), `copilot-assets` (the conventions the gate below enforces). |
+| Custom agent | `.github/agents/adr-generator.agent.md` | the ADR Generator persona (grounds ADRs via the `sdd-semantic` MCP server). |
+| Repo-wide rules | `.github/copilot-instructions.md` | always-on Copilot instructions + the Know How wiki agent. |
+| MCP server | `.vscode/mcp.json` | registers the `sdd-semantic` stdio server (`sdd-pipeline mcp --lexical`). |
+
+These assets are kept honest by `src/tools/scripts/check_copilot.py` — a deterministic,
+model-free gate (sibling of `check_docs.py`): C1 frontmatter present (prompts need a
+`description`, agents `name`+`description`, instructions `applyTo`), C2 every
+`sdd-pipeline <cmd>` in a code span is a real CLI command, C3 the `.vscode/mcp.json`
+wiring is valid and every referenced MCP tool (`tool_name(...)`) exists, C4 links
+resolve, C5 fences/frontmatter are well-formed. It runs in the GitLab `verify:quality`
+stage and the GitHub `copilot-health` workflow, so a broken Copilot asset cannot merge
+(self-tested by `tests/test_check_copilot.py`). VS Code discovery is enabled in
+`.vscode/settings.json` (`chat.promptFiles`, the instruction-files locations).
+
 ## Documentation
 
 All human-facing docs live under `docs/` as Markdown (the single source) and render
 with **MkDocs Material** (the `[docs]` extra → `mkdocs serve` for a local searchable
-site; `mkdocs build` → `./site`). `README.md` + `CLAUDE.md` stay canonical at the repo
-root and are surfaced in-site via include-stubs (`docs/_root/`). The authoritative
+site; `mkdocs build` → `./site`). The site is **published as GitLab Pages** by the
+`pages` job in `.gitlab-ci.yml` (`mkdocs build --strict --site-dir public` on the
+default branch → served at `https://<namespace>.gitlab.io/<project>/`); the same
+`--strict` build also runs as a *check* in `verify:quality`. `README.md` + `CLAUDE.md`
+stay canonical at the repo root and are surfaced in-site via include-stubs
+(`docs/_root/`). The authoritative
 per-command and per-setting references are `docs/reference/cli.md` and
 `docs/reference/configuration.md` — **when you add or change a CLI command/flag or a
 `PipelineConfig` field, update the matching reference page** (the README CLI section

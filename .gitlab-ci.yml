@@ -23,6 +23,7 @@ stages:
   - convert
   - index
   - publish
+  - pages
 
 # Built + pushed separately (see k8s/job.yaml header): az acr build ... -f Containerfile .
 # The image bakes pandoc + the package; ENTRYPOINT is `sdd-pipeline`.
@@ -45,17 +46,20 @@ cache:
     - .cache/huggingface          # only populated by the semantic (model) path
 
 # ── verify: code + docs quality gate (lint, types, fast tests, doc-health) ────
-# Runs on merge requests and on branch pushes that touch code/docs. The doc-health
-# battery (src/tools/scripts/check_docs.py) + `mkdocs build --strict` guarantee the
-# docs are *not broken* (links/render) AND *updated* (CLI/config/citation coverage):
-# a stale or broken doc fails the pipeline and cannot merge. Model-free (no pandoc
-# needed for `-m "not slow"`; no embedding model).
+# Runs on merge requests and on branch pushes that touch code/docs/Copilot assets.
+# Two deterministic batteries guard drift, both model-free:
+#   * check_docs.py + `mkdocs build --strict` — docs *not broken* (links/render) AND
+#     *updated* (CLI/config/citation coverage);
+#   * check_copilot.py — the GitHub Copilot assets (.github/prompts, /agents,
+#     /instructions, copilot-instructions.md, .vscode/mcp.json) are valid frontmatter
+#     and wired to real CLI commands / MCP tools / links.
+# A stale or broken doc or Copilot asset fails the pipeline and cannot merge.
 verify:quality:
   stage: verify
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "push"'
-      changes: ["src/**/*", "tests/**/*", "docs/**/*", "README.md", "CLAUDE.md", "pyproject.toml", "mkdocs.yml"]
+      changes: ["src/**/*", "tests/**/*", "docs/**/*", "README.md", "CLAUDE.md", "pyproject.toml", "mkdocs.yml", ".github/**/*", ".vscode/mcp.json"]
   before_script:
     - pip install -e ".[dev,docs]"
   script:
@@ -63,6 +67,7 @@ verify:quality:
     - ruff check src/ tests/
     - pytest -m "not slow"
     - python src/tools/scripts/check_docs.py          # docs not broken AND updated
+    - python src/tools/scripts/check_copilot.py        # Copilot assets valid AND wired
     - python -m mkdocs build --strict                 # nav / render / orphans
   artifacts:
     when: on_failure
@@ -170,4 +175,27 @@ publish:
     paths:
       - outbox/index/
       - outbox/reports/
+    expire_in: 30 days
+
+# ── pages: publish the MkDocs site as GitLab Pages ────────────────────────────
+# GitLab serves the `public/` artifact of a job named `pages` at
+# https://<namespace>.gitlab.io/<project>/. The same `mkdocs build --strict` the
+# verify stage runs as a *check* is run here to *render* into public/ on the default
+# branch. Model-free (the `[docs]` extra: mkdocs-material — no pandoc, no model).
+# Links are relative + `use_directory_urls: false`, so the site is correct under the
+# Pages sub-path. Independent of the corpus pipeline (mkdocs ignores the workspace
+# guard). `needs: []` so it doesn't wait on convert/index.
+pages:
+  stage: pages
+  needs: []
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      changes: ["docs/**/*", "mkdocs.yml", "README.md", "CLAUDE.md", "src/**/*"]
+  before_script:
+    - pip install -e ".[docs]"
+  script:
+    - mkdocs build --strict --site-dir public
+  artifacts:
+    paths:
+      - public
     expire_in: 30 days

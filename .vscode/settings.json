@@ -50,6 +50,17 @@
       "includePatterns": ["src/**", "tests/**", "docs/**"]
     }
   },
+  // Discover the ported Claude skills as Copilot prompt files (/<name> in chat) and
+  // auto-apply the scoped guardrails in .github/instructions/*.instructions.md.
+  // Validity is enforced by src/tools/scripts/check_copilot.py (CI).
+  "chat.promptFiles": true,
+  "chat.promptFilesLocations": {
+    ".github/prompts": true
+  },
+  "chat.instructionsFilesLocations": {
+    ".github/instructions": true
+  },
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
 
   // ── File associations ─────────────────────────────────────────────────────
   "files.associations": {

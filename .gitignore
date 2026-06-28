@@ -72,6 +72,8 @@ src/tools/eval/corpus_manifest.json
 # ── Docs site (MkDocs build output) ──────────────────────────────────────────
 # `mkdocs build` renders ./site from docs/; the Markdown under docs/ is the source.
 /site/
+# GitLab Pages builds into ./public (CI `pages` job: `mkdocs build --site-dir public`).
+/public/
 
 # ── Editors / OS ─────────────────────────────────────────────────────────────
 .idea/

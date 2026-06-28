@@ -1,0 +1,44 @@
+# Copilot integration health gate, for GitHub-hosted mirrors.
+# The single source of truth is src/tools/scripts/check_copilot.py — this workflow and
+# the GitLab `verify:quality` stage both invoke it, so a broken Copilot asset (missing
+# frontmatter, a dead CLI/MCP-tool reference, a broken link) fails CI on either host.
+# Model-free, fast (no pandoc / no embedding model / no mcp SDK).
+name: copilot-health
+
+on:
+  pull_request:
+    paths:
+      - ".github/prompts/**"
+      - ".github/agents/**"
+      - ".github/instructions/**"
+      - ".github/copilot-instructions.md"
+      - ".vscode/mcp.json"
+      - "src/sdd_pipeline/cli.py"
+      - "src/sdd_pipeline/mcp_server.py"
+      - "src/tools/scripts/check_copilot.py"
+  push:
+    branches: [main]
+    paths:
+      - ".github/prompts/**"
+      - ".github/agents/**"
+      - ".github/instructions/**"
+      - ".github/copilot-instructions.md"
+      - ".vscode/mcp.json"
+      - "src/sdd_pipeline/cli.py"
+      - "src/sdd_pipeline/mcp_server.py"
+      - "src/tools/scripts/check_copilot.py"
+
+jobs:
+  copilot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install (the package supplies the live CLI surface the gate reads)
+        run: pip install -e ".[dev]"
+      - name: Copilot asset health (valid + wired to real code)
+        run: python src/tools/scripts/check_copilot.py
+      - name: Copilot gate self-test
+        run: pytest tests/test_check_copilot.py -q
