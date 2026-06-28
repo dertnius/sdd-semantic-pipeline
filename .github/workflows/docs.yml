@@ -1,0 +1,29 @@
+# Mirror of the GitLab `verify:quality` doc-health gate, for GitHub-hosted mirrors.
+# The single source of truth for drift detection is src/tools/scripts/check_docs.py —
+# this workflow and the GitLab `verify` stage both invoke it, so a stale or broken doc
+# fails CI on either host. Model-free (no pandoc/model needed for the docs checks).
+name: docs-health
+
+on:
+  pull_request:
+    paths: ["src/**", "docs/**", "README.md", "CLAUDE.md", "pyproject.toml", "mkdocs.yml"]
+  push:
+    branches: [main]
+    paths: ["src/**", "docs/**", "README.md", "CLAUDE.md", "pyproject.toml", "mkdocs.yml"]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install (dev + docs)
+        run: pip install -e ".[dev,docs]"
+      - name: Doc-health battery (not broken AND updated)
+        run: python src/tools/scripts/check_docs.py
+      - name: MkDocs build (nav / render / orphans)
+        run: python -m mkdocs build --strict
+      - name: Fast tests
+        run: pytest -m "not slow"

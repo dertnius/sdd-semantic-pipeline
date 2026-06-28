@@ -84,6 +84,7 @@ nav:
   - Getting Started:
       - Pipeline 101 (runbook): guides/pipeline-101.md
       - Guides index: guides/index.md
+      - GitHub Copilot integration: guides/copilot-integration.md
       - Convert HTML (Linux): guides/convert-html-gitlab-markdown-linux.md
       - Convert HTML (Windows): guides/convert-html-gitlab-markdown-windows.md
   - Reference:

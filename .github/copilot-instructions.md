@@ -16,6 +16,21 @@ For full overview, read [README.md](../README.md).
 - Canonical setup and commands: [README.md](../README.md), [devfile.yaml](../devfile.yaml), [pyproject.toml](../pyproject.toml)
 - Local retrieval for agents: the `sdd-semantic` MCP server (`sdd-pipeline mcp`, registered in [.vscode/mcp.json](../.vscode/mcp.json)) exposes semantic search over the indexed corpus (`semantic_search`, `find_decision_context`, `list_section_types`, `list_spaces`). The ADR Generator agent calls it to ground ADRs; build an index first (`sdd-pipeline index`).
 
+## Prompts & Guardrails (Copilot assets)
+
+The Claude Code skills are ported to Copilot. Reach for them by typing `/` in chat:
+
+- **Prompts** ([`.github/prompts/`](prompts/)): `/doc-to-md`, `/convert-confluence`,
+  `/index-corpus`, `/docs-sync`, `/code-review`, `/simplify`, `/security-review`,
+  `/verify-change`, `/grill-me`, `/gitlab-mr`, `/copilot-context`. See
+  [`prompts/README.md`](prompts/README.md) for what each drives.
+- **Scoped guardrails** ([`.github/instructions/`](instructions/)) auto-apply by
+  `applyTo` glob — the Architecture Guardrails below are enforced for `src/**` edits
+  via `python.instructions.md`.
+
+These assets are validated in CI by `src/tools/scripts/check_copilot.py` (frontmatter,
+real CLI/MCP references, resolvable links) — keep them green when you edit `.github/`.
+
 ## High-Value Commands
 
 - Fast tests (default while iterating): `pytest tests/ -v -m "not slow" --cov=sdd_pipeline`
