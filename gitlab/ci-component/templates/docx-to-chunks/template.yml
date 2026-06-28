@@ -1,0 +1,226 @@
+# docx-to-chunks — drop-in pipeline that turns a repo full of Word documents into
+# semantic CHUNKS + a model-free LEXICAL INDEX, with a Windows+Office pre-stage that
+# converts legacy binary `.doc` to `.docx` (the pipeline reads OOXML `.docx` only).
+#
+# A consuming docs repo includes THIS component and commits its files under inbox/:
+#
+#   include:
+#     - component: $CI_SERVER_FQDN/<group>/ci-components/docx-to-chunks@1.0.0
+#       inputs: { lang: "de" }
+#
+# Flow:  prepare (.doc->.docx, Windows) -> convert (docx->md + lint) ->
+#        chunks (export + lexical index) -> publish (long-lived artifact).
+#
+# SELF-CONTAINED BY DESIGN. It does NOT `include:` the sibling python-nexus component:
+# a nested component include would have to hard-code the instance-specific <group> path,
+# which a portable component cannot know. Instead it inlines the same essentials
+# (Nexus image + pip-on-Nexus + runtime pandoc). Keep these in sync with
+# ../python-nexus/template.yml if that component changes.
+#
+# INPUTS interpolate at include/merge time with $[[ inputs.NAME ]] (before runtime vars).
+# The NEXUS_* endpoints stay ${VAR} — runtime GROUP-level CI/CD variables resolved by the
+# runner (same prerequisites as python-nexus).
+spec:
+  inputs:
+    pipeline_install:
+      default: "sdd-pipeline[lang]"
+      description: "pip spec for the pipeline package (Nexus PyPI proxy), or a git+https://...@<tag> spec."
+    lang:
+      default: "de"
+      options: ["de", "en", "fr", "it", "auto"]
+      description: "Enrichment language for export/index. 'auto' needs the [lang] extra."
+    merge_mode:
+      default: "prose"
+      options: ["prose", "definitions", "none"]
+      description: "Chunk merge: prose=--merge-prose, definitions=--merge-definitions, none=neither."
+    convert_legacy_doc:
+      type: boolean
+      default: true
+      description: "Run the Windows .doc->.docx prepare job. Set false for all-.docx repos with no Windows runner."
+    windows_runner_tags:
+      type: array
+      default: ["windows", "office"]
+      description: "Runner tags selecting the Windows shell runner that has Microsoft Word installed."
+    python_version:
+      default: "3.11"
+      description: "Python minor series for the python:<ver>-slim Nexus image tag (Linux jobs)."
+    pandoc_version:
+      default: "3.5"
+      description: "Pandoc version; keys the pandoc binary cache. Pair with NEXUS_PANDOC_URL."
+---
+# `default:` (not top-level) so the Windows prepare job can opt out of the Linux image/cache.
+# A Windows shell runner ignores `image:` anyway; the docker (Linux) jobs use it.
+default:
+  image: "${NEXUS_DOCKER_REGISTRY}/python:$[[ inputs.python_version ]]-slim"
+  cache:
+    - key: "dtc-pip-${CI_COMMIT_REF_SLUG}"
+      paths:
+        - .cache/pip
+    - key: "pandoc-$[[ inputs.pandoc_version ]]"   # version-keyed: re-downloaded only on a bump
+      paths:
+        - .cache/bin
+
+variables:
+  # pip on the Nexus PyPI proxy (anonymous .../simple/)
+  PIP_INDEX_URL: "${NEXUS_PYPI_INDEX_URL}"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PANDOC_VERSION: "$[[ inputs.pandoc_version ]]"
+  # PIP_TRUSTED_HOST: "nexus.corp.example.com"      # ONLY if Nexus TLS uses an internal CA
+  # the sdd-pipeline inbox/outbox workspace contract (consumer just commits files under inbox/)
+  PIPELINE_INBOX_DIR: "$CI_PROJECT_DIR/inbox"
+  PIPELINE_OUTBOX_DIR: "$CI_PROJECT_DIR/outbox"
+  PIPELINE_ENFORCE_WORKSPACE: "true"
+  PIPELINE_LANGUAGE: "$[[ inputs.lang ]]"
+  PYTHONUTF8: "1"
+  ANONYMIZED_TELEMETRY: "false"
+  # drives the prepare job's rule (boolean input -> string "true"/"false")
+  DTC_CONVERT_LEGACY_DOC: "$[[ inputs.convert_legacy_doc ]]"
+
+stages:
+  - prepare
+  - convert
+  - chunks
+  - publish
+
+# ── reusable before_script fragments (hidden jobs, never executed directly) ───
+.dtc-pip-bootstrap:
+  before_script:
+    - python -m pip install --upgrade pip          # resolves from PIP_INDEX_URL -> Nexus
+
+# pandoc >= 3.0 at runtime without a custom image: python:3.x-slim has Python + dpkg-deb,
+# so fetch the pinned .deb from the Nexus raw repo with stdlib urllib and cache it on PATH.
+.dtc-install-pandoc:
+  before_script:
+    - mkdir -p "$CI_PROJECT_DIR/.cache/bin"
+    - export PATH="$CI_PROJECT_DIR/.cache/bin:$PATH"
+    - |
+      command -v pandoc >/dev/null 2>&1 || {
+        python -c "import os,urllib.request; urllib.request.urlretrieve(os.environ['NEXUS_PANDOC_URL'], '/tmp/pandoc.deb')"
+        dpkg-deb -x /tmp/pandoc.deb /tmp/pandoc-x
+        cp /tmp/pandoc-x/usr/bin/pandoc "$CI_PROJECT_DIR/.cache/bin/pandoc"
+        chmod 0755 "$CI_PROJECT_DIR/.cache/bin/pandoc"
+      }
+    - pandoc --version | head -1
+
+# ── prepare: legacy .doc -> .docx on a Windows runner with Microsoft Word ──────
+# Runs only when convert_legacy_doc=true. KEEP THIS LOGIC IN SYNC with the canonical
+# scripts/convert-doc-to-docx.ps1 (a component cannot ship a loose file into the
+# consumer's checkout, so the logic is inlined here). Behaviour:
+#   * no .doc found        -> no-op, exit 0
+#   * Word not available   -> error + exit 3 (fails pipeline; convert .doc locally instead)
+#   * Word available       -> SaveAs2(.docx) in place (wdFormatDocumentDefault = 16)
+#
+# RUNNER REQUIREMENT: Word COM automation needs an INTERACTIVE desktop session. The
+# Windows GitLab Runner must use the *shell* executor running as a logged-in user
+# (autologon), NOT as a service/SYSTEM account — otherwise Documents.Open / SaveAs2 hang.
+# Password-protected .doc files also hang (Word prompts for a password); the `timeout:`
+# below is a backstop so a hang fails the job instead of running to the global timeout.
+prepare:doc-to-docx:
+  stage: prepare
+  tags: $[[ inputs.windows_runner_tags ]]
+  timeout: 30m
+  cache: []                      # opt out of the Linux pip/pandoc default cache on Windows
+  rules:
+    - if: '$DTC_CONVERT_LEGACY_DOC == "true"'
+      when: on_success
+    - when: never
+  script:
+    - |
+      $ErrorActionPreference = "Stop"
+      $inbox = if ($env:PIPELINE_INBOX_DIR) { $env:PIPELINE_INBOX_DIR } else { Join-Path $PWD "inbox" }
+      if (-not (Test-Path $inbox)) { Write-Host "No inbox at $inbox; nothing to convert."; exit 0 }
+      $docs = Get-ChildItem -Path $inbox -Recurse -File -Filter *.doc |
+              Where-Object { $_.Extension -ieq ".doc" }
+      if (-not $docs) { Write-Host "No legacy .doc files under $inbox; nothing to convert."; exit 0 }
+      Write-Host "Found $($docs.Count) legacy .doc file(s) to convert."
+      try {
+        $word = New-Object -ComObject Word.Application -ErrorAction Stop
+      } catch {
+        Write-Error ("Microsoft Word is not available on this runner. Legacy .doc files are " +
+          "NOT supported by the pipeline. Convert them to .docx locally with " +
+          "scripts/convert-doc-to-docx.ps1, then commit the .docx files. Offending files: " +
+          ($docs.FullName -join ', '))
+        exit 3
+      }
+      $word.Visible = $false
+      $failed = 0
+      foreach ($d in $docs) {
+        $docx = [System.IO.Path]::ChangeExtension($d.FullName, ".docx")
+        Write-Host "Converting $($d.FullName) -> $docx"
+        try {
+          $doc = $word.Documents.Open($d.FullName, $false, $true)  # ConfirmConversions=false, ReadOnly=true
+          $doc.SaveAs2($docx, 16)                                  # 16 = wdFormatDocumentDefault (.docx)
+          $doc.Close($false)
+        } catch {
+          Write-Host "ERROR converting $($d.FullName): $_"
+          $failed++
+        }
+      }
+      $word.Quit()
+      [System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) | Out-Null
+      [GC]::Collect(); [GC]::WaitForPendingFinalizers()
+      if ($failed -gt 0) { Write-Error "$failed file(s) failed to convert."; exit 1 }
+      Write-Host "Converted $($docs.Count) .doc file(s) to .docx."
+  artifacts:
+    paths:
+      - inbox/
+    expire_in: 1 day
+
+# ── convert: docx -> Markdown + raw-markdown quality gate (Linux, model-free) ──
+convert:
+  stage: convert
+  needs:
+    - job: "prepare:doc-to-docx"
+      optional: true       # prepare is skipped when convert_legacy_doc=false
+  before_script:
+    - !reference [.dtc-pip-bootstrap, before_script]
+    - !reference [.dtc-install-pandoc, before_script]
+    - pip install "$[[ inputs.pipeline_install ]]"
+    - sdd-pipeline check                      # fail fast if pandoc / deps are missing
+  script:
+    - sdd-pipeline convert-docx               # inbox/**/*.docx -> outbox/md/
+    - sdd-pipeline lint outbox/md --strict    # block-severity residue fails the pipeline
+  artifacts:
+    paths:
+      - outbox/md/
+      - outbox/reports/
+    expire_in: 1 week
+
+# ── chunks: export portable chunks + build the model-free lexical index ────────
+chunks:
+  stage: chunks
+  needs: ["convert"]
+  before_script:
+    - !reference [.dtc-pip-bootstrap, before_script]
+    - !reference [.dtc-install-pandoc, before_script]
+    - pip install "$[[ inputs.pipeline_install ]]"
+  script:
+    - |
+      case "$[[ inputs.merge_mode ]]" in
+        prose) MERGE="--merge-prose" ;;
+        definitions) MERGE="--merge-definitions" ;;
+        *) MERGE="" ;;
+      esac
+    - sdd-pipeline export outbox/md --lang "$[[ inputs.lang ]]" $MERGE --jobs 0
+    - sdd-pipeline index outbox/md --lexical --lang "$[[ inputs.lang ]]"
+  artifacts:
+    paths:
+      - outbox/chunks/
+      - outbox/index/
+      - outbox/reports/
+    expire_in: 1 week
+
+# ── publish: long-lived artifact bundling chunks + index + reports ────────────
+publish:
+  stage: publish
+  needs: ["chunks"]
+  script:
+    - echo "Chunks + lexical index published as artifacts (chunks-$CI_COMMIT_SHORT_SHA)."
+  artifacts:
+    name: "chunks-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - outbox/chunks/
+      - outbox/index/
+      - outbox/reports/
+    expire_in: 30 days
