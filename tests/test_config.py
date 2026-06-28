@@ -69,3 +69,15 @@ class TestVectorStoreConfig:
 
     def test_backend_override(self):
         assert PipelineConfig(vector_store_backend="chroma").vector_store_backend == "chroma"
+
+
+class TestPwshPathConfig:
+    def test_default_empty(self):
+        assert PipelineConfig().pwsh_path == ""
+
+    def test_kwarg_override(self):
+        assert PipelineConfig(pwsh_path="/opt/pwsh/pwsh").pwsh_path == "/opt/pwsh/pwsh"
+
+    def test_env_override(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setenv("PIPELINE_PWSH_PATH", "/usr/local/bin/pwsh")
+        assert PipelineConfig().pwsh_path == "/usr/local/bin/pwsh"

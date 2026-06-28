@@ -27,6 +27,8 @@ from pathlib import Path
 # ── Standard outbox sub-layout — one source of truth for default output homes ──
 OUTBOX_INDEX = "index"  # vector store (index --output; search/tui --index)
 OUTBOX_MD = "md"  # converted markdown (convert --output)
+OUTBOX_MEDIA = "media"  # resolved diagram SVGs (resolve-gliffy --output)
+OUTBOX_DRAWIO = "drawio"  # converted draw.io diagrams (convert-drawio --output)
 OUTBOX_CHUNKS = "chunks"  # exported chunks (export --output)
 OUTBOX_REPORTS = "reports"  # convert/lint JSON reports
 OUTBOX_VOCAB = "vocab"  # entity vocabulary (scan --vocab)

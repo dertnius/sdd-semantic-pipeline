@@ -1,6 +1,7 @@
 """
 CLI entry point: sdd-pipeline index | search | tui | export | scan | scan-taxonomy
-| lint | convert | check | help
+| lint | convert | convert-docx | resolve-gliffy | convert-drawio | check | pwsh-path
+| help
 """
 
 from __future__ import annotations
@@ -14,6 +15,8 @@ from rich.console import Console
 from rich.progress import track
 from rich.table import Table
 
+from .shell import resolve_pwsh
+
 app = typer.Typer(
     name="sdd-pipeline",
     help="Semantic search pipeline for Confluence SDD documents.",
@@ -21,6 +24,33 @@ app = typer.Typer(
     no_args_is_help=True,  # bare `sdd-pipeline` prints the command list instead of erroring
 )
 console = Console()
+
+
+def _parallel_compute(items: list, compute, jobs: int) -> list[tuple]:
+    """Run ``compute(item)`` over *items*, returning ``[(item, result, exc)]`` in INPUT order.
+
+    ``jobs`` <= 1 runs inline (byte-identical to serial); otherwise a thread pool overlaps
+    the work — ideal here because the heavy step is a pandoc *subprocess* that releases the
+    GIL. ``compute`` must be the pure/heavy phase; the caller applies results sequentially so
+    the report/order stays deterministic regardless of worker count. An exception from
+    ``compute`` is captured (never aborts the batch) and surfaced as the per-item error.
+    """
+    import os
+
+    def _one(item):
+        try:
+            return (item, compute(item), None)
+        except Exception as exc:  # collected per-item, applied by the caller
+            return (item, None, exc)
+
+    workers = (os.cpu_count() or 1) if jobs <= 0 else jobs
+    if workers <= 1 or len(items) <= 1:
+        return [_one(it) for it in items]
+
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(_one, items))  # .map preserves input order
 
 
 def _convert_confidence_reasons(notes: dict, max_unrecognized: int) -> list[str]:
@@ -58,6 +88,19 @@ def index(
         help="Local embedding model. Ignored when --provider azure (deployment from env).",
     ),
     provider: str = typer.Option("local", "--provider", help="Embedding backend: local | azure."),
+    lang: str = typer.Option(
+        "en",
+        "--lang",
+        help="Document language for enrichment rules: en|de|fr|it, or 'auto' to detect "
+        "per file (auto needs the [lang] extra).",
+    ),
+    lexical: bool = typer.Option(
+        False,
+        "--lexical",
+        "-L",
+        help="Build a MODEL-FREE lexical index: chunks are stored without embeddings and "
+        "search ranks by BM25. No embedding model is loaded — works for every language.",
+    ),
     backend: str | None = typer.Option(
         None,
         "--backend",
@@ -99,6 +142,8 @@ def index(
     overrides: dict = {
         "embedding_model": model,
         "embedding_provider": provider,
+        "language": lang,
+        "lexical_only": lexical,
         "chunk_merge_prose": merge_prose,
         "chunk_merge_definitions": merge_definitions,
     }
@@ -182,6 +227,104 @@ def index(
         f"\n[green]Done.[/green] {total} chunks {action} "
         f"from {len(md_files)} files ({errors} errors)."
     )
+
+
+# ── download ──────────────────────────────────────────────────────────────────
+
+
+@app.command()
+def download(
+    manifest: Path = typer.Argument(
+        ..., help="YAML/JSON manifest of {url, dest} entries to fetch into the inbox."
+    ),
+    auth: str | None = typer.Option(
+        None,
+        "--auth",
+        help="SiteMinder auth: cookie (default) | form | bearer | none. "
+        "Unset uses PIPELINE_DOWNLOAD_AUTH. Credentials come from env only.",
+    ),
+    insecure: bool = typer.Option(
+        False, "--insecure", help="Skip TLS verification (corporate interception)."
+    ),
+    timeout: int | None = typer.Option(None, "--timeout", help="Per-request timeout (seconds)."),
+    report: Path | None = typer.Option(
+        None,
+        "--report",
+        "-r",
+        help="JSON report path. Default: outbox/reports/download-report.json",
+    ),
+) -> None:
+    """Download manifest-listed files (Confluence HTML / SharePoint docx) into the inbox.
+
+    OPTIONAL ingestion behind SiteMinder SSO. Credentials are SECRETS — set via env
+    (PIPELINE_DOWNLOAD_COOKIE / _BEARER / _USERNAME / _PASSWORD / _LOGIN_URL), never flags.
+    Files land under the inbox (the workspace contract still applies). Exits non-zero if
+    any file fails so a CI stage surfaces the failure.
+    """
+    import json
+    from datetime import UTC, datetime
+
+    from .config import PipelineConfig
+    from .download import DownloadError, run_download
+    from .workspace import (
+        OUTBOX_REPORTS,
+        WorkspaceError,
+        ensure_inbox_exists,
+        resolve_output_file,
+    )
+
+    overrides: dict = {}
+    if auth is not None:
+        overrides["download_auth"] = auth
+    if insecure:
+        overrides["download_verify_tls"] = False
+    if timeout is not None:
+        overrides["download_timeout"] = timeout
+    config = PipelineConfig(**overrides)
+
+    try:
+        ensure_inbox_exists(config.inbox_dir, config.enforce_workspace)
+        report_path = resolve_output_file(
+            report,
+            outbox_dir=config.outbox_dir,
+            enforce=config.enforce_workspace,
+            default_subpath=f"{OUTBOX_REPORTS}/download-report.json",
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    try:
+        results = run_download(config, manifest)
+    except DownloadError as exc:
+        # Manifest/auth-setup error before any transfer (never echoes secrets).
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    ok = [r for r in results if r.status == "ok"]
+    failed = [r for r in results if r.status != "ok"]
+    report_path.write_text(
+        json.dumps(
+            {
+                "generated_at": datetime.now(UTC).isoformat(),
+                "auth": config.download_auth,
+                "total": len(results),
+                "ok": len(ok),
+                "failed": len(failed),
+                "results": [r.__dict__ for r in results],
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    for r in failed:
+        console.print(f"  [red]x[/red] {r.dest}: {r.error}")
+    console.print(
+        f"\n[green]Downloaded[/green] {len(ok)}/{len(results)} file(s) into the inbox "
+        f"({len(failed)} failed). Report: {report_path}"
+    )
+    if failed:
+        raise typer.Exit(1)
 
 
 # ── convert ─────────────────────────────────────────────────────────────────
@@ -417,6 +560,518 @@ def convert(
     raise typer.Exit(1 if (failed or quarantined) else 0)
 
 
+# ── convert-docx ────────────────────────────────────────────────────────────────
+
+
+@app.command(name="convert-docx")
+def convert_docx(
+    input_dir: Path | None = typer.Argument(
+        None,
+        help="Directory to scan recursively for .docx files. Default: the inbox.",
+    ),
+    output_dir: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write .md files (mirrors input tree). Default: outbox/md.",
+    ),
+    glob: str = typer.Option("**/*.docx", "--glob", "-g", help="docx file glob pattern."),
+    report: Path | None = typer.Option(
+        None,
+        "--report",
+        "-r",
+        help="JSON conversion report path. Default: outbox/reports/docx-conversion-report.json.",
+    ),
+    space: str = typer.Option(
+        "", "--space", help="Space/project key, written to frontmatter for provenance."
+    ),
+    source_url: str = typer.Option(
+        "", "--source-url", help="Canonical source URL, written to frontmatter for provenance."
+    ),
+    labels: str = typer.Option(
+        "", "--labels", help="Comma-separated labels, written to frontmatter for provenance."
+    ),
+    no_frontmatter: bool = typer.Option(False, "--no-frontmatter", help="Skip YAML front matter."),
+    toc: bool = typer.Option(
+        False,
+        "--toc",
+        help="Inject [[_TOC_]] (human-docs profile; default OFF for the embedding corpus).",
+    ),
+    no_media: bool = typer.Option(
+        False,
+        "--no-media",
+        help="Drop embedded images (keep alt text) instead of extracting them to media/. "
+        "Use for a pure-text embedding corpus.",
+    ),
+    pandoc_path: str | None = typer.Option(None, "--pandoc-path", help="Path to pandoc binary."),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """Convert all Word .docx files under a directory to Markdown and emit a JSON report."""
+    import json
+    from datetime import UTC, datetime
+
+    from .config import PipelineConfig
+    from .convert import ConversionError, convert_docx_file, resolve_pandoc
+    from .workspace import (
+        OUTBOX_MD,
+        WorkspaceError,
+        ensure_inbox_exists,
+        resolve_input,
+        resolve_output_dir,
+        resolve_output_file,
+    )
+
+    _cfg = PipelineConfig()
+
+    # Enforce the workspace contract: docx read from the inbox, .md (+ extracted
+    # media) and report written under the outbox.
+    try:
+        ensure_inbox_exists(_cfg.inbox_dir, _cfg.enforce_workspace)
+        in_dir = resolve_input(input_dir, inbox_dir=_cfg.inbox_dir, enforce=_cfg.enforce_workspace)
+        out_dir = resolve_output_dir(
+            output_dir,
+            outbox_dir=_cfg.outbox_dir,
+            enforce=_cfg.enforce_workspace,
+            default_subpath=OUTBOX_MD,
+        )
+        report_path = resolve_output_file(
+            report,
+            outbox_dir=_cfg.outbox_dir,
+            enforce=_cfg.enforce_workspace,
+            default_subpath="reports/docx-conversion-report.json",
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    # Fail fast if pandoc is missing — same error for every file otherwise.
+    try:
+        resolve_pandoc(pandoc_path)
+    except ConversionError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    label_list = [s.strip() for s in labels.split(",") if s.strip()]
+
+    # Skip Word lock/temp files (~$foo.docx) — they are not real documents.
+    docx_files = sorted(p for p in in_dir.glob(glob) if not p.name.startswith("~$"))
+    if not docx_files:
+        console.print(f"[yellow]No .docx files matching {glob!r} under {in_dir}[/yellow]")
+        raise typer.Exit(0)
+
+    console.print(f"[cyan]Found {len(docx_files)} .docx files in {in_dir}[/cyan]")
+
+    file_entries: list[dict] = []
+    totals = dict.fromkeys(_METRIC_FIELDS, 0)
+    warnings_total = 0
+    succeeded = 0
+
+    for src in track(docx_files, description="Converting..."):
+        # Mirror the source tree under the outbox md directory.
+        rel = src.relative_to(in_dir).with_suffix(".md")
+        out_target = out_dir / rel
+
+        try:
+            out_path, _md, metrics, notes = convert_docx_file(
+                src,
+                out_target,
+                add_frontmatter=not no_frontmatter,
+                add_toc=toc,
+                extract_media=not no_media,
+                pandoc_path=pandoc_path,
+                space=space,
+                source_url=source_url,
+                labels=label_list,
+                write=True,
+            )
+            slim = {k: metrics[k] for k in _METRIC_FIELDS}
+            for k in _METRIC_FIELDS:
+                totals[k] += slim[k]
+            warnings_total += len(notes.get("warnings", []))
+            succeeded += 1
+            file_entries.append(
+                {
+                    "source": str(src),
+                    "output": str(out_path),
+                    "status": "ok",
+                    "metrics": slim,
+                    "notes": notes,
+                    "error": None,
+                }
+            )
+            if verbose:
+                summary = ", ".join(f"{slim[k]} {k}" for k in _METRIC_FIELDS)
+                console.print(f"  [green]ok[/green]   {src.name} -> {summary}")
+        except (ConversionError, OSError, ValueError) as exc:
+            file_entries.append(
+                {
+                    "source": str(src),
+                    "output": None,
+                    "status": "error",
+                    "metrics": None,
+                    "notes": None,
+                    "error": str(exc),
+                }
+            )
+            console.print(f"  [red]fail[/red] {src.name}: {exc}")
+
+    failed = len(docx_files) - succeeded
+    report_doc = {
+        "generated_at": datetime.now(UTC).isoformat(),
+        "input_dir": str(in_dir),
+        "output_dir": str(out_dir),
+        "glob": glob,
+        "total_files": len(docx_files),
+        "succeeded": succeeded,
+        "failed": failed,
+        "warnings_total": warnings_total,
+        "totals": totals,
+        "files": file_entries,
+    }
+
+    report_path.write_text(json.dumps(report_doc, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    table = Table(title="Conversion totals", show_lines=False)
+    table.add_column("Metric", style="cyan")
+    table.add_column("Count", justify="right", style="green")
+    for k in _METRIC_FIELDS:
+        table.add_row(k, str(totals[k]))
+    console.print(table)
+    # ASCII-safe summary line (cp1252 consoles choke on emoji when redirected).
+    console.print(
+        f"\n[green]Done.[/green] {succeeded}/{len(docx_files)} files converted "
+        f"({failed} failed, {warnings_total} warning(s)). Report -> {report_path}"
+    )
+    raise typer.Exit(1 if failed else 0)
+
+
+# ── resolve-gliffy ──────────────────────────────────────────────────────────────
+
+
+_GLIFFY_METRIC_FIELDS = ("objects", "shapes", "lines", "texts", "images", "svgs", "unsupported")
+
+
+@app.command(name="resolve-gliffy")
+def resolve_gliffy(
+    input_dir: Path | None = typer.Argument(
+        None,
+        help="Directory to scan recursively for .gliffy files. Default: the inbox.",
+    ),
+    output_dir: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write .svg files (mirrors input tree). Default: outbox/media.",
+    ),
+    glob: str = typer.Option("**/*.gliffy", "--glob", "-g", help="Gliffy file glob pattern."),
+    report: Path | None = typer.Option(
+        None,
+        "--report",
+        "-r",
+        help="JSON manifest/report path. Default: outbox/reports/gliffy-report.json.",
+    ),
+    prefer_existing_svg: bool = typer.Option(
+        True,
+        "--prefer-existing-svg/--always-render",
+        help="Copy a sibling <name>.svg (Gliffy's own export) when present, instead of "
+        "rendering the JSON. --always-render forces the built-in renderer.",
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """Resolve Confluence-embedded Gliffy diagrams to editable SVG + a manifest.
+
+    The manifest maps each diagram (by source stem) to its written SVG so a later,
+    opt-in step in the Markdown converter can reference it. Coverage of the
+    built-in renderer is best-effort (basic shapes); ``unsupported`` in the report
+    flags low-coverage diagrams worth re-exporting from Gliffy/draw.io directly.
+    """
+    import json
+    from datetime import UTC, datetime
+
+    from .config import PipelineConfig
+    from .convert import ConversionError, resolve_gliffy_file
+    from .workspace import (
+        OUTBOX_MEDIA,
+        WorkspaceError,
+        ensure_inbox_exists,
+        resolve_input,
+        resolve_output_dir,
+        resolve_output_file,
+    )
+
+    _cfg = PipelineConfig()
+
+    # Workspace contract: .gliffy read from the inbox, .svg + manifest under outbox.
+    try:
+        ensure_inbox_exists(_cfg.inbox_dir, _cfg.enforce_workspace)
+        in_dir = resolve_input(input_dir, inbox_dir=_cfg.inbox_dir, enforce=_cfg.enforce_workspace)
+        out_dir = resolve_output_dir(
+            output_dir,
+            outbox_dir=_cfg.outbox_dir,
+            enforce=_cfg.enforce_workspace,
+            default_subpath=OUTBOX_MEDIA,
+        )
+        report_path = resolve_output_file(
+            report,
+            outbox_dir=_cfg.outbox_dir,
+            enforce=_cfg.enforce_workspace,
+            default_subpath="reports/gliffy-report.json",
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    gliffy_files = sorted(in_dir.glob(glob))
+    if not gliffy_files:
+        console.print(f"[yellow]No Gliffy files matching {glob!r} under {in_dir}[/yellow]")
+        raise typer.Exit(0)
+
+    console.print(f"[cyan]Found {len(gliffy_files)} Gliffy files in {in_dir}[/cyan]")
+
+    file_entries: list[dict] = []
+    diagrams: dict[str, dict] = {}
+    totals = dict.fromkeys(_GLIFFY_METRIC_FIELDS, 0)
+    succeeded = 0
+    unsupported_total = 0
+
+    for src in track(gliffy_files, description="Resolving..."):
+        rel = src.relative_to(in_dir).with_suffix(".svg")
+        out_target = out_dir / rel
+        try:
+            out_path, _svg, method, metrics = resolve_gliffy_file(
+                src, out_target, prefer_existing_svg=prefer_existing_svg
+            )
+            for k in _GLIFFY_METRIC_FIELDS:
+                totals[k] += metrics[k]
+            unsupported_total += metrics["unsupported"]
+            succeeded += 1
+            diagrams[src.stem] = {"svg": str(out_path), "method": method}
+            file_entries.append(
+                {
+                    "source": str(src),
+                    "output": str(out_path),
+                    "status": "ok",
+                    "method": method,
+                    "metrics": metrics,
+                    "error": None,
+                }
+            )
+            if verbose or metrics["unsupported"]:
+                note = f" ({metrics['unsupported']} unsupported)" if metrics["unsupported"] else ""
+                colour = "yellow" if metrics["unsupported"] else "green"
+                console.print(
+                    f"  [{colour}]ok[/{colour}]   {src.name} [{method}] -> {out_path.name}{note}"
+                )
+        except (ConversionError, OSError, ValueError) as exc:
+            file_entries.append(
+                {
+                    "source": str(src),
+                    "output": None,
+                    "status": "error",
+                    "method": None,
+                    "metrics": None,
+                    "error": str(exc),
+                }
+            )
+            console.print(f"  [red]fail[/red] {src.name}: {exc}")
+
+    failed = len(gliffy_files) - succeeded
+    report_doc = {
+        "generated_at": datetime.now(UTC).isoformat(),
+        "input_dir": str(in_dir),
+        "output_dir": str(out_dir),
+        "glob": glob,
+        "total_files": len(gliffy_files),
+        "succeeded": succeeded,
+        "failed": failed,
+        "unsupported_total": unsupported_total,
+        "totals": totals,
+        "diagrams": diagrams,
+        "files": file_entries,
+    }
+    report_path.write_text(json.dumps(report_doc, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    table = Table(title="Gliffy resolution totals", show_lines=False)
+    table.add_column("Metric", style="cyan")
+    table.add_column("Count", justify="right", style="green")
+    for k in _GLIFFY_METRIC_FIELDS:
+        table.add_row(k, str(totals[k]))
+    console.print(table)
+    console.print(
+        f"\n[green]Done.[/green] {succeeded}/{len(gliffy_files)} diagrams resolved "
+        f"({failed} failed, {unsupported_total} unsupported object(s)). Report -> {report_path}"
+    )
+    raise typer.Exit(1 if failed else 0)
+
+
+# ── convert-drawio ──────────────────────────────────────────────────────────────
+
+
+_DRAWIO_METRIC_FIELDS = ("nodes", "edges", "placeholders", "svgs", "images")
+
+
+@app.command(name="convert-drawio")
+def convert_drawio(
+    input_dir: Path | None = typer.Argument(
+        None,
+        help="Directory to scan recursively for .gliffy files. Default: the inbox.",
+    ),
+    output_dir: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Where to write .drawio files (mirrors input tree). Default: outbox/drawio.",
+    ),
+    glob: str = typer.Option("**/*.gliffy", "--glob", "-g", help="Gliffy file glob pattern."),
+    report: Path | None = typer.Option(
+        None,
+        "--report",
+        "-r",
+        help="JSON report path. Default: outbox/reports/drawio-report.json.",
+    ),
+    check: bool = typer.Option(
+        False,
+        "--check/--no-check",
+        help="Run the semantic-model round-trip fidelity oracle per file and record diffs "
+        "(emit -> re-parse -> compare). Makes the command exit non-zero on any mismatch.",
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> None:
+    """Convert Gliffy diagrams to draw.io (.drawio) and emit a JSON report.
+
+    Goes ``.gliffy`` -> shared semantic model -> mxGraph XML (basic-shape coverage;
+    icon stencils become dashed placeholders). With ``--check`` each file is also
+    round-tripped (emit -> re-parse -> compare) to verify emitter/parser fidelity.
+    """
+    import json
+    from datetime import UTC, datetime
+
+    from .config import PipelineConfig
+    from .convert import ConversionError, convert_gliffy_to_drawio_file, roundtrip_check
+    from .workspace import (
+        OUTBOX_DRAWIO,
+        WorkspaceError,
+        ensure_inbox_exists,
+        resolve_input,
+        resolve_output_dir,
+        resolve_output_file,
+    )
+
+    _cfg = PipelineConfig()
+
+    # Workspace contract: .gliffy read from the inbox, .drawio + report under outbox.
+    try:
+        ensure_inbox_exists(_cfg.inbox_dir, _cfg.enforce_workspace)
+        in_dir = resolve_input(input_dir, inbox_dir=_cfg.inbox_dir, enforce=_cfg.enforce_workspace)
+        out_dir = resolve_output_dir(
+            output_dir,
+            outbox_dir=_cfg.outbox_dir,
+            enforce=_cfg.enforce_workspace,
+            default_subpath=OUTBOX_DRAWIO,
+        )
+        report_path = resolve_output_file(
+            report,
+            outbox_dir=_cfg.outbox_dir,
+            enforce=_cfg.enforce_workspace,
+            default_subpath="reports/drawio-report.json",
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    gliffy_files = sorted(in_dir.glob(glob))
+    if not gliffy_files:
+        console.print(f"[yellow]No Gliffy files matching {glob!r} under {in_dir}[/yellow]")
+        raise typer.Exit(0)
+
+    console.print(f"[cyan]Found {len(gliffy_files)} Gliffy files in {in_dir}[/cyan]")
+
+    file_entries: list[dict] = []
+    totals = dict.fromkeys(_DRAWIO_METRIC_FIELDS, 0)
+    succeeded = 0
+    mismatched = 0
+
+    for src in track(gliffy_files, description="Converting..."):
+        rel = src.relative_to(in_dir).with_suffix(".drawio")
+        out_target = out_dir / rel
+        try:
+            out_path, _xml, metrics = convert_gliffy_to_drawio_file(src, out_target)
+            for k in _DRAWIO_METRIC_FIELDS:
+                totals[k] += metrics[k]
+            fidelity = None
+            if check:
+                fidelity = roundtrip_check(src.read_text(encoding="utf-8-sig"))
+                if not fidelity["equal"]:
+                    mismatched += 1
+            succeeded += 1
+            file_entries.append(
+                {
+                    "source": str(src),
+                    "output": str(out_path),
+                    "status": "ok",
+                    "metrics": metrics,
+                    "fidelity": {"equal": fidelity["equal"], "summary": fidelity["summary"]}
+                    if fidelity
+                    else None,
+                    "error": None,
+                }
+            )
+            if check and fidelity and not fidelity["equal"]:
+                console.print(
+                    f"  [yellow]mismatch[/yellow] {src.name}: {fidelity['summary']['diffs']} "
+                    f"field diff(s) -> {out_path.name}"
+                )
+            elif verbose:
+                ph = (
+                    f", {metrics['placeholders']} placeholder(s)" if metrics["placeholders"] else ""
+                )
+                console.print(
+                    f"  [green]ok[/green]   {src.name} -> {out_path.name} "
+                    f"({metrics['nodes']} nodes, {metrics['edges']} edges{ph})"
+                )
+        except (ConversionError, OSError, ValueError) as exc:
+            file_entries.append(
+                {
+                    "source": str(src),
+                    "output": None,
+                    "status": "error",
+                    "metrics": None,
+                    "fidelity": None,
+                    "error": str(exc),
+                }
+            )
+            console.print(f"  [red]fail[/red] {src.name}: {exc}")
+
+    failed = len(gliffy_files) - succeeded
+    report_doc = {
+        "generated_at": datetime.now(UTC).isoformat(),
+        "input_dir": str(in_dir),
+        "output_dir": str(out_dir),
+        "glob": glob,
+        "total_files": len(gliffy_files),
+        "succeeded": succeeded,
+        "failed": failed,
+        "checked": check,
+        "mismatched": mismatched,
+        "totals": totals,
+        "files": file_entries,
+    }
+    report_path.write_text(json.dumps(report_doc, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    table = Table(title="draw.io conversion totals", show_lines=False)
+    table.add_column("Metric", style="cyan")
+    table.add_column("Count", justify="right", style="green")
+    for k in _DRAWIO_METRIC_FIELDS:
+        table.add_row(k, str(totals[k]))
+    console.print(table)
+    check_note = f", {mismatched} fidelity mismatch(es)" if check else ""
+    console.print(
+        f"\n[green]Done.[/green] {succeeded}/{len(gliffy_files)} converted "
+        f"({failed} failed{check_note}). Report -> {report_path}"
+    )
+    raise typer.Exit(1 if (failed or mismatched) else 0)
+
+
 # ── export ────────────────────────────────────────────────────────────────────
 
 
@@ -434,6 +1089,19 @@ def export(
     ),
     fmt: str = typer.Option("json", "--format", "-f", help="Output format: json | jsonl."),
     glob: str = typer.Option("**/*.md", "--glob", "-g", help="Markdown file glob pattern."),
+    lang: str = typer.Option(
+        "en",
+        "--lang",
+        help="Document language for enrichment rules: en|de|fr|it, or 'auto' to detect "
+        "per file (auto needs the [lang] extra).",
+    ),
+    jobs: int = typer.Option(
+        1,
+        "--jobs",
+        "-j",
+        help="Parallel worker threads for per-file processing (0 = all CPUs). Output is "
+        "byte-identical to -j1; pandoc runs overlap for a real speedup on many files.",
+    ),
     merge_prose: bool = typer.Option(
         False,
         "--merge-prose",
@@ -480,7 +1148,9 @@ def export(
         raise typer.Exit(2)
 
     config = PipelineConfig(
-        chunk_merge_prose=merge_prose, chunk_merge_definitions=merge_definitions
+        chunk_merge_prose=merge_prose,
+        chunk_merge_definitions=merge_definitions,
+        language=lang,
     )
 
     # Enforce the workspace contract: .md read from the inbox, chunks + report
@@ -567,11 +1237,14 @@ def export(
             except Exception as exc:
                 _fail(src, exc)
     else:
-        for src in track(md_files, description="Exporting..."):
-            try:
-                _write(src, pipeline.process_file(src))
-            except Exception as exc:
+        # Compute (parse → enrich → chunk; pandoc-heavy) runs in parallel; the writes/report
+        # are applied sequentially in input order so output is identical for any --jobs value.
+        computed = _parallel_compute(md_files, pipeline.process_file, jobs)
+        for src, chunks, exc in computed:
+            if exc is not None:
                 _fail(src, exc)
+            else:
+                _write(src, chunks)
 
     failed = len(md_files) - succeeded
     report_doc = {
@@ -941,6 +1614,18 @@ def search(
         "-H",
         help="Fuse dense + lexical (BM25) rankings via Reciprocal Rank Fusion.",
     ),
+    lexical: bool = typer.Option(
+        False,
+        "--lexical",
+        "-L",
+        help="Model-free search: rank by BM25 lexical score only — no embedding model is "
+        "loaded. Works for every language (overrides --hybrid).",
+    ),
+    lang: str = typer.Option(
+        "en",
+        "--lang",
+        help="Language for lexical tokenization/stemming: en|de|fr|it.",
+    ),
 ) -> None:
     """Search the indexed SDD documents."""
     from .config import PipelineConfig
@@ -951,6 +1636,8 @@ def search(
     overrides: dict = {
         "embedding_model": model,
         "embedding_provider": provider,
+        "language": lang,
+        "lexical_only": lexical,
     }
     # Only override when the flag was given, so PIPELINE_VECTOR_STORE_BACKEND
     # keeps working when --backend is omitted.
@@ -1032,6 +1719,16 @@ def tui(
     hybrid: bool = typer.Option(
         False, "--hybrid", "-H", help="Start with hybrid (dense + BM25) retrieval enabled."
     ),
+    lexical: bool = typer.Option(
+        False,
+        "--lexical",
+        "-L",
+        help="Model-free mode: rank by BM25 only, load no embedding model. Auto-enabled "
+        "when the index itself was built lexical.",
+    ),
+    lang: str = typer.Option(
+        "en", "--lang", help="Language for lexical tokenization/stemming: en|de|fr|it."
+    ),
 ) -> None:
     """Launch an interactive search browser (TUI).
 
@@ -1045,6 +1742,8 @@ def tui(
     overrides: dict = {
         "embedding_model": model,
         "embedding_provider": provider,
+        "language": lang,
+        "lexical_only": lexical,
     }
     if backend is not None:
         overrides["vector_store_backend"] = backend
@@ -1095,13 +1794,24 @@ def mcp_serve(
     hybrid: bool = typer.Option(
         False, "--hybrid", "-H", help="Default tools to hybrid (dense + BM25) retrieval."
     ),
+    lexical: bool = typer.Option(
+        False,
+        "--lexical",
+        "-L",
+        help="Model-free mode: serve BM25-only search, load no embedding model. "
+        "Auto-enabled when the index itself was built lexical.",
+    ),
+    lang: str = typer.Option(
+        "en", "--lang", help="Language for lexical tokenization/stemming: en|de|fr|it."
+    ),
 ) -> None:
     """Run a local MCP server (stdio) exposing semantic search over the index.
 
     Requires the optional 'mcp' install extra. Designed for GitHub Copilot: register
     it in .vscode/mcp.json so the ADR-generator agent can retrieve corpus context.
-    Speaks JSON-RPC on stdout - do not pipe anything else through this command. The
-    embedder (--model/--provider) must match the one that built the index.
+    Speaks JSON-RPC on stdout - do not pipe anything else through this command. With a
+    semantic index the embedder (--model/--provider) must match the one that built it;
+    a lexical index (or --lexical) loads no model at all.
     """
     from .config import PipelineConfig
     from .workspace import WorkspaceError, resolve_index_path
@@ -1109,6 +1819,8 @@ def mcp_serve(
     overrides: dict = {
         "embedding_model": model,
         "embedding_provider": provider,
+        "language": lang,
+        "lexical_only": lexical,
     }
     if backend is not None:
         overrides["vector_store_backend"] = backend
@@ -1207,6 +1919,23 @@ def check() -> None:
     except ImportError:
         rows.append(("mcp (MCP server, optional)", "not installed - pip install '.[mcp]'", True))
 
+    # Optional PowerShell 7 — informational, never gates. No floor: report whatever
+    # exists (5.1 marked "not v7"), honoring a PIPELINE_PWSH_PATH pin. Non-intrusive.
+    from .config import PipelineConfig
+
+    info = resolve_pwsh(PipelineConfig())
+    if info is None:
+        pwsh_ver = "not found - install pwsh 7 or set PIPELINE_PWSH_PATH"
+    elif info.source == "config-missing":
+        pwsh_ver = f"PIPELINE_PWSH_PATH set but no file at {info.path}"
+    elif not info.usable:
+        pwsh_ver = f"@ {info.path} - found but could not run it"
+    elif not info.is_v7:
+        pwsh_ver = f"{info.version} @ {info.path} - not v7"
+    else:
+        pwsh_ver = f"{info.version} @ {info.path} ({info.source})"
+    rows.append(("pwsh (PowerShell 7, optional)", pwsh_ver, True))
+
     for var in ("PIPELINE_AZURE_OPENAI_ENDPOINT", "PIPELINE_AZURE_OPENAI_DEPLOYMENT"):
         rows.append((var, "set" if os.environ.get(var) else "unset", True))
     # Never print the key value — only whether it is present.
@@ -1217,6 +1946,32 @@ def check() -> None:
             True,
         )
     )
+
+    # Optional extras for the multilingual + ingestion features — informational.
+    for pkg, extra in (
+        ("langdetect", "lang"),
+        ("snowballstemmer", "stem"),
+        ("requests", "download"),
+    ):
+        try:
+            mod = __import__(pkg)
+            rows.append(
+                (f"{pkg} ({extra}, optional)", getattr(mod, "__version__", "installed"), True)
+            )
+        except ImportError:
+            rows.append(
+                (f"{pkg} ({extra}, optional)", f"not installed - pip install '.[{extra}]'", True)
+            )
+
+    # Download credentials (set/unset only — never the secret value).
+    for var in (
+        "PIPELINE_DOWNLOAD_COOKIE",
+        "PIPELINE_DOWNLOAD_BEARER",
+        "PIPELINE_DOWNLOAD_USERNAME",
+        "PIPELINE_DOWNLOAD_PASSWORD",
+        "PIPELINE_DOWNLOAD_LOGIN_URL",
+    ):
+        rows.append((var, "set" if os.environ.get(var) else "unset", True))
 
     table = Table(title="Environment check")
     table.add_column("Dependency")
@@ -1229,6 +1984,37 @@ def check() -> None:
 
     console.print(table)
     raise typer.Exit(0 if all_ok else 1)
+
+
+# ── pwsh-path ─────────────────────────────────────────────────────────────────
+
+
+@app.command("pwsh-path")
+def pwsh_path(
+    allow_any: bool = typer.Option(
+        False,
+        "--allow-any",
+        help="Print any usable PowerShell (e.g. 5.1), not just v7+.",
+    ),
+) -> None:
+    """Print the absolute resolved pwsh path for scripts to capture.
+
+    Enforces PowerShell 7 by default (``--allow-any`` accepts any usable version).
+    Honors PIPELINE_PWSH_PATH. Non-intrusive — never edits PATH. On success: the
+    path on stdout, exit 0. On failure: a diagnostic on stderr, empty stdout, exit 1
+    (so ``$env:PWSH = (sdd-pipeline pwsh-path)`` captures cleanly).
+    """
+    from .config import PipelineConfig
+
+    floor = 1 if allow_any else 7
+    info = resolve_pwsh(PipelineConfig(), min_major=floor)
+    if info is None or not info.usable:
+        print(
+            "error: no usable PowerShell 7 found - install pwsh 7 or set PIPELINE_PWSH_PATH",
+            file=sys.stderr,
+        )
+        raise typer.Exit(1)
+    print(info.path)  # plain stdout — path only, no Rich markup in a captured value
 
 
 @app.command()

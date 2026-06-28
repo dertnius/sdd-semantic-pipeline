@@ -90,6 +90,30 @@ def _run_pandoc(pandoc_path: str, input_text: str, args: list[str]) -> str:
     return result.stdout.decode("utf-8")
 
 
+def run_pandoc_file(
+    pandoc_path: str, src: Path, args: list[str], *, cwd: Path | None = None
+) -> str:
+    """Run pandoc reading a *binary* file positionally (UTF-8 stdout).
+
+    The docx reader needs the source as a real file argument — pandoc unzips it
+    and pulls embedded media — so it cannot go through stdin like the HTML path's
+    :func:`_run_pandoc`. ``stderr`` is decoded leniently (a pandoc warning may
+    carry non-UTF-8 bytes) and raised as :class:`ConversionError` on failure.
+
+    *cwd* runs pandoc from a working directory (with *src* given absolutely):
+    used so a relative ``--extract-media=.`` yields image links relative to the
+    output file rather than an absolute, backslashed path.
+    """
+    result = subprocess.run(
+        [pandoc_path, str(src), *args],
+        capture_output=True,
+        cwd=str(cwd) if cwd is not None else None,
+    )
+    if result.returncode != 0:
+        raise ConversionError(f"pandoc error:\n{result.stderr.decode('utf-8', 'replace')}")
+    return result.stdout.decode("utf-8")
+
+
 # ── Stage-D text layer: post-process, frontmatter, metrics (engine-agnostic) ──
 
 

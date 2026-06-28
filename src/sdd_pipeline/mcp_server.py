@@ -292,15 +292,20 @@ def run_server(config: PipelineConfig) -> None:
         "index: %s chunk(s) at %r (backend=%s)", count, persist, config.vector_store_backend
     )
 
+    lexical = config.lexical_only or pipe._index_is_lexical()
     if count > 0:
-        logger.info(
-            "loading embedding model (provider=%s model=%s)...",
-            config.embedding_provider,
-            config.embedding_model,
-        )
+        if lexical:
+            logger.info("lexical (BM25) mode: no embedding model will be loaded")
+        else:
+            logger.info(
+                "loading embedding model (provider=%s model=%s)...",
+                config.embedding_provider,
+                config.embedding_model,
+            )
         try:
             pipe.search("warmup", n_results=1)
-            logger.info("ready: model loaded, index verified (%s chunk(s))", count)
+            verb = "index ready (lexical)" if lexical else "model loaded, index verified"
+            logger.info("ready: %s (%s chunk(s))", verb, count)
         except ValueError as exc:
             logger.error("index/provenance check failed: %s", exc)
             logger.error("server will start; tool calls will return this error until fixed.")

@@ -7,10 +7,7 @@
         "-m",
         "sdd_pipeline.cli",
         "mcp",
-        "--model",
-        "BAAI/bge-large-en-v1.5",
-        "--provider",
-        "local"
+        "--lexical"
       ],
       "env": {
         "PYTHONPATH": "${workspaceFolder}/src",
@@ -18,8 +15,7 @@
         "PIPELINE_CHROMA_PERSIST_DIR": "${workspaceFolder}/outbox/index",
         "PIPELINE_COLLECTION_NAME": "sdd_docs",
         "PIPELINE_VECTOR_STORE_BACKEND": "memory",
-        "PIPELINE_EMBEDDING_PROVIDER": "local",
-        "PIPELINE_EMBEDDING_MODEL": "BAAI/bge-large-en-v1.5"
+        "PIPELINE_LEXICAL_ONLY": "true"
       }
     }
   }
