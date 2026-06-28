@@ -578,7 +578,11 @@ with **MkDocs Material** (the `[docs]` extra → `mkdocs serve` for a local sear
 site; `mkdocs build` → `./site`). The site is **published as GitLab Pages** by the
 `pages` job in `.gitlab-ci.yml` (`mkdocs build --strict --site-dir public` on the
 default branch → served at `https://<namespace>.gitlab.io/<project>/`); the same
-`--strict` build also runs as a *check* in `verify:quality`. `README.md` + `CLAUDE.md`
+`--strict` build also runs as a *check* in `verify:quality`. The same site is **also
+published as GitHub Pages** by the `pages` workflow (`.github/workflows/pages.yml`,
+default-branch / `workflow_dispatch`) at
+`https://dertnius.github.io/sdd-semantic-pipeline/`; the GitHub `docs.yml` workflow is
+the matching PR-time `--strict` *check*. `README.md` + `CLAUDE.md`
 stay canonical at the repo root and are surfaced in-site via include-stubs
 (`docs/_root/`). The authoritative
 per-command and per-setting references are `docs/reference/cli.md` and

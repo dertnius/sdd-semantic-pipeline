@@ -1,0 +1,61 @@
+# GitHub counterpart of the GitLab `pages` job (.gitlab-ci.yml): publish the MkDocs
+# site as GitHub Pages. `docs.yml` remains the PR *check* (it builds with --strict to
+# validate nav/render/orphans but never publishes); this workflow is the default-branch
+# *publish* path, deploying via GitHub's native Pages actions (artifact + deploy-pages,
+# not a gh-pages branch). Model-free — the `[docs]` extra is mkdocs-material +
+# include-markdown only (no pandoc, no embedding model). Served at
+# https://dertnius.github.io/sdd-semantic-pipeline/.
+#
+# One-time setup: repo Settings -> Pages -> Source = "GitHub Actions". The
+# configure-pages `enablement: true` step below tries to set this automatically.
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**", "mkdocs.yml", "README.md", "CLAUDE.md", "src/**"]
+  workflow_dispatch:
+
+# Required by deploy-pages: read the repo, write the Pages deployment, mint the OIDC
+# token the deploy action exchanges.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Standard GitHub Pages guard: serialize deploys, never cancel an in-flight one.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install (docs extra)
+        run: pip install -e ".[docs]"
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: MkDocs build (--strict)
+        run: mkdocs build --strict --site-dir site
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
