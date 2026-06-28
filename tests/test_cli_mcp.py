@@ -8,6 +8,7 @@ the workspace test exits before `run_server`, and the run-path test monkeypatche
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -19,12 +20,18 @@ from sdd_pipeline.cli import app
 
 runner = CliRunner()
 
+# Typer/Rich styles help with ANSI; bold (`\x1b[1m`) splits a flag into `-`+`-name`,
+# which NO_COLOR does not strip. Remove escape codes so flag-name substring checks are
+# rendering-independent across platforms.
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
 
 def test_mcp_help_lists_options():
     result = runner.invoke(app, ["mcp", "--help"])
     assert result.exit_code == 0
+    plain = _ANSI_RE.sub("", result.output)
     for opt in ("--index", "--model", "--provider", "--backend", "--hybrid"):
-        assert opt in result.output
+        assert opt in plain
 
 
 def test_mcp_out_of_zone_index_exits_2(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
