@@ -16,20 +16,24 @@ For full overview, read [README.md](../README.md).
 - Canonical setup and commands: [README.md](../README.md), [devfile.yaml](../devfile.yaml), [pyproject.toml](../pyproject.toml)
 - Local retrieval for agents: the `sdd-semantic` MCP server (`sdd-pipeline mcp`, registered in [.vscode/mcp.json](../.vscode/mcp.json)) exposes semantic search over the indexed corpus (`semantic_search`, `find_decision_context`, `list_section_types`, `list_spaces`). The ADR Generator agent calls it to ground ADRs; build an index first (`sdd-pipeline index`).
 
-## Prompts & Guardrails (Copilot assets)
+## Skills, Prompts & Guardrails (Copilot assets)
 
-The Claude Code skills are ported to Copilot. Reach for them by typing `/` in chat:
+Reach for these by typing `/` in chat:
 
-- **Prompts** ([`.github/prompts/`](prompts/)): `/doc-to-md`, `/convert-confluence`,
-  `/index-corpus`, `/docs-sync`, `/code-review`, `/simplify`, `/security-review`,
-  `/verify-change`, `/grill-me`, `/gitlab-mr`, `/copilot-context`. See
-  [`prompts/README.md`](prompts/README.md) for what each drives.
+- **Agent Skills** (`.claude/skills/*/SKILL.md`, the portable open standard read by both
+  Claude Code and Copilot): `/doc-to-md`, `/docs-sync`. The single source of truth for
+  our project skills.
+- **Prompts** ([`.github/prompts/`](prompts/), Copilot-only ports of Claude's
+  bundled/plugin skills): `/convert-confluence`, `/index-corpus`, `/code-review`,
+  `/simplify`, `/security-review`, `/verify-change`, `/grill-me`, `/gitlab-mr`,
+  `/copilot-context`. See [`prompts/README.md`](prompts/README.md) for what each drives.
 - **Scoped guardrails** ([`.github/instructions/`](instructions/)) auto-apply by
   `applyTo` glob — the Architecture Guardrails below are enforced for `src/**` edits
   via `python.instructions.md`.
 
 These assets are validated in CI by `src/tools/scripts/check_copilot.py` (frontmatter,
-real CLI/MCP references, resolvable links) — keep them green when you edit `.github/`.
+real CLI/MCP references, resolvable links, spec-valid `SKILL.md`) — keep them green when
+you edit `.github/` or `.claude/skills/`.
 
 ## High-Value Commands
 
