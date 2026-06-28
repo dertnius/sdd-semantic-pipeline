@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 from pathlib import Path
 
 import pytest
@@ -21,6 +22,16 @@ from sdd_pipeline.models import (
     SectionType,
     SemanticChunk,
 )
+
+# ── Deterministic CLI rendering (Typer/Rich) ──────────────────────────────────
+# Typer renders help/errors through Rich, which colorizes and wraps to the terminal
+# width. On a narrow, color-emitting CI terminal that splits a `--flag` across ANSI
+# codes and breaks phrases across lines (e.g. `does\nnot exist`), so substring
+# assertions in the CLI tests fail there while passing on a wide local terminal. Pin
+# no-color + a wide width at import time so CliRunner output is stable everywhere.
+os.environ["NO_COLOR"] = "1"
+os.environ["COLUMNS"] = "200"
+os.environ.pop("FORCE_COLOR", None)
 
 # ── Workspace contract (inbox/outbox) ─────────────────────────────────────────
 
