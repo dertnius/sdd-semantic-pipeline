@@ -1,23 +1,28 @@
 # Copilot prompt files
 
 Reusable GitHub Copilot prompts, invoked as `/<name>` in Copilot Chat (VS Code).
-These are the **Copilot port of the Claude Code skills** — Copilot can't run
-Claude's Skill tool, so each skill's behaviour is reproduced as a native prompt
-file. Scoped guardrails live alongside in [`../instructions/`](../instructions/);
-the persistent ADR persona lives in [`../agents/`](../agents/).
+
+> **Project-specific skills now live once as portable `SKILL.md` folders under
+> `.claude/skills/`** (the [Agent Skills](https://agentskills.io) open standard),
+> read **natively** by both Claude Code and Copilot — so they are no longer ported
+> here. `doc-to-md` and `docs-sync` moved there. The prompts below are the ones with
+> **no** `.claude/skills/` equivalent: Copilot-only ports of Claude's **bundled/plugin**
+> skills (Claude Code has those built-in) plus two pipeline-flagship workflows.
+
+Scoped guardrails live alongside in [`../instructions/`](../instructions/); the
+persistent ADR persona lives in [`../agents/`](../agents/).
 
 Validity is enforced by `src/tools/scripts/check_copilot.py` (CI): every prompt
 needs a `description`, every `sdd-pipeline <cmd>` must be a real command, every
-referenced MCP tool must exist, and every link must resolve.
+referenced MCP tool must exist, every link must resolve — and every
+`.claude/skills/*/SKILL.md` must have spec-valid frontmatter (C6).
 
-## Ported prompts
+## Copilot-only prompts
 
 | Prompt | Source skill | Drives |
 |---|---|---|
-| `/doc-to-md` | `doc-to-md` | `sdd-pipeline convert-docx` |
 | `/convert-confluence` | (pipeline flagship) | `sdd-pipeline convert` + `lint` |
 | `/index-corpus` | (pipeline flagship) | `sdd-pipeline index --lexical` / `export` |
-| `/docs-sync` | `docs-sync` | `check_docs.py` + reference pages |
 | `/code-review` | `code-review` | the working diff (correctness + guardrails) |
 | `/simplify` | `simplify` | quality-only cleanup of the diff |
 | `/security-review` | `security-review` | secret/subprocess/SSRF/workspace review |

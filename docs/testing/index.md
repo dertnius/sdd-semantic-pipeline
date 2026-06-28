@@ -88,5 +88,6 @@ The docs themselves are tested. [`check_docs.py`](../../src/tools/scripts/check_
 (no LLM/model/pandoc) asserts docs are **not broken** (links, source-refs, render,
 well-formedness) **and updated** (CLI/config/extras/citation coverage against the
 code). It runs in the CI `verify` stage alongside `mkdocs build --strict`. The
-on-demand `docs-sync` Claude skill (`.claude/skills/docs-sync/SKILL.md`, a local
-helper since `.claude/` is gitignored) drives the same reconciliation interactively.
+on-demand `docs-sync` skill (`.claude/skills/docs-sync/SKILL.md`, a tracked portable
+Agent Skill read by both Claude Code and Copilot) drives the same reconciliation
+interactively.
