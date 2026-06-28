@@ -62,7 +62,8 @@ auto-applies the right guardrails to the file you're editing:
   [the CLI](../reference/cli.md) and [configuration](../reference/configuration.md)
   references authoritative; run the doc-health battery.
 - `copilot-assets.instructions.md` (`.github/prompts/**`, `/agents/**`,
-  `/instructions/**`, `.vscode/mcp.json`) — the conventions the gate below enforces.
+  `/instructions/**`, `.vscode/mcp.json`, `.claude/skills/**`) — the conventions the
+  gate below enforces.
 
 Repo-wide rules (always on) stay in `.github/copilot-instructions.md`; the ADR
 Generator persona is `.github/agents/adr-generator.agent.md`, which grounds ADRs via

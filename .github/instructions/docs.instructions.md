@@ -27,5 +27,5 @@ single source of truth for behaviour.
   freshness table in `docs/learn/README.md` — keep both in sync when code moves.
 - **Log doc changes** in `docs/guides/log.md`
   (`## YYYY-MM-DD | docs-sync | <what changed>`).
-- The interactive fix-it pass is the `/docs-sync` prompt; the enforced guarantee is
-  `check_docs.py` + CI.
+- The interactive fix-it pass is the `/docs-sync` skill (`.claude/skills/docs-sync/`);
+  the enforced guarantee is `check_docs.py` + CI.
