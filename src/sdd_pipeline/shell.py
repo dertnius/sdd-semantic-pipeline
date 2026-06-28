@@ -23,7 +23,7 @@ import re
 import shutil
 import subprocess
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 # Probe command — arg-list, no shell. ``-NoProfile``/``-NoLogo`` certify the
 # *install* (deterministic, CI-safe), not the caller's profile. We only ever run
@@ -81,10 +81,10 @@ def known_pwsh_locations() -> list[str]:
         for var in ("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)"):
             base = os.environ.get(var)
             if base:
-                paths.append(str(Path(base) / "PowerShell" / "7" / "pwsh.exe"))
+                paths.append(str(PureWindowsPath(base) / "PowerShell" / "7" / "pwsh.exe"))
         local = os.environ.get("LOCALAPPDATA")
         if local:  # Microsoft Store alias shim
-            paths.append(str(Path(local) / "Microsoft" / "WindowsApps" / "pwsh.exe"))
+            paths.append(str(PureWindowsPath(local) / "Microsoft" / "WindowsApps" / "pwsh.exe"))
     elif system == "Darwin":
         paths.extend(["/usr/local/bin/pwsh", "/opt/homebrew/bin/pwsh"])
     else:  # Linux and other POSIX
@@ -170,7 +170,11 @@ def _candidate_paths() -> list[tuple[str, str]]:
             sysroot = os.environ.get("SystemRoot")
             if sysroot:
                 legacy = str(
-                    Path(sysroot) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+                    PureWindowsPath(sysroot)
+                    / "System32"
+                    / "WindowsPowerShell"
+                    / "v1.0"
+                    / "powershell.exe"
                 )
                 if _is_file(legacy):
                     ps = legacy
