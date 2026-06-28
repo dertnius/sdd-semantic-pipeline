@@ -229,6 +229,75 @@ def index(
     )
 
 
+@app.command()
+def reindex(
+    file: Path = typer.Argument(..., help="Path to a single .md file to re-index in place."),
+    output_dir: str | None = typer.Option(
+        None, "--output", "-o", help="Vector index persistence path. Default: outbox/index."
+    ),
+    model: str = typer.Option(
+        "BAAI/bge-large-en-v1.5",
+        "--model",
+        "-m",
+        help="Local embedding model. Ignored when --provider azure (deployment from env).",
+    ),
+    provider: str = typer.Option("local", "--provider", help="Embedding backend: local | azure."),
+    lang: str = typer.Option(
+        "en", "--lang", help="Document language for enrichment rules: en|de|fr|it, or 'auto'."
+    ),
+    lexical: bool = typer.Option(
+        False, "--lexical", "-L", help="Model-free lexical (BM25) index — no embedding model."
+    ),
+    backend: str | None = typer.Option(
+        None, "--backend", help="Vector store backend: memory (default) | chroma."
+    ),
+) -> None:
+    """Re-index a single markdown file in place (drop its chunks, then index it).
+
+    The incremental refresh the SAD-sync flow uses after a human applies a SAD patch,
+    so the next coverage check sees the change without a full corpus rebuild. The
+    --provider/--model/--backend MUST match the existing index's provenance.
+    """
+    from .config import PipelineConfig
+    from .pipeline import SemanticPipeline
+    from .workspace import WorkspaceError, resolve_index_path, resolve_input
+
+    overrides: dict = {
+        "embedding_model": model,
+        "embedding_provider": provider,
+        "language": lang,
+        "lexical_only": lexical,
+    }
+    if backend is not None:
+        overrides["vector_store_backend"] = backend
+
+    ws = PipelineConfig(**overrides)
+    try:
+        # Enforce the workspace contract: the file under the inbox, index under outbox.
+        resolve_input(file.parent, inbox_dir=ws.inbox_dir, enforce=ws.enforce_workspace)
+        index_path = resolve_index_path(
+            output_dir or ws.chroma_persist_dir,
+            outbox_dir=ws.outbox_dir,
+            enforce=ws.enforce_workspace,
+        )
+    except WorkspaceError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2) from exc
+
+    if not file.is_file():
+        console.print(f"[red]Not a file: {file}[/red]")
+        raise typer.Exit(1)
+
+    overrides["chroma_persist_dir"] = str(index_path)
+    pipeline = SemanticPipeline(config=PipelineConfig(**overrides))
+    try:
+        count = pipeline.reindex_file(file)
+    except Exception as exc:
+        console.print(f"  [red]X[/red] {file.name}: {exc}")
+        raise typer.Exit(1) from exc
+    console.print(f"[green]Re-indexed[/green] {file.name} -> {count} chunks at {index_path}")
+
+
 # ── download ──────────────────────────────────────────────────────────────────
 
 

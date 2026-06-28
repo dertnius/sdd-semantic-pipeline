@@ -9,19 +9,23 @@ report, and exits non-zero if **any** check fails, so a broken Copilot asset can
 merge. Wired into CI (the GitHub ``copilot-health`` workflow + the GitLab ``verify``
 stage) and the ``.github/instructions/copilot-assets.instructions.md`` guardrail.
 
-Scope — the tracked Copilot integration surface:
+Scope — the tracked agent-asset surface (Copilot integration + portable skills):
 
-  .github/prompts/*.prompt.md            reusable /slash prompts (ported skills)
+  .github/prompts/*.prompt.md            reusable /slash prompts (Copilot-only ports)
   .github/agents/*.agent.md              custom agents (e.g. the ADR Generator)
   .github/instructions/*.instructions.md scoped guardrails (applyTo globs)
   .github/copilot-instructions.md        repo-wide Copilot instructions
   .github/**/*.md                        any other Copilot markdown (link/shape checks)
   .vscode/mcp.json                       the sdd-semantic MCP server registration
+  .claude/skills/*/SKILL.md              portable Agent Skills, read NATIVELY by both
+                                         Claude Code and Copilot (the single source of
+                                         truth — see CLAUDE.md "GitHub Copilot integration")
 
 Checks:
 
   C1 frontmatter   prompts have a non-empty `description`; agents have `name` +
-                   `description`; instructions have a non-empty `applyTo`.
+                   `description` (and any `agents:` refs resolve to real subagents);
+                   instructions have a non-empty `applyTo`.
   C2 CLI refs      every `sdd-pipeline <cmd>` / `-m sdd_pipeline.cli <cmd>` used in a
                    code span resolves to a registered CLI command.
   C3 MCP wiring    .vscode/mcp.json registers the sdd-semantic stdio server whose args
@@ -29,6 +33,13 @@ Checks:
                    (`tool_name(`) is one the server actually exposes.
   C4 links         relative markdown links / source-file links in the assets resolve.
   C5 well-formed   balanced code fences + a closed YAML frontmatter block.
+  C6 skills        every .claude/skills/*/SKILL.md has Agent-Skills-spec frontmatter:
+                   `name` present, equal to its directory, lowercase letters/digits/
+                   hyphens only (no leading/trailing/double hyphen), <=64 chars; and a
+                   non-empty `description` of <=1024 chars.
+
+The code-span/link/shape checks (C2/C4/C5) also cover the skill bodies; C3's tool-ref
+scan does too, so a SKILL.md naming a non-existent MCP tool in call form is caught.
 
 Usage:  python src/tools/scripts/check_copilot.py [--verbose]
 """
@@ -48,6 +59,8 @@ INSTRUCTIONS = GH / "instructions"
 COPILOT_INSTRUCTIONS = GH / "copilot-instructions.md"
 MCP_JSON = REPO / ".vscode" / "mcp.json"
 MCP_SERVER = REPO / "src" / "sdd_pipeline" / "mcp_server.py"
+# Portable Agent Skills — the single tracked source both Claude Code and Copilot read.
+SKILLS = REPO / ".claude" / "skills"
 
 # Markdown inline link / image: [text](target). Group 1 = target.
 _LINK_RE = re.compile(r"!?\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+[\"'][^\"']*[\"'])?\s*\)")
@@ -62,6 +75,9 @@ _TOOL_CALL_RE = re.compile(r"\b([a-z][a-z0-9_]*_[a-z0-9_]*)\s*\(")
 # A `.tool()` / `.tool(...)` decorator (FastMCP) — the next def is the tool name.
 _TOOL_DECORATOR_RE = re.compile(r"\.tool\s*\(")
 _DEF_RE = re.compile(r"\s*def\s+([a-z_][a-z0-9_]*)\s*\(")
+# Agent Skills `name` spec: lowercase letters/digits/hyphens, no leading/trailing hyphen
+# (the `--` ban and the 64-char cap are checked separately for clearer messages).
+_SKILL_NAME_RE = re.compile(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$")
 
 # Documented placeholders that appear in call form but are not real tools (mirrors
 # check_docs.py's `module.py` placeholder). `tool_name(` is the convention example in
@@ -82,11 +98,15 @@ def _read(p: Path) -> str:
 
 
 def _markdown_assets() -> list[Path]:
-    """Every tracked Copilot markdown file (prompts, agents, instructions, the
-    repo-wide instructions, any README) — the scope for code-span/link/shape checks."""
-    if not GH.is_dir():
-        return []
-    return sorted(GH.rglob("*.md"))
+    """Every tracked agent-asset markdown file — the .github/ Copilot surface (prompts,
+    agents, instructions, the repo-wide instructions, any README) plus the portable
+    .claude/skills/ bodies — the scope for code-span/link/shape checks (C2/C3/C4/C5)."""
+    out: list[Path] = []
+    if GH.is_dir():
+        out.extend(GH.rglob("*.md"))
+    if SKILLS.is_dir():
+        out.extend(SKILLS.rglob("*.md"))
+    return sorted(out)
 
 
 def _frontmatter_block(text: str) -> str | None:
@@ -109,6 +129,15 @@ def _fm_keys(block: str) -> dict[str, str]:
         if m:
             out[m.group(1)] = m.group(2).strip().strip("'\"").strip()
     return out
+
+
+def _parse_agents_list(raw: str) -> list[str]:
+    """Parse an inline ``agents: [a, b]`` coordinator frontmatter value into names."""
+    raw = raw.strip()
+    if not raw:
+        return []
+    raw = raw.removeprefix("[").removesuffix("]")
+    return [s.strip().strip("'\"") for s in raw.split(",") if s.strip()]
 
 
 def _code_spans(text: str) -> str:
@@ -190,6 +219,13 @@ def check_frontmatter() -> list[str]:
         for key in ("name", "description"):
             if not keys.get(key):
                 errors.append(f"{_rel(p)}: agent frontmatter needs a non-empty '{key}'")
+        # A coordinator's `agents:` allowlist must point at real subagent files — the
+        # orchestration analogue of C2 (CLI refs) and C3 (MCP tools) resolving.
+        for ref in _parse_agents_list(keys.get("agents", "")):
+            if not (AGENTS / f"{ref}.agent.md").is_file():
+                errors.append(
+                    f"{_rel(p)}: 'agents' references unknown subagent {ref!r} (no {ref}.agent.md)"
+                )
     for p in sorted(INSTRUCTIONS.glob("*.instructions.md")) if INSTRUCTIONS.is_dir() else []:
         block = _frontmatter_block(_read(p))
         if block is None:
@@ -297,12 +333,54 @@ def _code_spans_stripped(text: str) -> str:
     return re.sub(r"`[^`]*`", "", "\n".join(out))
 
 
+def check_skills() -> list[str]:
+    """C6 — every .claude/skills/<dir>/SKILL.md carries Agent-Skills-spec frontmatter.
+
+    Validates the two required fields against the open standard (agentskills.io
+    /specification): `name` is present, equals its directory, matches the lowercase
+    letters/digits/hyphens grammar (no leading/trailing/double hyphen) and is <=64
+    chars; `description` is present and <=1024 chars. Skips silently when the skills
+    dir is absent (e.g. a checkout without the tracked subtree)."""
+    errors: list[str] = []
+    if not SKILLS.is_dir():
+        return errors
+    for skill_md in sorted(SKILLS.glob("*/SKILL.md")):
+        skill_dir = skill_md.parent.name
+        block = _frontmatter_block(_read(skill_md))
+        if block is None:
+            errors.append(f"{_rel(skill_md)}: missing/unterminated YAML frontmatter")
+            continue
+        keys = _fm_keys(block)
+        name = keys.get("name", "")
+        if not name:
+            errors.append(f"{_rel(skill_md)}: skill frontmatter needs a non-empty 'name'")
+        else:
+            if name != skill_dir:
+                errors.append(
+                    f"{_rel(skill_md)}: 'name: {name}' must equal the skill directory '{skill_dir}'"
+                )
+            if len(name) > 64 or not _SKILL_NAME_RE.match(name) or "--" in name:
+                errors.append(
+                    f"{_rel(skill_md)}: invalid skill 'name: {name}' "
+                    "(lowercase letters/digits/hyphens, no leading/trailing/double hyphen, <=64 chars)"
+                )
+        desc = keys.get("description", "")
+        if not desc:
+            errors.append(f"{_rel(skill_md)}: skill frontmatter needs a non-empty 'description'")
+        elif len(desc) > 1024:
+            errors.append(
+                f"{_rel(skill_md)}: 'description' exceeds 1024 chars ({len(desc)}) — trim it"
+            )
+    return errors
+
+
 _CHECKS = [
     ("C1 frontmatter", check_frontmatter),
     ("C2 CLI refs", check_cli_refs),
     ("C3 MCP wiring", check_mcp),
     ("C4 links", check_links),
     ("C5 well-formed", check_wellformed),
+    ("C6 skills", check_skills),
 ]
 
 
@@ -311,8 +389,8 @@ def main(argv: list[str] | None = None) -> int:
     verbose = "--verbose" in argv or "-v" in argv
     sys.path.insert(0, str(REPO / "src"))  # make `import sdd_pipeline` work standalone
 
-    if not GH.is_dir():
-        print("check-copilot: no .github/ directory — nothing to check.")
+    if not GH.is_dir() and not SKILLS.is_dir():
+        print("check-copilot: no .github/ or .claude/skills/ — nothing to check.")
         return 0
 
     total = 0
@@ -326,9 +404,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"    - {e}")
     print()
     if total:
-        print(f"check-copilot: {total} issue(s) - Copilot assets are broken or stale.")
+        print(f"check-copilot: {total} issue(s) - agent assets are broken or stale.")
         return 1
-    print("check-copilot: all checks passed — Copilot assets are valid and wired to real code.")
+    print("check-copilot: all checks passed — agent assets are valid and wired to real code.")
     return 0
 
 

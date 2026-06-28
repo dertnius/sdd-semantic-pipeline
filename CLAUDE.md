@@ -362,15 +362,18 @@ for editable native draw.io shapes of complex diagrams, use draw.io's own Gliffy
   GitHub Copilot's ADR-generator agent can RAG over the indexed corpus. It imports
   `mcp` only when the command runs, so core flows never pull it in; it imports only
   the public `SemanticPipeline` + enums (no `vector_store`/`embeddings`/`workspace`
-  — the CLI command does path resolution), so **no guardrail is broken**. Four
+  — the CLI command does path resolution), so **no guardrail is broken**. Five
   tools: `semantic_search` (full content; lean `section_type`/`space`/`hybrid`
   filters; `hybrid=None` defers to the server default — never forces it off),
   `find_decision_context` (snippets grouped onto the ADR template — a guaranteed
   `general` recall bucket plus precision buckets `context`/`decision`/
   `alternatives`/`tradeoffs`/`consequences`/`done_criteria`, deduped precision-first
-  so a passage appears once), and `list_section_types`/`list_spaces`. Each tool's
+  so a passage appears once), `find_sad_coverage` (does a decision + its named
+  entities appear in the SAD? — `doc_type="sad"`-filtered, an entity+section **hard**
+  match else a section-scoped semantic **soft** match, for the SAD-sync step), and
+  `list_section_types`/`list_spaces`. Each tool's
   logic is a plain module function (`run_search`/`find_decision_context_impl`/
-  `result_to_dict`/`resolve_section_type`/…), so the contract is unit-tested
+  `find_sad_coverage_impl`/`result_to_dict`/`resolve_section_type`/…), so the contract is unit-tested
   model-free via `hashing_embedder` (no MCP runtime) — see `tests/test_mcp_server.py`.
   The **stdio contract** keeps stdout for JSON-RPC: all diagnostics go to stderr,
   ASCII-only (Windows cp1252). `run_server` eagerly warms the model at startup
@@ -534,14 +537,21 @@ protocol. Both backend libraries are imported lazily, so `export`/`scan`/
 
 ## GitHub Copilot integration
 
-The Claude Code skills are **ported to GitHub Copilot** as native assets under
-`.github/` (which is intentionally tracked, unlike the gitignored `.claude/`). Copilot
-can't run Claude's Skill tool, so each skill's behaviour is reproduced as a Copilot
-prompt file, with the architecture guardrails as scoped instruction files:
+Each **project-specific** skill is authored **once** as a portable `SKILL.md` folder
+under `.claude/skills/` and read **natively** by both Claude Code and GitHub Copilot —
+they follow the [Agent Skills](https://agentskills.io) open standard, and `.claude/skills/`
+is the one project directory both tools discover (Claude Code reads only `.claude/skills/`
++ plugins; Copilot reads `.github/skills/`, `.claude/skills/`, or `.agents/skills/`). So
+`.claude/skills/` is the **single source of truth** for our own skills — it is the **one
+tracked exception** to the otherwise-gitignored `.claude/` (see `.gitignore`). The
+`.github/` assets are now only the things with **no** `.claude/skills/` equivalent:
+Copilot-only **ports of Claude's bundled/plugin skills** (Claude Code already has those
+built-in), the scoped instruction guardrails, the custom agent, and the MCP wiring.
 
 | Asset | Path | Role |
 |---|---|---|
-| Prompt files | `.github/prompts/*.prompt.md` | the ported skills, invoked as `/<name>` in Copilot Chat (`doc-to-md`, `convert-confluence`, `index-corpus`, `docs-sync`, `code-review`, `simplify`, `security-review`, `verify-change`, `grill-me`, `gitlab-mr`, `copilot-context`). `.github/prompts/README.md` lists the port + the Claude-Code-only skills deliberately **not** ported. |
+| Agent Skills | `.claude/skills/*/SKILL.md` | the project skills (`doc-to-md`, `docs-sync`), invoked as `/<name>` in **both** Claude Code and Copilot Chat. Tracked; the single source of truth. |
+| Prompt files | `.github/prompts/*.prompt.md` | Copilot-only ports of Claude's bundled/plugin skills, invoked as `/<name>` in Copilot Chat (`convert-confluence`, `index-corpus`, `code-review`, `simplify`, `security-review`, `verify-change`, `grill-me`, `gitlab-mr`, `copilot-context`). `.github/prompts/README.md` lists the port + the Claude-Code-only skills deliberately **not** ported. |
 | Instruction files | `.github/instructions/*.instructions.md` | scoped guardrails auto-applied by `applyTo` glob — `python` (module boundaries/determinism), `tests` (markers/fixtures), `docs` (doc-health), `copilot-assets` (the conventions the gate below enforces). |
 | Custom agent | `.github/agents/adr-generator.agent.md` | the ADR Generator persona (grounds ADRs via the `sdd-semantic` MCP server). |
 | Repo-wide rules | `.github/copilot-instructions.md` | always-on Copilot instructions + the Know How wiki agent. |
@@ -549,13 +559,17 @@ prompt file, with the architecture guardrails as scoped instruction files:
 
 These assets are kept honest by `src/tools/scripts/check_copilot.py` — a deterministic,
 model-free gate (sibling of `check_docs.py`): C1 frontmatter present (prompts need a
-`description`, agents `name`+`description`, instructions `applyTo`), C2 every
-`sdd-pipeline <cmd>` in a code span is a real CLI command, C3 the `.vscode/mcp.json`
-wiring is valid and every referenced MCP tool (`tool_name(...)`) exists, C4 links
-resolve, C5 fences/frontmatter are well-formed. It runs in the GitLab `verify:quality`
-stage and the GitHub `copilot-health` workflow, so a broken Copilot asset cannot merge
-(self-tested by `tests/test_check_copilot.py`). VS Code discovery is enabled in
-`.vscode/settings.json` (`chat.promptFiles`, the instruction-files locations).
+`description`, agents `name`+`description` and any `agents:` refs resolve, instructions
+`applyTo`), C2 every `sdd-pipeline <cmd>` in a code span is a real CLI command, C3 the
+`.vscode/mcp.json` wiring is valid and every referenced MCP tool (`tool_name(...)`)
+exists, C4 links resolve, C5 fences/frontmatter are well-formed, **C6** every
+`.claude/skills/*/SKILL.md` has spec-valid frontmatter (`name` matching its dir +
+grammar/length, `description` ≤1024 chars) — and C2/C4/C5 also cover the skill bodies.
+It runs in the GitLab `verify:quality` stage and the GitHub `copilot-health` workflow,
+so a broken skill or Copilot asset cannot merge (self-tested by
+`tests/test_check_copilot.py`). VS Code discovery is enabled in `.vscode/settings.json`
+(`chat.agentSkillsLocations` for skills, `chat.promptFiles`, the instruction-files
+locations).
 
 ## Documentation
 
@@ -579,5 +593,5 @@ command/flag is in `cli.md`, every `PIPELINE_*` field is in `configuration.md`, 
 `module.py::symbol` citation in `learn/` resolves). It runs in the CI `verify` stage
 alongside `mkdocs build --strict`, so a stale or broken doc cannot merge. The
 on-demand `.claude/skills/docs-sync` skill reconciles docs↔code and logs to
-`docs/guides/log.md`. (`.claude/` is gitignored — the skill is a local helper; the
-tracked, enforceable guarantee is `check_docs.py` + CI.)
+`docs/guides/log.md`. (It is a tracked portable Agent Skill — see *GitHub Copilot
+integration* — but the enforceable guarantee remains `check_docs.py` + CI.)

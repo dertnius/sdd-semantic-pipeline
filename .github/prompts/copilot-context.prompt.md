@@ -1,5 +1,5 @@
 ---
-agent: ask
+mode: ask
 description: Explain a Copilot /context report and diagnose why Copilot may be missing files, then give concrete fixes to improve its awareness of this codebase.
 ---
 

@@ -18,8 +18,10 @@ pytest.importorskip("mcp")  # the server module imports `mcp`; skip if the extra
 
 from sdd_pipeline.config import PipelineConfig
 from sdd_pipeline.mcp_server import (
+    _expected_sad_sections,
     build_server,
     find_decision_context_impl,
+    find_sad_coverage_impl,
     list_section_type_values,
     list_spaces_impl,
     resolve_section_type,
@@ -37,6 +39,7 @@ _RESULT_KEYS = {
     "source_url",
     "breadcrumb",
     "section_type",
+    "doc_type",
     "space",
     "entities",
     "tags",
@@ -258,7 +261,7 @@ def test_list_spaces_empty_index_returns_empty(hashing_embedder, tmp_path):
 # ── build_server smoke (exposes the 4 tools) ───────────────────────────────────
 
 
-def test_build_server_exposes_four_tools(sample_document_model, hashing_embedder, tmp_path):
+def test_build_server_exposes_five_tools(sample_document_model, hashing_embedder, tmp_path):
     import asyncio
 
     from mcp.server.fastmcp import FastMCP
@@ -274,6 +277,7 @@ def test_build_server_exposes_four_tools(sample_document_model, hashing_embedder
     assert {t.name for t in tools} == {
         "semantic_search",
         "find_decision_context",
+        "find_sad_coverage",
         "list_section_types",
         "list_spaces",
     }
@@ -303,3 +307,109 @@ def test_run_search_model_free_over_lexical_index(sample_document_model, tmp_pat
     results = run_search(pipe, "kubernetes deployment", top_k=5, section_type=None, space=None)
     assert results
     assert all(_RESULT_KEYS <= set(r) for r in results)
+
+
+# ── find_sad_coverage + doc_type stamping ──────────────────────────────────────
+
+
+def _sad_doc(arch_text: str = "We adopt FooBar for messaging."):
+    """A minimal SAD-shaped doc: 3 fingerprint headings -> detect_doc_type == 'sad'."""
+    from sdd_pipeline.models import (
+        ContentBlock,
+        ContentType,
+        DocumentMetadata,
+        DocumentModel,
+        Section,
+    )
+
+    def section(title: str, sid: str, body: str) -> Section:
+        return Section(
+            level=1,
+            title=title,
+            section_id=sid,
+            breadcrumb=[title],
+            blocks=[
+                ContentBlock(block_id=f"{sid}-b", content_type=ContentType.PARAGRAPH, text=body)
+            ],
+        )
+
+    return DocumentModel(
+        doc_id="sad-doc",
+        metadata=DocumentMetadata(title="RetailNexus SAD", space="ARCH", url="http://sad"),
+        root_sections=[
+            section("Introduction", "intro", "This document is the SAD for the system."),
+            section("Architecture", "arch", arch_text),
+            section("Data Model", "data", "Orders are stored in PostgreSQL per service."),
+        ],
+        source_path="/tmp/sad.md",
+    )
+
+
+def _one_section_doc():
+    from sdd_pipeline.models import (
+        ContentBlock,
+        ContentType,
+        DocumentMetadata,
+        DocumentModel,
+        Section,
+    )
+
+    return DocumentModel(
+        doc_id="notes-doc",
+        metadata=DocumentMetadata(title="Notes", space="MISC", url="http://n"),
+        root_sections=[
+            Section(
+                level=1,
+                title="Notes",
+                section_id="notes",
+                breadcrumb=["Notes"],
+                blocks=[
+                    ContentBlock(
+                        block_id="n-b",
+                        content_type=ContentType.PARAGRAPH,
+                        text="Some loose notes about caching and queues.",
+                    )
+                ],
+            )
+        ],
+        source_path="/tmp/notes.md",
+    )
+
+
+def test_doc_type_stamped_onto_sad_chunks(hashing_embedder, tmp_path):
+    pipe = _indexed_pipeline(tmp_path, _sad_doc(), hashing_embedder)
+    sad_chunks = [r for r in pipe.store.get_corpus() if r.metadata.get("doc_type") == "sad"]
+    assert sad_chunks  # detect_doc_type ran at index time and stamped every chunk
+
+
+def test_find_sad_coverage_hard_match(hashing_embedder, tmp_path):
+    pipe = _indexed_pipeline(tmp_path, _sad_doc(), hashing_embedder)
+    # The decision carries no section hint, so expected == () and a hard match only
+    # needs the entity to appear in any SAD chunk (objective, model-free path).
+    out = find_sad_coverage_impl(pipe, "adopt the FooBar approach", ["FooBar"])
+    assert out["covered"] is True
+    assert out["confidence"] == "hard"
+    assert out["matched_entities"] == ["FooBar"]
+    assert out["missing_entities"] == []
+
+
+def test_find_sad_coverage_no_sad_in_index(hashing_embedder, tmp_path):
+    # A non-SAD doc -> no chunk has doc_type='sad' -> confidence 'none', not covered.
+    pipe = _indexed_pipeline(tmp_path, _one_section_doc(), hashing_embedder)
+    out = find_sad_coverage_impl(pipe, "anything at all", ["JWT"])
+    assert out["covered"] is False
+    assert out["confidence"] == "none"
+    assert out["missing_entities"] == ["JWT"]
+
+
+def test_find_sad_coverage_empty_index_raises(hashing_embedder, tmp_path):
+    pipe = _empty_pipeline(tmp_path, hashing_embedder)
+    with pytest.raises(ValueError, match="Index is empty"):
+        find_sad_coverage_impl(pipe, "anything", ["X"])
+
+
+def test_expected_sad_sections_mapping():
+    assert _expected_sad_sections("choose a database engine") == ("data_model",)
+    assert _expected_sad_sections("integration via a kafka topic") == ("architecture",)
+    assert _expected_sad_sections("a brand new microservice") == ("architecture", "api")
+    assert _expected_sad_sections("nothing topical here") == ()

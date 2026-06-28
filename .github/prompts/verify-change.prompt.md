@@ -1,5 +1,5 @@
 ---
-agent: agent
+mode: agent
 model: Claude Sonnet 4.6
 description: Verify a change actually works by running the real commands — fast tests, lint/format, type-check, and the relevant sdd-pipeline CLI path — then report proof.
 ---

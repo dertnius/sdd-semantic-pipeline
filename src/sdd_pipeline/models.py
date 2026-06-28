@@ -195,6 +195,9 @@ class DocumentModel:
     metadata: DocumentMetadata
     root_sections: list[Section] = field(default_factory=list)
     source_path: str = ""
+    # Document-type facet from doc_router.detect_doc_type ("sad"/"unknown"/""),
+    # set during enrichment and copied onto every chunk for filtering.
+    doc_type: str = ""
 
     def iter_sections(self) -> list[Section]:
         """Flatten all sections (BFS order)."""
@@ -236,6 +239,11 @@ class SemanticChunk:
     # is citable on its own (the doc_id alone is an opaque hash).
     title: str = ""
     source_url: str = ""
+    # Document-type facet (e.g. "sad") from doc_router.detect_doc_type, stamped at
+    # index time so search/coverage checks can filter to a SAD. Metadata-only — it is
+    # NOT folded into to_embed_text, so it changes neither the vector nor
+    # EMBED_FORMAT_VERSION.
+    doc_type: str = ""
     # Inventory-driven structured fields copied from the Section (see Section.metadata).
     metadata: dict[str, list[str]] = field(default_factory=dict)
 
@@ -347,6 +355,7 @@ class SemanticChunk:
             "labels": json.dumps(self.labels),
             "title": self.title,
             "source_url": self.source_url,
+            "doc_type": self.doc_type,
             "fields": json.dumps(self.metadata, sort_keys=True),
         }
 
@@ -376,6 +385,7 @@ class SemanticChunk:
             "labels": list(self.labels),
             "title": self.title,
             "source_url": self.source_url,
+            "doc_type": self.doc_type,
             "metadata": {k: list(v) for k, v in self.metadata.items()},
             "embed_text": self.to_embed_text(),
         }

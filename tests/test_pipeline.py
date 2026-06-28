@@ -43,6 +43,22 @@ def _mock_store() -> MagicMock:
     return store
 
 
+def test_reindex_keeps_chunk_count_stable(sample_document_model, hashing_embedder, tmp_path):
+    """The incremental refresh mechanism (delete_document + re-index, as used by
+    ``reindex_file``) must replace a doc's chunks, not duplicate them."""
+    config = PipelineConfig(chroma_persist_dir=str(tmp_path))
+    pipe = SemanticPipeline(config=config, embedding_model=hashing_embedder)
+    n = pipe.index_doc(sample_document_model, [])
+    assert n > 0
+    assert pipe.store.count == n
+
+    # reindex_file does: store.delete_document(doc_id) then index the file again.
+    pipe.store.delete_document(sample_document_model.doc_id)
+    n2 = pipe.index_doc(sample_document_model, [])
+    assert n2 == n
+    assert pipe.store.count == n  # no duplicates after the delete + re-index
+
+
 def _prose_doc() -> DocumentModel:
     section = Section(
         level=1,
