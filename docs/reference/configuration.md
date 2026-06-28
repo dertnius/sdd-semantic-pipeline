@@ -24,7 +24,7 @@ Optional dependency groups in [`pyproject.toml`](../../pyproject.toml). Install 
 | Extra | Pulls in | Enables |
 |---|---|---|
 | `dev` | pytest, pytest-cov, pytest-mock, ruff, mypy, chromadb, textual, mcp, langdetect, snowballstemmer, cairosvg, pillow | Full test + lint + type-check toolchain. |
-| `docs` | mkdocs-material, mkdocs-include-markdown-plugin | The local MkDocs documentation site (`mkdocs serve`). |
+| `docs` | mkdocs-material, mkdocs-include-markdown-plugin | The local MkDocs documentation site (`mkdocs serve`, or `mkdocs build` → offline-searchable `./site`). |
 | `azure` | openai | Azure OpenAI embedding provider (`--provider azure`). |
 | `chroma` | chromadb | Chroma vector-store backend (`--backend chroma`). |
 | `tui` | textual | Interactive search TUI (`sdd-pipeline tui`). |

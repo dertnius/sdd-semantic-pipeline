@@ -34,7 +34,21 @@ The "why" behind the architecture lives in four defense documents:
 ## This site
 
 These docs are authored as Markdown under [`docs/`](https://github.com) and rendered
-with **MkDocs Material** (`mkdocs serve` for a local searchable site). The same
-Markdown is the single source for the repo, this site, and a future wiki.js import.
-The repo-root [README](_root/readme.md) and [CLAUDE.md](_root/claude.md) are surfaced
-in-site but stay canonical at the repository root.
+with **MkDocs Material**. The same Markdown is the single source for the repo, this
+site, and a future wiki.js import. The repo-root [README](_root/readme.md) and
+[CLAUDE.md](_root/claude.md) are surfaced in-site but stay canonical at the
+repository root.
+
+Three ways to read these docs, all with working full-text search:
+
+- **Hosted** — the published [GitHub Pages](https://dertnius.github.io/sdd-semantic-pipeline/)
+  / GitLab Pages sites (search works out of the box over HTTPS).
+- **Offline, from disk** — run `mkdocs build`, then open `site/index.html`
+  directly (double-click / `file://`). The `offline` plugin inlines the search
+  index into every page, so search works with **no server**.
+- **Live editing** — `mkdocs serve`, then browse <http://localhost:8000/> for a
+  local site with hot-reload.
+
+> Material's search is client-side and normally needs an HTTP server, so a plain
+> `file://` build would search nothing. If search ever misbehaves from disk, serve
+> the built site instead: `python -m http.server -d site 8000`.
