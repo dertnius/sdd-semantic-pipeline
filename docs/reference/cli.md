@@ -52,6 +52,28 @@ unless `--lexical`. Input: inbox. Output: `outbox/index/`.
 sdd-pipeline index --model all-MiniLM-L6-v2 --merge-prose -v
 ```
 
+## reindex
+
+Re-index a **single** `.md` file in place: drop its existing chunks, then index it.
+The incremental refresh the SAD-sync flow uses after a human applies a SAD patch, so the
+next coverage check sees the change without a full corpus rebuild. The
+`--provider`/`--model`/`--backend` **must match** the existing index's provenance. Input:
+a file under the inbox. Output: `outbox/index/`.
+
+| Flag | Default | Description |
+|---|---|---|
+| `file` (arg) | — | Path to the single `.md` file to re-index. |
+| `--output`, `-o` | `outbox/index` | Vector index persistence path. |
+| `--model`, `-m` | `BAAI/bge-large-en-v1.5` | Local embedding model (ignored when `--provider azure`). |
+| `--provider` | `local` | Embedding backend: `local` \| `azure`. |
+| `--lang` | `en` | Enrichment language: `en\|de\|fr\|it`, or `auto` (needs `[lang]`). |
+| `--lexical`, `-L` | off | Model-free BM25 index (no embeddings stored). |
+| `--backend` | env / `memory` | Vector store backend: `memory` \| `chroma`. |
+
+```powershell
+sdd-pipeline reindex inbox/sad-retailnexus-oms.md --provider azure
+```
+
 ## download
 
 Download manifest-listed files (Confluence HTML / SharePoint docx) into the inbox.

@@ -17,6 +17,28 @@
         "PIPELINE_VECTOR_STORE_BACKEND": "memory",
         "PIPELINE_LEXICAL_ONLY": "true"
       }
+    },
+    "sdd-semantic-dense": {
+      "type": "stdio",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "args": [
+        "-m",
+        "sdd_pipeline.cli",
+        "mcp",
+        "--provider",
+        "azure"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "PYTHONUTF8": "1",
+        "PIPELINE_CHROMA_PERSIST_DIR": "${workspaceFolder}/outbox/index-dense",
+        "PIPELINE_COLLECTION_NAME": "sdd_docs_dense",
+        "PIPELINE_VECTOR_STORE_BACKEND": "memory",
+        "PIPELINE_EMBEDDING_PROVIDER": "azure",
+        "PIPELINE_AZURE_OPENAI_ENDPOINT": "${env:PIPELINE_AZURE_OPENAI_ENDPOINT}",
+        "PIPELINE_AZURE_OPENAI_DEPLOYMENT": "${env:PIPELINE_AZURE_OPENAI_DEPLOYMENT}",
+        "PIPELINE_AZURE_OPENAI_API_KEY": "${env:PIPELINE_AZURE_OPENAI_API_KEY}"
+      }
     }
   }
 }

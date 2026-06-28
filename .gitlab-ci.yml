@@ -61,7 +61,7 @@ verify:quality:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "push"'
-      changes: ["src/**/*", "tests/**/*", "docs/**/*", "README.md", "CLAUDE.md", "pyproject.toml", "mkdocs.yml", ".github/**/*", ".vscode/mcp.json"]
+      changes: ["src/**/*", "tests/**/*", "docs/**/*", "README.md", "CLAUDE.md", "pyproject.toml", "mkdocs.yml", ".github/**/*", ".vscode/mcp.json", ".claude/skills/**/*"]
   before_script:
     - !reference [.nexus-pip-bootstrap, before_script]
     - pip install -e ".[dev,docs]"

@@ -276,6 +276,7 @@ def _section_to_chunks(
     embed_char_budget: int | None = None,
     keyphrase_fn: Callable[[str], list[str]] | None = None,
     overlap_sentences: int = 0,
+    doc_type: str = "",
 ) -> list[SemanticChunk]:
     """Recursively convert a section and all its subsections into chunks."""
     chunks: list[SemanticChunk] = []
@@ -340,6 +341,7 @@ def _section_to_chunks(
                     labels=list(labels),
                     title=title,
                     source_url=source_url,
+                    doc_type=doc_type,
                 )
             )
 
@@ -443,6 +445,7 @@ def _section_to_chunks(
                 embed_char_budget,
                 keyphrase_fn,
                 overlap_sentences,
+                doc_type=doc_type,
             )
         )
 
@@ -496,6 +499,7 @@ def chunk_document(
     labels = doc.metadata.labels
     title = doc.metadata.title
     source_url = doc.metadata.url
+    doc_type = doc.doc_type
     chunks: list[SemanticChunk] = []
 
     for section in doc.root_sections:
@@ -514,6 +518,7 @@ def chunk_document(
                 embed_char_budget,
                 keyphrase_fn,
                 overlap_sentences,
+                doc_type=doc_type,
             )
         )
 

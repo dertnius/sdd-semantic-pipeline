@@ -25,7 +25,8 @@ broken asset can't merge.
   don't invent commands.
 - Every MCP tool referenced in call form (`tool_name(...)`) must be one the
   `sdd-semantic` server actually exposes: `semantic_search`, `find_decision_context`,
-  `list_section_types`, `list_spaces` (see `src/sdd_pipeline/mcp_server.py`).
+  `find_sad_coverage`, `list_section_types`, `list_spaces`
+  (see `src/sdd_pipeline/mcp_server.py`).
 - `.vscode/mcp.json` must register the `sdd-semantic` stdio server whose args invoke a
   real CLI command (`mcp`).
 - Every relative markdown link / source-file link must resolve on disk.

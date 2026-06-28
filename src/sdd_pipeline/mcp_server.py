@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import sys
 from typing import TYPE_CHECKING, Any
 
@@ -48,6 +49,33 @@ _ADR_BUCKETS: list[tuple[str, tuple[str, ...]]] = [
     ("consequences", ("consequence",)),
     ("done_criteria", ("done_criteria",)),
 ]
+
+# Map a decision's topical keywords to the SAD section(s) that should record it, so
+# find_sad_coverage checks the *expected* section rather than the whole document. The
+# first keyword group found in the decision text wins; no match → search any SAD section.
+_SAD_SECTION_HINTS: list[tuple[tuple[str, ...], tuple[str, ...]]] = [
+    (("database", "datastore", "persistence", "schema", "sql", "table"), ("data_model",)),
+    (("integration", "kafka", "topic", "queue", "event", "message", "broker"), ("architecture",)),
+    (
+        ("service", "microservice", "component", "module", "api", "endpoint"),
+        ("architecture", "api"),
+    ),
+    (("security", "auth", "encryption", "tls", "secret", "credential"), ("security",)),
+    (("deploy", "infrastructure", "kubernetes", "container", "runtime"), ("deployment",)),
+]
+
+
+def _expected_sad_sections(decision: str) -> tuple[str, ...]:
+    """Section-type values where a SAD should record *decision* (``()`` = any).
+
+    Matches on whole word tokens (not substrings) so a hint like ``topic`` does not
+    fire on ``topical`` — the substring-collision class this repo guards against.
+    """
+    tokens = set(re.findall(r"[a-z]+", decision.lower()))
+    for keywords, sections in _SAD_SECTION_HINTS:
+        if tokens & set(keywords):
+            return sections
+    return ()
 
 
 # ── Pure helpers (unit-tested directly, no MCP runtime) ────────────────────────
@@ -104,6 +132,7 @@ def result_to_dict(r: SearchResult, *, truncate: int | None = None) -> dict:
         "source_url": md.get("source_url", ""),
         "breadcrumb": md.get("breadcrumb", ""),
         "section_type": md.get("section_type", ""),
+        "doc_type": md.get("doc_type", ""),
         "space": md.get("space", ""),
         "entities": _loads_list(md.get("entities")),
         "tags": _loads_list(md.get("tags")),
@@ -207,6 +236,100 @@ def list_spaces_impl(pipeline: SemanticPipeline) -> list[str]:
     return sorted(s for s in spaces if s)
 
 
+def find_sad_coverage_impl(
+    pipeline: SemanticPipeline,
+    decision: str,
+    entities: list[str] | None = None,
+    *,
+    score_threshold: float = 0.3,
+    snippet_chars: int = 400,
+) -> dict:
+    """Check whether *decision* (and its named *entities*) is reflected in the SAD.
+
+    Two-tier coverage, mirroring the agreed design:
+      - **hard** — a named entity appears in a SAD chunk in the decision's *expected*
+        section (objective; the caller may auto-accept it).
+      - **soft** — no entity match (or none supplied): fall back to a section-scoped
+        semantic search over the SAD. A top score >= *score_threshold* is *soft*
+        coverage the caller must route through the skeptic + a human before trusting.
+
+    The SAD is identified by the ``doc_type="sad"`` facet stamped at index time. Returns
+    ``{covered, confidence: hard|soft|none, sad_section, matched_entities,
+    missing_entities, score, note}``.
+    """
+    _require_nonempty_index(pipeline)
+    entities = [e for e in (entities or []) if e and e.strip()]
+    expected = _expected_sad_sections(decision)
+
+    sad_chunks = [r for r in pipeline.store.get_corpus() if r.metadata.get("doc_type") == "sad"]
+    if not sad_chunks:
+        return {
+            "covered": False,
+            "confidence": "none",
+            "sad_section": "",
+            "matched_entities": [],
+            "missing_entities": entities,
+            "score": 0.0,
+            "note": "No SAD found in the index (no chunk has doc_type='sad').",
+        }
+
+    # ── Tier 1: hard entity + expected-section match (objective) ──
+    matched: list[str] = []
+    missing: list[str] = []
+    hard_section = ""
+    for ent in entities:
+        low = ent.lower()
+        hit = next(
+            (
+                r
+                for r in sad_chunks
+                if low in r.content.lower()
+                and (not expected or r.metadata.get("section_type") in expected)
+            ),
+            None,
+        )
+        if hit is not None:
+            matched.append(ent)
+            hard_section = hard_section or hit.metadata.get("breadcrumb", "")
+        else:
+            missing.append(ent)
+
+    if entities and not missing:
+        return {
+            "covered": True,
+            "confidence": "hard",
+            "sad_section": hard_section,
+            "matched_entities": matched,
+            "missing_entities": [],
+            "score": 1.0,
+            "note": "All decision entities are present in the expected SAD section.",
+        }
+
+    # ── Tier 2: section-scoped semantic fallback (soft → skeptic + human) ──
+    primary = expected[0] if expected else None
+    candidates = [
+        d
+        for d in run_search(pipeline, decision, 5, primary, None, truncate=snippet_chars)
+        if d.get("doc_type") == "sad"
+    ]
+    top = candidates[0] if candidates else None
+    score = float(top["score"]) if top else 0.0
+    covered = score >= score_threshold
+    return {
+        "covered": covered,
+        "confidence": "soft",
+        "sad_section": top["breadcrumb"] if top else "",
+        "matched_entities": matched,
+        "missing_entities": missing,
+        "score": score,
+        "note": (
+            "Soft semantic match - confirm with the sad-skeptic + a human before trusting."
+            if covered
+            else "No SAD coverage for this decision; likely drift - propose a SAD patch."
+        ),
+    }
+
+
 # ── Server factory ─────────────────────────────────────────────────────────────
 
 
@@ -262,6 +385,19 @@ def build_server(config: PipelineConfig, *, pipeline: SemanticPipeline | None = 
     def list_spaces() -> list[str]:
         """List the Confluence space keys present in the index."""
         return list_spaces_impl(pipe)
+
+    @server.tool()
+    def find_sad_coverage(decision: str, entities: list[str] | None = None) -> dict:
+        """Check whether a decision is reflected in the Software Architecture Document (SAD).
+
+        Pass the decision statement and its named entities (service / technology /
+        topic names). Returns {covered, confidence, sad_section, matched_entities,
+        missing_entities, score, note}. confidence='hard' is an objective entity+section
+        match (trust it); 'soft' is a semantic-only match to confirm via the sad-skeptic
+        + a human; covered=false means the SAD does not record this decision yet (drift -
+        propose a SAD patch). Requires a dense/lexical index built with doc_type stamping.
+        """
+        return find_sad_coverage_impl(pipe, decision, entities)
 
     return server
 

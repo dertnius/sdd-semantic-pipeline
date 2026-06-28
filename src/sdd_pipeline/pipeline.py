@@ -14,6 +14,7 @@ from pathlib import Path
 from .ast_parser import generate_ast
 from .chunking import chunk_document
 from .config import PipelineConfig
+from .doc_router import detect_doc_type
 from .embeddings import EmbedderProtocol, embedder_identity, make_embedder
 from .enrichment import (
     classify_document,
@@ -173,6 +174,10 @@ class SemanticPipeline:
         doc = enrich_document(
             doc, entity_terms=entity_terms, inventory=inventory, language=language
         )
+        # Stamp the document-type facet (e.g. "sad") so chunking copies it onto every
+        # chunk's metadata, letting search/coverage filter to a SAD. Metadata-only —
+        # not embedded, so no EMBED_FORMAT_VERSION bump.
+        doc.doc_type = detect_doc_type(doc)
         merge_prose, merge_definitions = self._resolve_merge_strategy(doc)
         keyphrase_fn = (
             (lambda t: extract_keyphrases(t, language=language))
@@ -300,6 +305,18 @@ class SemanticPipeline:
             Number of chunks indexed (0 if the file produced no content).
         """
         return self.index_doc(self.parse_file(md_path), self.config.entity_terms)
+
+    def reindex_file(self, md_path: Path) -> int:
+        """Re-index a single file *in place*: drop its existing chunks, then index it.
+
+        Lets a downstream edit (e.g. a human-applied SAD patch) be reflected without a
+        full corpus rebuild — the incremental refresh the SAD-sync flow runs before it
+        re-verifies coverage. The configured embedder must match the index provenance.
+
+        Returns the number of chunks indexed.
+        """
+        self.store.delete_document(_stable_doc_id(md_path))
+        return self.index_file(md_path)
 
     def index_directory(
         self,
