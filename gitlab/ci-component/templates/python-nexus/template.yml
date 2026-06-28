@@ -1,0 +1,57 @@
+# python-nexus — stock python:3.x-slim from the enterprise Nexus registry, pip pinned
+# to the Nexus PyPI proxy, plus a runtime pandoc install (no custom image required).
+#
+# INPUTS interpolate at include/merge time with $[[ inputs.NAME ]] (before the pipeline
+# has runtime variables). The NEXUS_* endpoints stay ${VAR} — runtime CI/CD variables
+# resolved by the runner from inherited GROUP-level variables, NOT inputs.
+spec:
+  inputs:
+    python_version:
+      default: "3.11"
+      description: "Python minor series for the python:<ver>-slim Nexus image tag."
+    pandoc_version:
+      default: "3.5"
+      description: "Pandoc version; keys the pandoc binary cache. Bump with NEXUS_PANDOC_URL."
+---
+# `default:` (not top-level) so a consuming job that sets its own `image:`/`cache:`
+# overrides only that job, instead of replacing the shared config wholesale on merge.
+default:
+  image: "${NEXUS_DOCKER_REGISTRY}/python:$[[ inputs.python_version ]]-slim"
+  cache:
+    - key: "sdd-${CI_COMMIT_REF_SLUG}"
+      paths:
+        - .cache/pip
+    - key: "pandoc-$[[ inputs.pandoc_version ]]"   # version-keyed: re-downloaded only on a bump
+      paths:
+        - .cache/bin
+
+variables:
+  PIP_INDEX_URL: "${NEXUS_PYPI_INDEX_URL}"          # anonymous Nexus PyPI proxy (…/simple/)
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PANDOC_VERSION: "$[[ inputs.pandoc_version ]]"    # exposed so consumers can key a job-cache
+  # PIP_TRUSTED_HOST: "nexus.corp.example.com"      # ONLY if Nexus TLS uses an internal CA
+
+# ── reusable before_script fragments (hidden jobs, never executed directly) ───
+# A job has ONE before_script, so a consumer composes these with !reference. After the
+# `include:` merge they are ordinary hidden jobs of the consumer's pipeline.
+.nexus-pip-bootstrap:
+  before_script:
+    - python -m pip install --upgrade pip          # pip resolves from PIP_INDEX_URL → Nexus
+
+# pandoc >= 3.0 at runtime without a custom image. python:3.x-slim has no curl, but it
+# has Python + dpkg-deb: fetch the pinned .deb from the Nexus raw repo with stdlib urllib,
+# extract the binary, and cache it on PATH. NEXUS_PANDOC_URL is a GROUP CI/CD variable.
+# (Debian apt pandoc is 2.17 < the >= 3.0 requirement, so apt is not an option.)
+.nexus-install-pandoc:
+  before_script:
+    - mkdir -p "$CI_PROJECT_DIR/.cache/bin"
+    - export PATH="$CI_PROJECT_DIR/.cache/bin:$PATH"
+    - |
+      command -v pandoc >/dev/null 2>&1 || {
+        python -c "import os,urllib.request; urllib.request.urlretrieve(os.environ['NEXUS_PANDOC_URL'], '/tmp/pandoc.deb')"
+        dpkg-deb -x /tmp/pandoc.deb /tmp/pandoc-x
+        cp /tmp/pandoc-x/usr/bin/pandoc "$CI_PROJECT_DIR/.cache/bin/pandoc"
+        chmod 0755 "$CI_PROJECT_DIR/.cache/bin/pandoc"
+      }
+    - pandoc --version | head -1

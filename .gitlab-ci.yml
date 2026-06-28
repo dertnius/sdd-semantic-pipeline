@@ -25,9 +25,18 @@ stages:
   - publish
   - pages
 
-# Built + pushed separately (see k8s/job.yaml header): az acr build ... -f Containerfile .
-# The image bakes pandoc + the package; ENTRYPOINT is `sdd-pipeline`.
-image: "$CI_REGISTRY_IMAGE/sdd-pipeline:latest"
+# CI bootstrap — the stock python:3.x-slim from the enterprise Nexus registry, pip pinned
+# to the Nexus PyPI proxy, and the runtime pandoc install — is provided by the shared
+# `python-nexus` CI/CD Component (source scaffolded under gitlab/ci-component/). It supplies
+# `default: image`, `default: cache` (pip + pandoc binary), the pip/pandoc `variables:`, and
+# the hidden fragments `.nexus-pip-bootstrap` / `.nexus-install-pandoc` referenced by the
+# jobs below. The NEXUS_* endpoints are inherited GROUP-level CI/CD variables. Pin the
+# component to an exact tag; bump deliberately. Fill in <group> for your instance.
+include:
+  - component: $CI_SERVER_FQDN/<group>/ci-components/python-nexus@1.0.0
+    inputs:
+      python_version: "3.11"
+      pandoc_version: "3.5"
 
 variables:
   PIPELINE_INBOX_DIR: "$CI_PROJECT_DIR/inbox"
@@ -36,14 +45,7 @@ variables:
   PIPELINE_LANGUAGE: "auto"            # per-document EN/DE/FR/IT detection ([lang] extra)
   PYTHONUTF8: "1"                      # Windows-safe; harmless on Linux runners
   ANONYMIZED_TELEMETRY: "false"
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  HF_HOME: "$CI_PROJECT_DIR/.cache/huggingface"
-
-cache:
-  key: "sdd-${CI_COMMIT_REF_SLUG}"
-  paths:
-    - .cache/pip
-    - .cache/huggingface          # only populated by the semantic (model) path
+  HF_HOME: "$CI_PROJECT_DIR/.cache/huggingface"   # used only by index:semantic (model path)
 
 # ── verify: code + docs quality gate (lint, types, fast tests, doc-health) ────
 # Runs on merge requests and on branch pushes that touch code/docs/Copilot assets.
@@ -61,6 +63,7 @@ verify:quality:
     - if: '$CI_PIPELINE_SOURCE == "push"'
       changes: ["src/**/*", "tests/**/*", "docs/**/*", "README.md", "CLAUDE.md", "pyproject.toml", "mkdocs.yml", ".github/**/*", ".vscode/mcp.json"]
   before_script:
+    - !reference [.nexus-pip-bootstrap, before_script]
     - pip install -e ".[dev,docs]"
   script:
     - ruff format --check src/ tests/
@@ -85,6 +88,7 @@ verify:types:
       changes: ["src/**/*", "pyproject.toml"]
   allow_failure: true
   before_script:
+    - !reference [.nexus-pip-bootstrap, before_script]
     - pip install -e ".[dev]"
   script:
     - mypy src/
@@ -97,6 +101,9 @@ download:
     - if: '$CI_PIPELINE_SOURCE == "web"'      # manual "Run pipeline"
       when: manual
       allow_failure: false
+  before_script:
+    - !reference [.nexus-pip-bootstrap, before_script]
+    - pip install -e ".[download]"            # requests — SiteMinder-aware ingestion
   script:
     # PIPELINE_DOWNLOAD_COOKIE (or form-login vars) come from masked CI/CD variables.
     - sdd-pipeline download inbox/manifest.yaml --auth cookie
@@ -115,6 +122,11 @@ convert:
     - changes: [inbox/**/*, config/**/*, .gitlab-ci.yml]
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: manual
+  before_script:
+    - !reference [.nexus-pip-bootstrap, before_script]
+    - !reference [.nexus-install-pandoc, before_script]
+    - pip install -e ".[lang]"                # base package + --lang auto detection
+    - sdd-pipeline check                      # fail fast if pandoc/deps didn't install
   script:
     - sdd-pipeline convert                    # HTML → md (per-file; pandoc-bound)
     - sdd-pipeline convert-docx               # docx → md
@@ -133,6 +145,10 @@ index:lexical:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
     - changes: [inbox/**/*, config/**/*, .gitlab-ci.yml]
+  before_script:
+    - !reference [.nexus-pip-bootstrap, before_script]
+    - !reference [.nexus-install-pandoc, before_script]
+    - pip install -e ".[lang]"
   script:
     - sdd-pipeline export outbox/md --lang auto --jobs 0       # portable .chunks.json artifacts
     - sdd-pipeline index outbox/md --lexical --lang auto       # vectorless index → outbox/index
@@ -154,6 +170,16 @@ index:semantic:
       allow_failure: true
   variables:
     PIPELINE_EMBEDDING_PROVIDER: "azure"
+  # Job-scoped cache: overrides the component's default cache for THIS job only, adding the
+  # HuggingFace cache (model path) while preserving the shared pip + pandoc caches.
+  cache:
+    - { key: "sdd-${CI_COMMIT_REF_SLUG}", paths: [.cache/pip] }
+    - { key: "pandoc-${PANDOC_VERSION}",  paths: [.cache/bin] }
+    - { key: "hf-${CI_COMMIT_REF_SLUG}",  paths: [.cache/huggingface] }
+  before_script:
+    - !reference [.nexus-pip-bootstrap, before_script]
+    - !reference [.nexus-install-pandoc, before_script]
+    - pip install -e ".[azure,lang]"
   script:
     - sdd-pipeline index outbox/md --provider azure --lang auto
   artifacts:
@@ -192,6 +218,7 @@ pages:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       changes: ["docs/**/*", "mkdocs.yml", "README.md", "CLAUDE.md", "src/**/*"]
   before_script:
+    - !reference [.nexus-pip-bootstrap, before_script]
     - pip install -e ".[docs]"
   script:
     - mkdocs build --strict --site-dir public
