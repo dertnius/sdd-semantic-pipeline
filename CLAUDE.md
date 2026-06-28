@@ -574,8 +574,10 @@ locations).
 ## Documentation
 
 All human-facing docs live under `docs/` as Markdown (the single source) and render
-with **MkDocs Material** (the `[docs]` extra → `mkdocs serve` for a local searchable
-site; `mkdocs build` → `./site`). The site is **published as GitLab Pages** by the
+with **MkDocs Material** (the `[docs]` extra → `mkdocs serve` for a live-reload local
+site; `mkdocs build` → `./site`, which the built-in `offline` plugin makes
+*searchable straight from disk* over `file://` — open `site/index.html`). The site is
+**published as GitLab Pages** by the
 `pages` job in `.gitlab-ci.yml` (`mkdocs build --strict --site-dir public` on the
 default branch → served at `https://<namespace>.gitlab.io/<project>/`); the same
 `--strict` build also runs as a *check* in `verify:quality`. The same site is **also

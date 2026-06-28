@@ -2,10 +2,14 @@ site_name: SDD Semantic Pipeline
 site_description: >-
   Confluence/HTML/docx → Markdown converter + local semantic search over SDD/ADR docs.
 docs_dir: docs
-# `mkdocs build` emits ./site (gitignored). `mkdocs serve` runs the local search site.
+# `mkdocs build` emits ./site (gitignored). `mkdocs serve` runs the live-reload site.
 # Emit real <page>.html files (not pretty <page>/ directory URLs) so the built site
 # is browsable by double-clicking over file:// — directory URLs only resolve under a
 # web server and otherwise render as a bare folder listing.
+# Combined with the `offline` plugin below, the built ./site is also *searchable*
+# straight from disk over file:// (open ./site/index.html) — Material's client-side
+# search normally needs an HTTP server, but `offline` ships the index as a JS file
+# loaded behind an iframe-worker shim so no Fetch API call is made.
 use_directory_urls: false
 
 theme:
@@ -31,6 +35,14 @@ theme:
 plugins:
   - search
   - include-markdown
+  # Makes full-text search work when ./site is opened directly over file:// (no
+  # server): it moves the search index to a JS file and uses an iframe-worker shim
+  # to bypass the Fetch API, which browsers block from a file:// origin. Built into
+  # mkdocs-material; must come after `search`; auto-sets use_directory_urls:false.
+  # Default-on via the toggle so a plain `mkdocs build` + double-click is searchable;
+  # `OFFLINE=false mkdocs build` produces a vanilla online build instead.
+  - offline:
+      enabled: !ENV [OFFLINE, true]
 
 markdown_extensions:
   - admonition
