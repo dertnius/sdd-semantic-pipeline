@@ -1,7 +1,12 @@
 # ci-components
 
 Shared **GitLab CI/CD Components** for the enterprise org, importable by **any project
-on the GitLab instance** via `include: component:`. Currently one component:
+on the GitLab instance** via `include: component:`. Currently two components:
+
+- **`python-nexus`** — the base layer: a stock `python:3.x-slim` from the Nexus registry,
+  pip on the Nexus proxy, and a runtime pandoc install. Compose it into your own jobs.
+- **`docx-to-chunks`** — a turnkey pipeline that converts a repo of Word documents
+  (incl. legacy `.doc` via a Windows+Office stage) into semantic chunks + a lexical index.
 
 ## `python-nexus`
 
@@ -23,6 +28,39 @@ container image**. It provides:
 | Input | Default | Purpose |
 |---|---|---|
 | `python_version` | `3.11` | the `python:<ver>-slim` Nexus image tag |
+| `pandoc_version` | `3.5` | keys the pandoc binary cache; pair with `NEXUS_PANDOC_URL` |
+
+---
+
+## `docx-to-chunks`
+
+A **turnkey** pipeline a docs repo includes to turn a folder of Word documents into
+**semantic chunks + a model-free lexical index** — no Python knowledge required. It is
+**self-contained** (it inlines the `python-nexus` essentials rather than nesting a
+component include, which would need the instance-specific `<group>` path).
+
+```
+prepare (.doc -> .docx, Windows+Word)  ->  convert (docx -> md + lint)
+  ->  chunks (export + index --lexical)  ->  publish (chunks + index artifact)
+```
+
+The pipeline reads OOXML `.docx` only, so legacy binary `.doc` is converted first on a
+**Windows runner with Microsoft Word** (via Word COM). If that runner has no Word, the job
+**fails with guidance** to convert locally with
+[`scripts/convert-doc-to-docx.ps1`](scripts/convert-doc-to-docx.ps1) and commit the `.docx`.
+When there are no `.doc` files the prepare job is a no-op; set `convert_legacy_doc: false`
+to skip it entirely (all-`.docx` repos with no Windows runner).
+
+### Inputs
+
+| Input | Default | Purpose |
+|---|---|---|
+| `pipeline_install` | `sdd-pipeline[lang]` | pip spec for the pipeline (Nexus proxy), or a `git+https://…@<tag>` spec |
+| `lang` | `de` | enrichment language (`de`/`en`/`fr`/`it`/`auto`) |
+| `merge_mode` | `prose` | `prose`→`--merge-prose`, `definitions`→`--merge-definitions`, `none`→neither |
+| `convert_legacy_doc` | `true` | run the Windows `.doc`→`.docx` job (set `false` for all-`.docx`/no-Windows) |
+| `windows_runner_tags` | `["windows","office"]` | tags selecting the Windows shell runner with Word |
+| `python_version` | `3.11` | `python:<ver>-slim` Nexus image tag (Linux jobs) |
 | `pandoc_version` | `3.5` | keys the pandoc binary cache; pair with `NEXUS_PANDOC_URL` |
 
 ---
@@ -174,7 +212,81 @@ Pin to an exact tag in production and bump deliberately. A component change is a
 
 ---
 
-## Publishing / maintaining this component
+## Using `docx-to-chunks` in *your* project
+
+The whole pipeline is the component — a consuming **docs** repo needs only an `include:`
+and its documents under `inbox/`.
+
+### Prerequisites
+
+| Prerequisite | Notes |
+|---|---|
+| Group CI/CD variables `NEXUS_DOCKER_REGISTRY` / `NEXUS_PYPI_INDEX_URL` / `NEXUS_PANDOC_URL` | same as `python-nexus` (see above). |
+| The pipeline package installable from Nexus | publish `sdd-pipeline` to a Nexus-hosted PyPI repo in the proxy group, **or** point `pipeline_install` at a `git+https://…/sdd-semantic-pipeline.git@<tag>` spec. |
+| A Windows runner with **Microsoft Word**, tagged to match `windows_runner_tags` | **only** when `convert_legacy_doc: true` and `.doc` files are present. No such runner? See the local fallback below. |
+
+> ⚠️ **The Windows runner must use the `shell` executor running as a logged-in user**
+> (autologon / interactive desktop), **not** a service or `SYSTEM` account. Word COM
+> automation hangs without an interactive desktop session — this is a Word limitation, not
+> a pipeline bug. The job sets `timeout: 30m` as a backstop so a hang (incl. a
+> password-protected `.doc`, which prompts for a password) fails the job rather than running
+> to the global timeout. Unprotect protected `.doc` files before converting.
+
+### The whole consuming pipeline
+
+```yaml
+# docs-repo/.gitlab-ci.yml
+include:
+  - component: $CI_SERVER_FQDN/<group>/ci-components/docx-to-chunks@1.0.0
+    inputs:
+      lang: "de"
+```
+
+Commit `.doc`/`.docx` under `inbox/` (subfolders allowed) and push. The chunks + lexical
+index land as the `publish` job's `chunks-<sha>` artifact (`outbox/chunks/`, `outbox/index/`,
+`outbox/reports/`), 30-day retention.
+
+### All `.docx` already, or no Windows runner
+
+Skip the Windows stage entirely:
+
+```yaml
+    inputs:
+      convert_legacy_doc: false
+```
+
+If you *do* have `.doc` but no Windows+Word runner, convert them locally first with the
+canonical script, then commit the `.docx`:
+
+```powershell
+pwsh ./convert-doc-to-docx.ps1 -InboxDir inbox -Recurse   # needs Microsoft Word on Windows
+git add inbox; git commit -m "convert .doc -> .docx"; git push
+```
+
+(The script is [`scripts/convert-doc-to-docx.ps1`](scripts/convert-doc-to-docx.ps1) in this
+component repo — the same logic the CI Windows job runs. It is a **no-op** when no `.doc` is
+present and **exits 3** with guidance when Word is unavailable.)
+
+### Choosing chunk shape / language
+
+`merge_mode: prose` (default) packs each section's prose into one chunk — best for an
+embedding/search corpus. `definitions` also folds code in (reference/spec docs). `lang`
+fixes the enrichment language (`de` for an all-German corpus) or use `auto` for mixed.
+
+### Troubleshooting
+
+| Symptom | Likely cause |
+|---|---|
+| `prepare:doc-to-docx` stuck pending | no runner matches `windows_runner_tags`; set `convert_legacy_doc: false` and convert locally, or register/tag a Windows+Word runner |
+| prepare fails `exit 3` "Microsoft Word is not available" | the matched Windows runner has no Word installed — fix the runner or convert locally |
+| prepare **hangs** then hits `timeout: 30m` | the runner isn't an interactive logged-in session (Word COM needs one), or a `.doc` is password-protected. Run the runner as a logged-in user (autologon), and unprotect protected docs. |
+| `convert` fails on a file | a `.doc` slipped through unconverted (the converter rejects binary `.doc`), or `lint --strict` found block-severity residue — read `outbox/reports/` |
+| `pip install` can't find `sdd-pipeline` | package not in the Nexus PyPI repo — publish it, or set `pipeline_install` to a `git+https` spec |
+| (anything Nexus/image/pandoc related) | see the `python-nexus` troubleshooting table above — `docx-to-chunks` uses the same Nexus plumbing |
+
+---
+
+## Publishing / maintaining these components
 
 This source is **scaffolded inside the `sdd-semantic-pipeline` repo** under
 `gitlab/ci-component/` for review, but a CI/CD Catalog component must live in its **own**
@@ -182,14 +294,18 @@ GitLab project. To publish:
 
 1. Create a GitLab project `<group>/ci-components` and push the **contents of this
    `gitlab/ci-component/` directory to its root** (so `templates/python-nexus/template.yml`
-   sits at the repo root).
+   and `templates/docx-to-chunks/template.yml` sit under the repo root, and the
+   `scripts/` dir alongside them).
 2. Add a project description + this README, then **Settings → CI/CD → CI/CD Catalog
    resource → ON**.
 3. Set the three `NEXUS_*` variables at the **group** level.
-4. Push a branch / open an MR → the `component-selftest` job validates the component at
-   `@$CI_COMMIT_SHA` (pulls the Nexus image, installs pandoc, does a trivial pip install).
+4. Push a branch / open an MR → the `component-selftest` and `docx-to-chunks-selftest`
+   jobs validate the components at `@$CI_COMMIT_SHA` (Nexus image, pandoc, a trivial install,
+   and a docx → chunks smoke test). The Windows `prepare` stage can only be exercised on a
+   tagged Windows+Word runner.
 5. Tag a semver release (e.g. `1.0.0`) → the `release` job publishes it to the org Catalog.
-6. Bump consumers' `@<version>` deliberately when the component changes.
+   Both components share the repo's tag/version.
+6. Bump consumers' `@<version>` deliberately when a component changes.
 
 > This directory is **not** consumed by the `sdd-semantic-pipeline` pipeline — it is inert
 > to that repo's CI, doc-health, lint, type, test, and packaging gates.

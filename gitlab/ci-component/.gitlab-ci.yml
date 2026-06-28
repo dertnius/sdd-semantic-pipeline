@@ -30,6 +30,51 @@ component-selftest:
     - python -m pip install --quiet typer       # trivial Nexus-proxied pip install
     - echo "python-nexus smoke OK"
 
+# Smoke-test the docx-to-chunks LINUX path end-to-end: install the pipeline, generate a
+# tiny German .docx with pandoc (no committed binary fixture), then convert -> export ->
+# index --lexical and assert chunks + index landed. The Windows `prepare` stage can only
+# run on a tagged Windows+Word runner, so it is out of scope here.
+# allow_failure: this exercises the component's real prerequisite — `sdd-pipeline`
+# installable from the Nexus PyPI proxy. It stays non-blocking until that package is
+# published; flip to false once it is.
+docx-to-chunks-selftest:
+  stage: test
+  allow_failure: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+  variables:
+    PIPELINE_INBOX_DIR: "$CI_PROJECT_DIR/inbox"
+    PIPELINE_OUTBOX_DIR: "$CI_PROJECT_DIR/outbox"
+    PIPELINE_ENFORCE_WORKSPACE: "true"
+    PYTHONUTF8: "1"
+  before_script:
+    - !reference [.nexus-pip-bootstrap, before_script]
+    - !reference [.nexus-install-pandoc, before_script]
+    - pip install --quiet "sdd-pipeline[lang]"   # the component's default pipeline_install
+  script:
+    - mkdir -p inbox
+    - |
+      cat > /tmp/fixture.md <<'EOF'
+      # Architektur Entscheidung
+
+      Dieses Dokument beschreibt eine Architektur Entscheidung fuer den Selbsttest
+      und ihre Konsequenzen fuer das System.
+
+      ## Sicherheit
+
+      Die Loesung muss die Sicherheitsanforderungen erfuellen. Die
+      Authentifizierung erfolgt zentral.
+      EOF
+    - pandoc /tmp/fixture.md -o inbox/sample.docx
+    - sdd-pipeline check
+    - sdd-pipeline convert-docx
+    - sdd-pipeline export outbox/md --lang de --merge-prose --jobs 0
+    - sdd-pipeline index outbox/md --lexical --lang de
+    - test -n "$(find outbox/chunks -name '*.chunks.json' 2>/dev/null)" || { echo 'no chunks produced'; exit 1; }
+    - test -d outbox/index || { echo 'no index produced'; exit 1; }
+    - echo "docx-to-chunks smoke OK"
+
 # Publishing a Release in a Catalog-flagged project auto-publishes that version to the
 # CI/CD Catalog. CAVEAT: the public registry.gitlab.com/gitlab-org/release-cli image is
 # usually unreachable air-gapped — mirror it into Nexus (shown) or POST the Releases API
@@ -40,7 +85,7 @@ release:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   image: "${NEXUS_DOCKER_REGISTRY}/gitlab-org/release-cli:latest"
   script:
-    - echo "Releasing python-nexus $CI_COMMIT_TAG to the CI/CD Catalog"
+    - echo "Releasing ci-components $CI_COMMIT_TAG (python-nexus + docx-to-chunks) to the CI/CD Catalog"
   release:
     tag_name: "$CI_COMMIT_TAG"
-    description: "python-nexus $CI_COMMIT_TAG — Nexus python image + pip proxy + runtime pandoc."
+    description: "ci-components $CI_COMMIT_TAG — python-nexus (Nexus image + pip proxy + runtime pandoc) and docx-to-chunks (Word docs -> chunks + lexical index)."
