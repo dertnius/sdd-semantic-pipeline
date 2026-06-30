@@ -143,6 +143,21 @@ Confluence HTML / SharePoint docx into the inbox behind SiteMinder SSO
 never CLI flags; the deterministic core never touches them. Needs the `[download]`
 extra; exits non-zero on any failure so a CI ingest stage surfaces it.
 
+**SharePoint ingestion via PnP PowerShell (CI-only, separate from `download.py`).** A
+PowerShell-native path downloads SharePoint Online folders into the inbox using
+[PnP.PowerShell](https://github.com/pnp/powershell): `gitlab/ci-component/scripts/download-sharepoint.ps1`
+(canonical, Pester-tested via `tests/download-sharepoint.Tests.ps1`) reads a
+`config/sharepoint-manifest.yaml` of `{site, folder}` entries and downloads all files
+recursively into `inbox/sharepoint/<dest>`. The `download:sharepoint` job in `.gitlab-ci.yml`
+(and the reusable `gitlab/ci-component/templates/sharepoint-download` component) authenticate
+to **HashiCorp Vault** with a secretless GitLab **OIDC ID token** (`id_tokens:` → Vault JWT
+auth) to read the SharePoint credential, then `Connect-PnPOnline` (`-AuthMode
+secret`/`certificate`/`managedidentity`; secret is **legacy ACS, retired 2026-04-02** — use
+certificate/managedidentity). This is a **CLI/PowerShell-layer** capability: like
+`convert-doc-to-docx.ps1`, the Python core never launches `pwsh` (`shell.py` stays
+diagnostic-only), and the secret is **env-only**, never logged. Structural-tested by
+`tests/test_sharepoint_component.py`.
+
 **Cross-corpus vocabulary (optional):** when `PIPELINE_ENTITY_VOCAB_PATH` is set,
 `index_directory` runs a two-pass flow — parse every doc, `scan_corpus` to discover
 an entity vocabulary across the whole set (seeded by `entity_terms` + the persisted

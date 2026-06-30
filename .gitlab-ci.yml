@@ -16,6 +16,16 @@
 #   PIPELINE_DOWNLOAD_COOKIE   pre-issued SMSESSION cookie (primary auth)
 #   (or PIPELINE_DOWNLOAD_USERNAME/_PASSWORD/_LOGIN_URL for form login)
 #   PIPELINE_AZURE_OPENAI_API_KEY  only if a semantic (provider=azure) index is built.
+#
+# SharePoint ingestion via PnP PowerShell (`download:sharepoint`, OPTIONAL):
+#   The SharePoint credential is NOT a CI variable — it is read at run time from HashiCorp
+#   Vault via a secretless OIDC ID token (id_tokens -> Vault JWT auth -> KV). The job exports
+#   SHAREPOINT_CLIENT_SECRET in-script; it is never declared here and never echoed.
+#   Non-secret CI variables (set per project): SHAREPOINT_MANIFEST, SHAREPOINT_CLIENT_ID,
+#     SHAREPOINT_TENANT, SHAREPOINT_AUTH_MODE, VAULT_ADDR, VAULT_JWT_ROLE,
+#     VAULT_SECRET_PATH, VAULT_SECRET_FIELD.
+#   Extra GROUP variables: NEXUS_VAULT_URL (vault CLI binary in a Nexus raw repo),
+#     NEXUS_PSGALLERY_URL (PowerShell-Gallery proxy for PnP.PowerShell + powershell-yaml).
 
 stages:
   - verify
@@ -98,6 +108,32 @@ verify:types:
   script:
     - mypy src/
 
+# ── verify: Pester unit tests for the PowerShell scripts (model-free) ─────────
+# Unit-tests the pure helpers of scripts/download-sharepoint.ps1 (manifest parse, inbox-safe
+# local-path mapping, extension filter, report shape) with the PnP cmdlets mocked — no network,
+# no tenant. Runs on a pwsh image; Pester + powershell-yaml come from the Nexus PS-Gallery proxy.
+verify:pester:
+  stage: verify
+  image: "${NEXUS_DOCKER_REGISTRY}/dotnet/powershell:7.4-debian-12"
+  cache: []                                   # opt out of the Linux pip/pandoc default cache
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes: ["gitlab/ci-component/scripts/*.ps1", "tests/*.Tests.ps1"]
+  before_script:
+    - pwsh -NoProfile -Command "Register-PSRepository -Name Nexus -SourceLocation '$NEXUS_PSGALLERY_URL' -InstallationPolicy Trusted -ErrorAction SilentlyContinue; Install-Module Pester, powershell-yaml -Repository Nexus -Scope CurrentUser -Force"
+  script:
+    - pwsh -NoProfile -Command "Invoke-Pester -Path tests -CI"
+
+# ── reusable before_script fragment: vault CLI on PATH from a Nexus raw repo ───
+# Mirrors python-nexus's runtime pandoc install: no custom image, fetch the pinned `vault`
+# binary from NEXUS_VAULT_URL and cache it on PATH. Used by download:sharepoint.
+.install-vault:
+  before_script:
+    - mkdir -p "$CI_PROJECT_DIR/.cache/bin" && export PATH="$CI_PROJECT_DIR/.cache/bin:$PATH"
+    - command -v vault >/dev/null 2>&1 || { curl -fsSL "$NEXUS_VAULT_URL" -o "$CI_PROJECT_DIR/.cache/bin/vault" && chmod 0755 "$CI_PROJECT_DIR/.cache/bin/vault"; }
+    - vault version
+
 # ── download (OPTIONAL: scheduled refresh or manual only) ─────────────────────
 download:
   stage: download
@@ -114,6 +150,48 @@ download:
     - sdd-pipeline download inbox/manifest.yaml --auth cookie
     # Plain un-gated URL alternative:
     #   curl -fsSL "$SOME_URL" -o inbox/confluence/page.html
+  artifacts:
+    paths:
+      - inbox/
+    expire_in: 1 day
+
+# ── download:sharepoint (OPTIONAL: PnP PowerShell, Vault OIDC) ─────────────────
+# Downloads SharePoint Online folders (config/sharepoint-manifest.yaml) into inbox/sharepoint/
+# via PnP.PowerShell. GitLab authenticates to Vault with a secretless OIDC ID token, reads the
+# SharePoint secret from KV, then connects. Coexists with `download` (independent ingestion).
+# NOTE: SHAREPOINT_AUTH_MODE=secret is legacy ACS app-only (retired 2026-04-02) — set it to
+# `certificate` (Entra app + cert) or `managedidentity` in a current tenant. See
+# gitlab/ci-component/templates/sharepoint-download/README.md.
+download:sharepoint:
+  stage: download
+  image: "${NEXUS_DOCKER_REGISTRY}/dotnet/powershell:7.4-debian-12"   # PowerShell 7 on Linux
+  timeout: 30m
+  id_tokens:
+    VAULT_ID_TOKEN:
+      aud: "$VAULT_ADDR"          # MUST equal the Vault JWT role's bound_audiences
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'      # manual "Run pipeline"
+      when: manual
+      allow_failure: false
+  variables:
+    SHAREPOINT_MANIFEST: "config/sharepoint-manifest.yaml"
+    SHAREPOINT_CLIENT_ID: ""        # Entra/ACS app id (NOT a secret)
+    SHAREPOINT_TENANT: ""           # contoso.onmicrosoft.com (certificate mode)
+    SHAREPOINT_AUTH_MODE: "secret"  # secret | certificate | managedidentity
+    VAULT_ADDR: ""                  # https://vault.corp.example.com
+    VAULT_JWT_ROLE: "sdd-sharepoint"
+    VAULT_SECRET_PATH: "secret/sharepoint/sdd"   # `vault kv get` path (no /data/ infix)
+    VAULT_SECRET_FIELD: "client_secret"
+  before_script:
+    - !reference [.install-vault, before_script]
+    - pwsh -NoProfile -Command "Register-PSRepository -Name Nexus -SourceLocation '$NEXUS_PSGALLERY_URL' -InstallationPolicy Trusted -ErrorAction SilentlyContinue; Install-Module PnP.PowerShell, powershell-yaml -Repository Nexus -Scope CurrentUser -Force -AllowClobber"
+  script:
+    # OIDC -> Vault token -> SharePoint secret (env-only; never echoed).
+    - export VAULT_TOKEN="$(vault write -field=token auth/jwt/login role=$VAULT_JWT_ROLE jwt=$VAULT_ID_TOKEN)"
+    - export SHAREPOINT_CLIENT_SECRET="$(vault kv get -field=$VAULT_SECRET_FIELD $VAULT_SECRET_PATH)"
+    # certificate mode also needs: SHAREPOINT_CERT_BASE64 (+ SHAREPOINT_CERT_PASSWORD) from Vault.
+    - pwsh -NoProfile -File gitlab/ci-component/scripts/download-sharepoint.ps1 -Manifest "$SHAREPOINT_MANIFEST" -AuthMode "$SHAREPOINT_AUTH_MODE" -ClientId "$SHAREPOINT_CLIENT_ID" -Tenant "$SHAREPOINT_TENANT"
   artifacts:
     paths:
       - inbox/

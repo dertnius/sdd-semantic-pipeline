@@ -1,0 +1,21 @@
+# SharePoint Online folders to ingest into the pipeline inbox.
+#
+# Consumed by gitlab/ci-component/scripts/download-sharepoint.ps1 (the `download:sharepoint`
+# CI job / the `sharepoint-download` component). One PnP connection is made per entry; all
+# entries share the credential read at run time from Vault (SHAREPOINT_CLIENT_SECRET, etc.).
+#
+# Per-entry fields:
+#   site    (required) the SharePoint Online site URL
+#   folder  (required) the SITE-RELATIVE folder to download (display name, e.g. "Shared Documents/SAD")
+#   dest    (optional) subpath under inbox/ to write into; default: sharepoint/<folder leaf>
+#   recurse (optional) descend into subfolders; default: true
+#
+# Replace the examples below with your real sites/folders. This file is committed
+# configuration (config/), not a pipeline input — convert/convert-docx ignore it.
+entries:
+  - site: "https://contoso.sharepoint.com/sites/Architecture"
+    folder: "Shared Documents/SAD"
+    dest: "sharepoint/arch-sad"
+    recurse: true
+  - site: "https://contoso.sharepoint.com/sites/Platform"
+    folder: "Shared Documents/ADRs"
