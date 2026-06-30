@@ -59,13 +59,17 @@ variables:
 
 # ── verify: code + docs quality gate (lint, types, fast tests, doc-health) ────
 # Runs on merge requests and on branch pushes that touch code/docs/Copilot assets.
-# Two deterministic batteries guard drift, both model-free:
+# Three deterministic batteries guard drift, all model-free:
 #   * check_docs.py + `mkdocs build --strict` — docs *not broken* (links/render) AND
 #     *updated* (CLI/config/citation coverage);
 #   * check_copilot.py — the GitHub Copilot assets (.github/prompts, /agents,
 #     /instructions, copilot-instructions.md, .vscode/mcp.json) are valid frontmatter
-#     and wired to real CLI commands / MCP tools / links.
-# A stale or broken doc or Copilot asset fails the pipeline and cannot merge.
+#     and wired to real CLI commands / MCP tools / links;
+#   * run_skill_evals.py — the Agent Skills' deterministic (fast-lane) evals: each
+#     skill's vendored scripts run on committed fixtures and the structural assertions
+#     in <skill>/evals/evals.json are code-graded (no model, no pandoc).
+# A stale/broken doc, a broken Copilot asset, or a skill-engine regression fails the
+# pipeline and cannot merge.
 verify:quality:
   stage: verify
   rules:
@@ -81,6 +85,7 @@ verify:quality:
     - pytest -m "not slow"
     - python src/tools/scripts/check_docs.py          # docs not broken AND updated
     - python src/tools/scripts/check_copilot.py        # Copilot assets valid AND wired
+    - python src/tools/scripts/run_skill_evals.py      # skill engines pass committed evals (fast lane)
     - python -m mkdocs build --strict                 # nav / render / orphans
   artifacts:
     when: on_failure

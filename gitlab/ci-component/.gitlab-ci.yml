@@ -1,20 +1,29 @@
-# CI for the `ci-components` project itself: smoke-test the python-nexus, docx-to-chunks, and
-# sharepoint-download components at the current commit, then publish a Catalog release on a tag.
+# CI for the `ci-components` project itself: smoke-test the python-nexus, docx-to-chunks,
+# validate-skills, and sharepoint-download components at the current commit, then publish a
+# Catalog release on a semver tag.
 #
 # Prerequisites in the GitLab project:
 #   * Settings → CI/CD → "CI/CD Catalog resource" toggled ON (needs a description + README).
 #   * GROUP CI/CD variables NEXUS_DOCKER_REGISTRY / NEXUS_PYPI_INDEX_URL / NEXUS_PANDOC_URL.
 stages:
   - test
+  - validate
   - release
 
-# Self-include the component at THIS commit (works regardless of the project's path) so
-# the smoke test exercises the real fragments before any tag is cut.
+# Self-include the components at THIS commit (works regardless of the project's path) so the
+# smoke tests exercise the real fragments/jobs before any tag is cut.
+#   * python-nexus  — provides the image + .nexus-* fragments the test jobs compose.
+#   * validate-skills — its `validate:skills` job IS the selftest: pointed at the committed
+#     valid fixture (templates/validate-skills/examples/skills), it must pass. Both
+#     components default to the same Nexus python image, so the merged `default:` is benign.
 include:
   - component: $CI_SERVER_FQDN/$CI_PROJECT_PATH/python-nexus@$CI_COMMIT_SHA
     inputs:
       python_version: "3.11"
       pandoc_version: "3.5"
+  - component: $CI_SERVER_FQDN/$CI_PROJECT_PATH/validate-skills@$CI_COMMIT_SHA
+    inputs:
+      skills_dir: "templates/validate-skills/examples/skills"
 
 component-selftest:
   stage: test
@@ -98,7 +107,7 @@ release:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   image: "${NEXUS_DOCKER_REGISTRY}/gitlab-org/release-cli:latest"
   script:
-    - echo "Releasing ci-components $CI_COMMIT_TAG (python-nexus + docx-to-chunks + sharepoint-download) to the CI/CD Catalog"
+    - echo "Releasing ci-components $CI_COMMIT_TAG (python-nexus + docx-to-chunks + validate-skills + sharepoint-download) to the CI/CD Catalog"
   release:
     tag_name: "$CI_COMMIT_TAG"
-    description: "ci-components $CI_COMMIT_TAG — python-nexus (Nexus image + pip proxy + runtime pandoc), docx-to-chunks (Word docs -> chunks + lexical index), and sharepoint-download (SharePoint folders -> inbox via PnP + Vault)."
+    description: "ci-components $CI_COMMIT_TAG — python-nexus (Nexus image + pip proxy + runtime pandoc), docx-to-chunks (Word docs -> chunks + lexical index), validate-skills (offline SKILL.md / Agent-Skills validation), and sharepoint-download (SharePoint folders -> inbox via PnP + Vault)."
