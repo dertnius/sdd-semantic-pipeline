@@ -1,0 +1,129 @@
+# sharepoint-download — download SharePoint Online folders into the pipeline inbox using
+# PnP.PowerShell, with the SharePoint credential fetched at run time from HashiCorp Vault
+# (secretless GitLab->Vault via an OIDC ID token).
+#
+# A consuming repo includes THIS component and commits a manifest under config/:
+#
+#   include:
+#     - component: $CI_SERVER_FQDN/<group>/ci-components/sharepoint-download@1.0.0
+#       inputs:
+#         vault_addr: "https://vault.corp.example.com"
+#         client_id:  "<entra-app-client-id>"
+#
+# It adds one job (`sharepoint-download`, in the `download` stage by default) that downloads
+# every file (recursively) from each {site, folder} in config/sharepoint-manifest.yaml into
+# inbox/<dest>, so the rest of a pipeline (convert/export/index) can process them.
+#
+# *** ACS RETIREMENT (auth_mode: secret) ***
+# auth_mode "secret" is the legacy Azure ACS app-only path (-ClientId/-ClientSecret), which
+# Microsoft RETIRED for SharePoint on 2026-04-02. In a current tenant it will FAIL even with a
+# valid secret. Use auth_mode "certificate" (Entra app + cert) or "managedidentity" instead.
+# "secret" is kept as the default only because the originating project requested it.
+#
+# NO INLINE POWERSHELL: the download logic is the single canonical script
+# scripts/download-sharepoint.ps1 (Pester-tested, locally runnable). A component included by
+# another repo does not receive this repo's scripts/, so the job FETCHES the script at run time
+# from a Nexus raw repo (`script_url`, default ${NEXUS_SHAREPOINT_SCRIPT_URL}) — the same idiom
+# python-nexus uses to fetch the pandoc binary, and `.install-vault` uses for the vault CLI.
+# Publish a VERSION-PINNED copy of the script to that raw repo on each component release so a
+# consumer pinned to @<version> fetches the matching script.
+#
+# INPUTS interpolate at include/merge time with $[[ inputs.NAME ]]. The NEXUS_* endpoints stay
+# ${VAR} — runtime GROUP-level CI/CD variables resolved by the runner.
+spec:
+  inputs:
+    manifest:
+      default: "config/sharepoint-manifest.yaml"
+      description: "YAML manifest of { site, folder, dest?, recurse? } entries to download."
+    auth_mode:
+      default: "secret"
+      options: ["secret", "certificate", "managedidentity"]
+      description: "PnP auth. secret=ACS app-only (LEGACY, retired 2026-04-02); certificate=Entra app+cert; managedidentity=Azure MI."
+    client_id:
+      default: ""
+      description: "Entra/ACS application (client) id. Required for secret and certificate modes."
+    tenant:
+      default: ""
+      description: "Tenant, e.g. contoso.onmicrosoft.com. Required for certificate mode."
+    uami_client_id:
+      default: ""
+      description: "User-assigned managed identity client id (managedidentity mode; omit for system-assigned)."
+    stage:
+      default: "download"
+      description: "Pipeline stage to attach the job to (must exist in the consuming pipeline)."
+    pwsh_image:
+      default: "${NEXUS_DOCKER_REGISTRY}/dotnet/powershell:7.4-debian-12"
+      description: "Linux image with PowerShell 7. Override for a non-Nexus consumer (e.g. mcr.microsoft.com/dotnet/powershell:7.4-debian-12)."
+    script_url:
+      default: "${NEXUS_SHAREPOINT_SCRIPT_URL}"
+      description: "URL of download-sharepoint.ps1 in a Nexus raw repo, fetched at job start. Pin to the component version's copy."
+    vault_addr:
+      default: ""
+      description: "Vault address, e.g. https://vault.corp.example.com. Also the OIDC token audience."
+    vault_jwt_role:
+      default: "sdd-sharepoint"
+      description: "Vault JWT auth role bound to this project's GitLab claims."
+    vault_secret_path:
+      default: "secret/sharepoint/sdd"
+      description: "Vault KV path read with `vault kv get` (no /data/ infix)."
+    vault_secret_field:
+      default: "client_secret"
+      description: "KV field holding the client secret (secret mode)."
+    vault_cert_field:
+      default: "cert_base64"
+      description: "KV field holding the base64 PFX (certificate mode)."
+    vault_cert_pw_field:
+      default: "cert_password"
+      description: "KV field holding the PFX password (certificate mode; optional)."
+    nexus_vault_url:
+      default: "${NEXUS_VAULT_URL}"
+      description: "URL of the `vault` CLI binary in a Nexus raw repo (fetched onto PATH)."
+    nexus_psgallery_url:
+      default: "${NEXUS_PSGALLERY_URL}"
+      description: "PowerShell-Gallery proxy URL for Install-Module (PnP.PowerShell, powershell-yaml)."
+---
+stages:
+  - "$[[ inputs.stage ]]"
+
+sharepoint-download:
+  stage: "$[[ inputs.stage ]]"
+  image: "$[[ inputs.pwsh_image ]]"
+  timeout: 30m
+  # Secretless GitLab->Vault: this JWT is exchanged for a short-lived Vault token. The
+  # audience MUST equal the Vault JWT role's bound_audiences.
+  id_tokens:
+    VAULT_ID_TOKEN:
+      aud: "$[[ inputs.vault_addr ]]"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'      # manual "Run pipeline"
+      when: manual
+      allow_failure: false
+  variables:
+    PIPELINE_INBOX_DIR: "$CI_PROJECT_DIR/inbox"
+    PIPELINE_OUTBOX_DIR: "$CI_PROJECT_DIR/outbox"
+    PIPELINE_ENFORCE_WORKSPACE: "true"
+    PYTHONUTF8: "1"
+    VAULT_ADDR: "$[[ inputs.vault_addr ]]"
+  before_script:
+    # vault CLI + the downloader script from Nexus raw repos (mirrors python-nexus's pandoc fetch).
+    - mkdir -p "$CI_PROJECT_DIR/.cache/bin" && export PATH="$CI_PROJECT_DIR/.cache/bin:$PATH"
+    - command -v vault >/dev/null 2>&1 || { curl -fsSL "$[[ inputs.nexus_vault_url ]]" -o "$CI_PROJECT_DIR/.cache/bin/vault" && chmod 0755 "$CI_PROJECT_DIR/.cache/bin/vault"; }
+    - vault version
+    - curl -fsSL "$[[ inputs.script_url ]]" -o /tmp/download-sharepoint.ps1
+    # PnP.PowerShell + powershell-yaml from a Nexus PowerShell-Gallery proxy
+    - pwsh -NoProfile -Command "Register-PSRepository -Name Nexus -SourceLocation '$[[ inputs.nexus_psgallery_url ]]' -InstallationPolicy Trusted -ErrorAction SilentlyContinue; Install-Module PnP.PowerShell, powershell-yaml -Repository Nexus -Scope CurrentUser -Force -AllowClobber"
+  script:
+    # OIDC -> Vault token -> SharePoint secret (env-only; never echoed).
+    - export VAULT_TOKEN="$(vault write -field=token auth/jwt/login role=$[[ inputs.vault_jwt_role ]] jwt=$VAULT_ID_TOKEN)"
+    - export SHAREPOINT_CLIENT_SECRET="$(vault kv get -field=$[[ inputs.vault_secret_field ]] $[[ inputs.vault_secret_path ]])"
+    - |
+      if [ "$[[ inputs.auth_mode ]]" = "certificate" ]; then
+        export SHAREPOINT_CERT_BASE64="$(vault kv get -field=$[[ inputs.vault_cert_field ]] $[[ inputs.vault_secret_path ]])"
+        export SHAREPOINT_CERT_PASSWORD="$(vault kv get -field=$[[ inputs.vault_cert_pw_field ]] $[[ inputs.vault_secret_path ]] 2>/dev/null || true)"
+      fi
+    - pwsh -NoProfile -File /tmp/download-sharepoint.ps1 -Manifest "$[[ inputs.manifest ]]" -AuthMode "$[[ inputs.auth_mode ]]" -ClientId "$[[ inputs.client_id ]]" -Tenant "$[[ inputs.tenant ]]" -UserAssignedManagedIdentityClientId "$[[ inputs.uami_client_id ]]"
+  artifacts:
+    paths:
+      - inbox/
+    expire_in: 1 day

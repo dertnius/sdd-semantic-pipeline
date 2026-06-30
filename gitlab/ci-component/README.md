@@ -1,12 +1,15 @@
 # ci-components
 
 Shared **GitLab CI/CD Components** for the enterprise org, importable by **any project
-on the GitLab instance** via `include: component:`. Currently two components:
+on the GitLab instance** via `include: component:`. Currently three components:
 
 - **`python-nexus`** — the base layer: a stock `python:3.x-slim` from the Nexus registry,
   pip on the Nexus proxy, and a runtime pandoc install. Compose it into your own jobs.
 - **`docx-to-chunks`** — a turnkey pipeline that converts a repo of Word documents
   (incl. legacy `.doc` via a Windows+Office stage) into semantic chunks + a lexical index.
+- **`sharepoint-download`** — downloads SharePoint Online folders into the inbox via
+  PnP PowerShell, with the credential fetched from HashiCorp Vault (secretless GitLab→Vault
+  via an OIDC ID token). See [`templates/sharepoint-download/README.md`](templates/sharepoint-download/README.md).
 
 ## `python-nexus`
 
@@ -286,6 +289,38 @@ fixes the enrichment language (`de` for an all-German corpus) or use `auto` for 
 
 ---
 
+## Using `sharepoint-download` in *your* project
+
+Include the component and commit a `config/sharepoint-manifest.yaml` of `{ site, folder }`
+entries. On a schedule or manual run it downloads every file (recursively) from each folder
+into `inbox/`, reading the SharePoint credential from Vault via a secretless OIDC ID token.
+
+```yaml
+# your-repo/.gitlab-ci.yml
+include:
+  - component: $CI_SERVER_FQDN/<group>/ci-components/sharepoint-download@1.0.0
+    inputs:
+      vault_addr: "https://vault.corp.example.com"
+      client_id:  "<entra-app-client-id>"
+      auth_mode:  "certificate"        # see the ACS note below
+      tenant:     "contoso.onmicrosoft.com"
+```
+
+> ⚠️ The default `auth_mode: secret` is the legacy **Azure ACS app-only** path, which Microsoft
+> **retired for SharePoint on 2026-04-02** — use `certificate` (Entra app + cert) or
+> `managedidentity` in a current tenant. Full inputs, Vault setup (JWT auth role + policy), and
+> troubleshooting are in [`templates/sharepoint-download/README.md`](templates/sharepoint-download/README.md).
+
+### Prerequisites
+
+| Prerequisite | Notes |
+|---|---|
+| GROUP CI/CD variables `NEXUS_DOCKER_REGISTRY`, `NEXUS_VAULT_URL`, `NEXUS_PSGALLERY_URL`, `NEXUS_SHAREPOINT_SCRIPT_URL` | the pwsh image, the `vault` CLI binary (Nexus raw repo), a PowerShell-Gallery proxy for `PnP.PowerShell` + `powershell-yaml`, and the `download-sharepoint.ps1` script (Nexus raw repo, version-pinned). |
+| HashiCorp Vault with JWT auth configured for this GitLab | a role bound to the project's OIDC claims + a read policy on the KV secret path. |
+| An Entra app (or managed identity) with SharePoint **Sites** application permission | the identity PnP connects as; its secret/cert lives in Vault. |
+
+---
+
 ## Publishing / maintaining these components
 
 This source is **scaffolded inside the `sdd-semantic-pipeline` repo** under
@@ -293,18 +328,22 @@ This source is **scaffolded inside the `sdd-semantic-pipeline` repo** under
 GitLab project. To publish:
 
 1. Create a GitLab project `<group>/ci-components` and push the **contents of this
-   `gitlab/ci-component/` directory to its root** (so `templates/python-nexus/template.yml`
-   and `templates/docx-to-chunks/template.yml` sit under the repo root, and the
-   `scripts/` dir alongside them).
+   `gitlab/ci-component/` directory to its root** (so `templates/python-nexus/template.yml`,
+   `templates/docx-to-chunks/template.yml`, and `templates/sharepoint-download/template.yml`
+   sit under the repo root, and the `scripts/` dir alongside them).
 2. Add a project description + this README, then **Settings → CI/CD → CI/CD Catalog
    resource → ON**.
 3. Set the three `NEXUS_*` variables at the **group** level.
-4. Push a branch / open an MR → the `component-selftest` and `docx-to-chunks-selftest`
-   jobs validate the components at `@$CI_COMMIT_SHA` (Nexus image, pandoc, a trivial install,
-   and a docx → chunks smoke test). The Windows `prepare` stage can only be exercised on a
-   tagged Windows+Word runner.
+4. Push a branch / open an MR → the `component-selftest`, `docx-to-chunks-selftest`, and
+   `sharepoint-download-selftest` jobs validate the components at `@$CI_COMMIT_SHA` (Nexus
+   image, pandoc, a trivial install, a docx → chunks smoke test, and a YAML-merge +
+   PowerShell-parse smoke of the SharePoint downloader). The Windows `prepare` stage and the
+   live SharePoint/Vault path can only be exercised on the appropriate runner / tenant.
 5. Tag a semver release (e.g. `1.0.0`) → the `release` job publishes it to the org Catalog.
-   Both components share the repo's tag/version.
+   All three components share the repo's tag/version. **`sharepoint-download` also needs its
+   script published**: upload `scripts/download-sharepoint.ps1` to the Nexus raw repo at a
+   version-pinned path and point `NEXUS_SHAREPOINT_SCRIPT_URL` (or the component's `script_url`
+   input) at it, so a consumer pinned to `@<version>` fetches the matching script.
 6. Bump consumers' `@<version>` deliberately when a component changes.
 
 > This directory is **not** consumed by the `sdd-semantic-pipeline` pipeline — it is inert

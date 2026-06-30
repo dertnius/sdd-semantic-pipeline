@@ -1,5 +1,5 @@
-# CI for the `ci-components` project itself: smoke-test the python-nexus component at the
-# current commit, then publish a Catalog release on a semver tag.
+# CI for the `ci-components` project itself: smoke-test the python-nexus, docx-to-chunks, and
+# sharepoint-download components at the current commit, then publish a Catalog release on a tag.
 #
 # Prerequisites in the GitLab project:
 #   * Settings → CI/CD → "CI/CD Catalog resource" toggled ON (needs a description + README).
@@ -75,6 +75,19 @@ docx-to-chunks-selftest:
     - test -d outbox/index || { echo 'no index produced'; exit 1; }
     - echo "docx-to-chunks smoke OK"
 
+# Smoke-test the sharepoint-download component: a PowerShell-parse check of the canonical
+# downloader (catches syntax breaks). The live SharePoint/Vault path needs a real tenant +
+# Vault, so it is out of scope here; the script's pure helpers are unit-tested by the main
+# repo's Pester suite (tests/download-sharepoint.Tests.ps1 via the `verify:pester` job).
+sharepoint-download-selftest:
+  stage: test
+  image: "${NEXUS_DOCKER_REGISTRY}/dotnet/powershell:7.4-debian-12"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+  script:
+    - pwsh -NoProfile -Command "[ScriptBlock]::Create((Get-Content -Raw ./scripts/download-sharepoint.ps1)) | Out-Null; 'download-sharepoint.ps1 parses OK'"
+
 # Publishing a Release in a Catalog-flagged project auto-publishes that version to the
 # CI/CD Catalog. CAVEAT: the public registry.gitlab.com/gitlab-org/release-cli image is
 # usually unreachable air-gapped — mirror it into Nexus (shown) or POST the Releases API
@@ -85,7 +98,7 @@ release:
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   image: "${NEXUS_DOCKER_REGISTRY}/gitlab-org/release-cli:latest"
   script:
-    - echo "Releasing ci-components $CI_COMMIT_TAG (python-nexus + docx-to-chunks) to the CI/CD Catalog"
+    - echo "Releasing ci-components $CI_COMMIT_TAG (python-nexus + docx-to-chunks + sharepoint-download) to the CI/CD Catalog"
   release:
     tag_name: "$CI_COMMIT_TAG"
-    description: "ci-components $CI_COMMIT_TAG — python-nexus (Nexus image + pip proxy + runtime pandoc) and docx-to-chunks (Word docs -> chunks + lexical index)."
+    description: "ci-components $CI_COMMIT_TAG — python-nexus (Nexus image + pip proxy + runtime pandoc), docx-to-chunks (Word docs -> chunks + lexical index), and sharepoint-download (SharePoint folders -> inbox via PnP + Vault)."
