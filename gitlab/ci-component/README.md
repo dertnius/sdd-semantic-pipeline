@@ -1,12 +1,14 @@
 # ci-components
 
 Shared **GitLab CI/CD Components** for the enterprise org, importable by **any project
-on the GitLab instance** via `include: component:`. Currently two components:
+on the GitLab instance** via `include: component:`. Currently three components:
 
 - **`python-nexus`** — the base layer: a stock `python:3.x-slim` from the Nexus registry,
   pip on the Nexus proxy, and a runtime pandoc install. Compose it into your own jobs.
 - **`docx-to-chunks`** — a turnkey pipeline that converts a repo of Word documents
   (incl. legacy `.doc` via a Windows+Office stage) into semantic chunks + a lexical index.
+- **`validate-skills`** — an offline CI gate that validates **Agent Skills** (`SKILL.md`)
+  against the Agent Skills open standard; no pip/pandoc/GitHub, just a Python image.
 
 ## `python-nexus`
 
@@ -62,6 +64,37 @@ to skip it entirely (all-`.docx` repos with no Windows runner).
 | `windows_runner_tags` | `["windows","office"]` | tags selecting the Windows shell runner with Word |
 | `python_version` | `3.11` | `python:<ver>-slim` Nexus image tag (Linux jobs) |
 | `pandoc_version` | `3.5` | keys the pandoc binary cache; pair with `NEXUS_PANDOC_URL` |
+
+---
+
+## `validate-skills`
+
+An **offline** CI gate that validates **Agent Skills** (`SKILL.md`) against the
+[Agent Skills open standard](https://agentskills.io/specification) — the same idea as
+[`gitlab-ci-skill`](https://gitlab.com/gitlab-org/ci-cd/gitlab-ci-skill)'s own pipeline,
+but **self-contained**: instead of `git fetch`-ing the upstream `agentskills` validator
+from github.com at run time (unreliable behind a proxy / air-gap), it validates with an
+**inline, stdlib-only Python checker** — no pip, no pandoc, no Nexus proxy, no GitHub. The
+checks mirror this repo's own `check_copilot.py` C6 (`check_skills`): a present/terminated
+`---` frontmatter block; a `name` that is present, equals its directory, matches the
+lowercase-letters/digits/hyphens grammar (no leading/trailing/double hyphen) and is
+`<= 64` chars; and a present `description` of `<= 1024` chars. The `validate:skills` job
+fails the pipeline on any problem and writes a `skill-validation-report.txt` artifact.
+
+```
+validate (validate:skills — inline stdlib-Python check of every SKILL.md)
+```
+
+### Inputs
+
+| Input | Default | Purpose |
+|---|---|---|
+| `skills_dir` | `.claude/skills` | dir holding `<name>/SKILL.md` skill folders (e.g. `.claude/skills`, `.github/skills`, `.agents/skills`) |
+| `image` | `${NEXUS_DOCKER_REGISTRY}/python:3.11-slim` | container image with a Python 3 interpreter; non-Nexus consumers override with e.g. `python:3.11-slim` |
+| `fail_on_empty` | `true` | fail if no `SKILL.md` is found under `skills_dir` (catches a misconfigured path) |
+
+Unlike the other two components, `validate-skills` needs **no** `NEXUS_*` plumbing when a
+consumer sets `image` to a public Python image — it installs nothing.
 
 ---
 
@@ -286,6 +319,44 @@ fixes the enrichment language (`de` for an all-German corpus) or use `auto` for 
 
 ---
 
+## Using `validate-skills` in *your* project
+
+A skill repo includes the component and keeps its skills under `skills_dir` as
+`<name>/SKILL.md`. That's it — no group variables needed if you bring your own image.
+
+```yaml
+# my-skills-repo/.gitlab-ci.yml
+include:
+  - component: $CI_SERVER_FQDN/<group>/ci-components/validate-skills@1.0.0
+    inputs:
+      skills_dir: ".claude/skills"     # default; also e.g. .github/skills, .agents/skills
+```
+
+On every merge request and default-branch push the `validate:skills` job checks each
+`SKILL.md` and **fails the pipeline** on any malformed frontmatter, leaving a
+`skill-validation-report.txt` artifact (30-day retention).
+
+### Outside the Nexus org (no `NEXUS_*` variables)
+
+`validate-skills` installs nothing, so it only needs a Python image. If your project isn't
+in the org that defines `NEXUS_DOCKER_REGISTRY`, override `image` with any public one:
+
+```yaml
+    inputs:
+      image: "python:3.11-slim"
+```
+
+### Troubleshooting
+
+| Symptom | Likely cause |
+|---|---|
+| job fails `no SKILL.md found under …` | `skills_dir` is wrong, or your skills aren't laid out as `<skills_dir>/<name>/SKILL.md`. Fix the path, or set `fail_on_empty: false` if an empty set is acceptable. |
+| `'name: …' must equal the skill directory` | the `name:` in frontmatter doesn't match the folder name — rename one to match. |
+| `invalid skill 'name: …'` | `name` must be lowercase letters/digits/hyphens, no leading/trailing/double hyphen, `<= 64` chars. |
+| image pulls from Docker Hub / `401` | default `image` expects `NEXUS_DOCKER_REGISTRY`; outside the org set `image` to a public Python image (above). |
+
+---
+
 ## Publishing / maintaining these components
 
 This source is **scaffolded inside the `sdd-semantic-pipeline` repo** under
@@ -293,18 +364,19 @@ This source is **scaffolded inside the `sdd-semantic-pipeline` repo** under
 GitLab project. To publish:
 
 1. Create a GitLab project `<group>/ci-components` and push the **contents of this
-   `gitlab/ci-component/` directory to its root** (so `templates/python-nexus/template.yml`
-   and `templates/docx-to-chunks/template.yml` sit under the repo root, and the
-   `scripts/` dir alongside them).
+   `gitlab/ci-component/` directory to its root** (so `templates/python-nexus/template.yml`,
+   `templates/docx-to-chunks/template.yml`, and `templates/validate-skills/template.yml` sit
+   under the repo root, and the `scripts/` dir alongside them).
 2. Add a project description + this README, then **Settings → CI/CD → CI/CD Catalog
    resource → ON**.
 3. Set the three `NEXUS_*` variables at the **group** level.
-4. Push a branch / open an MR → the `component-selftest` and `docx-to-chunks-selftest`
-   jobs validate the components at `@$CI_COMMIT_SHA` (Nexus image, pandoc, a trivial install,
-   and a docx → chunks smoke test). The Windows `prepare` stage can only be exercised on a
-   tagged Windows+Word runner.
+4. Push a branch / open an MR → the `component-selftest`, `docx-to-chunks-selftest`, and the
+   self-included `validate:skills` jobs validate the components at `@$CI_COMMIT_SHA` (Nexus
+   image, pandoc, a trivial install, a docx → chunks smoke test, and a SKILL.md check against
+   the committed `templates/validate-skills/examples/skills` fixture). The Windows `prepare`
+   stage can only be exercised on a tagged Windows+Word runner.
 5. Tag a semver release (e.g. `1.0.0`) → the `release` job publishes it to the org Catalog.
-   Both components share the repo's tag/version.
+   All three components share the repo's tag/version.
 6. Bump consumers' `@<version>` deliberately when a component changes.
 
 > This directory is **not** consumed by the `sdd-semantic-pipeline` pipeline — it is inert

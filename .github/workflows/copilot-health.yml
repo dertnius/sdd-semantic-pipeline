@@ -1,8 +1,11 @@
-# Copilot integration health gate, for GitHub-hosted mirrors.
-# The single source of truth is src/tools/scripts/check_copilot.py — this workflow and
-# the GitLab `verify:quality` stage both invoke it, so a broken Copilot asset (missing
-# frontmatter, a dead CLI/MCP-tool reference, a broken link) fails CI on either host.
-# Model-free, fast (no pandoc / no embedding model / no mcp SDK).
+# Copilot + Agent-Skill integration health gate, for GitHub-hosted mirrors.
+# Two deterministic, model-free batteries (mirrored in the GitLab `verify:quality` stage,
+# so either host fails CI on drift):
+#   * check_copilot.py — Copilot assets valid + wired (frontmatter, CLI/MCP refs, links).
+#   * run_skill_evals.py — the Agent Skills' deterministic (fast-lane) evals: each skill's
+#     vendored scripts run on committed fixtures and the structural assertions in
+#     <skill>/evals/evals.json are code-graded.
+# Both are fast (no pandoc / no embedding model / no mcp SDK) and self-tested by pytest.
 name: copilot-health
 
 on:
@@ -17,6 +20,8 @@ on:
       - "src/sdd_pipeline/cli.py"
       - "src/sdd_pipeline/mcp_server.py"
       - "src/tools/scripts/check_copilot.py"
+      - "src/tools/scripts/run_skill_evals.py"
+      - "tests/test_run_skill_evals.py"
   push:
     branches: [main]
     paths:
@@ -29,6 +34,8 @@ on:
       - "src/sdd_pipeline/cli.py"
       - "src/sdd_pipeline/mcp_server.py"
       - "src/tools/scripts/check_copilot.py"
+      - "src/tools/scripts/run_skill_evals.py"
+      - "tests/test_run_skill_evals.py"
 
 jobs:
   copilot:
@@ -44,3 +51,7 @@ jobs:
         run: python src/tools/scripts/check_copilot.py
       - name: Copilot gate self-test
         run: pytest tests/test_check_copilot.py -q
+      - name: Skill evals (deterministic, fast lane)
+        run: python src/tools/scripts/run_skill_evals.py
+      - name: Skill-eval harness self-test
+        run: pytest tests/test_run_skill_evals.py -q
