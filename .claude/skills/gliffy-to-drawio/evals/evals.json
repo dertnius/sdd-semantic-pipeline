@@ -1,0 +1,97 @@
+{
+  "skill": "gliffy-to-drawio",
+  "version": 1,
+  "_about": "agentskills.io eval schema (prompt/expected_output/files/assertions) plus a deterministic 'command' + structured 'assertions' extension graded model-free by src/tools/scripts/run_skill_evals.py. {file}=abs path of files[0], {outdir}=this case's output dir, {stem}=files[0] stem.",
+  "cases": [
+    {
+      "id": "basic-shapes-roundtrip",
+      "prompt": "Convert the Gliffy diagram files/minimal-shapes.gliffy to a draw.io (.drawio) file.",
+      "files": ["files/minimal-shapes.gliffy"],
+      "command": ["{python}", "scripts/convert_drawio.py", "{file}", "-o", "{outdir}"],
+      "expected_output": "A well-formed minimal-shapes.drawio mxGraph file containing a rectangle, an ellipse and a diamond node; no placeholders; the round-trip oracle reports the emitter and parser are self-consistent.",
+      "assertions": [
+        { "type": "exit_code", "op": "==", "value": 0 },
+        { "type": "file_exists", "path": "{outdir}/{stem}.drawio" },
+        { "type": "valid_xml", "path": "{outdir}/{stem}.drawio" },
+        { "type": "is_mxgraph", "path": "{outdir}/{stem}.drawio" },
+        { "type": "node_count", "op": "==", "value": 3 },
+        { "type": "placeholder_count", "op": "==", "value": 0 },
+        { "type": "roundtrip_ok" }
+      ],
+      "markers": ["fast"]
+    },
+    {
+      "id": "edge-with-arrows",
+      "prompt": "Convert files/edge-arrows.gliffy (two boxes joined by an arrow) to draw.io.",
+      "files": ["files/edge-arrows.gliffy"],
+      "command": ["{python}", "scripts/convert_drawio.py", "{file}", "-o", "{outdir}"],
+      "expected_output": "A .drawio file with two rectangle nodes and exactly one edge carrying an arrowhead; round-trip self-consistent.",
+      "assertions": [
+        { "type": "exit_code", "op": "==", "value": 0 },
+        { "type": "file_exists", "path": "{outdir}/{stem}.drawio" },
+        { "type": "valid_xml", "path": "{outdir}/{stem}.drawio" },
+        { "type": "node_count", "op": "==", "value": 2 },
+        { "type": "edge_count", "op": "==", "value": 1 },
+        { "type": "xml_contains", "path": "{outdir}/{stem}.drawio", "needle": "edge=\"1\"" },
+        { "type": "roundtrip_ok" }
+      ],
+      "markers": ["fast"]
+    },
+    {
+      "id": "unknown-stencil-placeholder",
+      "prompt": "Convert files/unknown-stencil.gliffy, which uses an unsupported network-cloud stencil, to draw.io.",
+      "files": ["files/unknown-stencil.gliffy"],
+      "command": ["{python}", "scripts/convert_drawio.py", "{file}", "-o", "{outdir}"],
+      "expected_output": "Conversion succeeds without crashing; the unknown stencil degrades to exactly one dashed placeholder node; round-trip self-consistent.",
+      "assertions": [
+        { "type": "exit_code", "op": "==", "value": 0 },
+        { "type": "file_exists", "path": "{outdir}/{stem}.drawio" },
+        { "type": "valid_xml", "path": "{outdir}/{stem}.drawio" },
+        { "type": "placeholder_count", "op": "==", "value": 1 },
+        { "type": "xml_contains", "path": "{outdir}/{stem}.drawio", "needle": "dashed=1" },
+        { "type": "roundtrip_ok" }
+      ],
+      "markers": ["fast"]
+    },
+    {
+      "id": "check-flag-passes",
+      "prompt": "Convert files/minimal-shapes.gliffy with the --check fidelity flag enabled.",
+      "files": ["files/minimal-shapes.gliffy"],
+      "command": ["{python}", "scripts/convert_drawio.py", "{file}", "-o", "{outdir}", "--check"],
+      "expected_output": "The CLI exits 0 and reports [check: OK]; it never prints DIFFS.",
+      "assertions": [
+        { "type": "exit_code", "op": "==", "value": 0 },
+        { "type": "stdout_contains", "needle": "[check: OK]" },
+        { "type": "stdout_not_contains", "needle": "DIFFS" }
+      ],
+      "markers": ["fast"]
+    },
+    {
+      "id": "empty-diagram-no-crash",
+      "prompt": "Convert files/empty.gliffy (a valid Gliffy with zero objects) to draw.io.",
+      "files": ["files/empty.gliffy"],
+      "command": ["{python}", "scripts/convert_drawio.py", "{file}", "-o", "{outdir}"],
+      "expected_output": "Conversion succeeds and emits a valid, empty mxGraph (0 nodes, 0 edges) rather than crashing.",
+      "assertions": [
+        { "type": "exit_code", "op": "==", "value": 0 },
+        { "type": "valid_xml", "path": "{outdir}/{stem}.drawio" },
+        { "type": "node_count", "op": "==", "value": 0 },
+        { "type": "edge_count", "op": "==", "value": 0 }
+      ],
+      "markers": ["fast"]
+    },
+    {
+      "id": "malformed-input-clean-error",
+      "prompt": "Try to convert files/not-a-diagram.gliffy, which is JSON but not a Gliffy diagram.",
+      "files": ["files/not-a-diagram.gliffy"],
+      "command": ["{python}", "scripts/convert_drawio.py", "{file}", "-o", "{outdir}"],
+      "expected_output": "The CLI fails cleanly with a non-zero exit and a FAIL message on stderr; it does not write a partial .drawio or dump a raw traceback.",
+      "assertions": [
+        { "type": "exit_code", "op": "!=", "value": 0 },
+        { "type": "stderr_contains", "needle": "FAIL" },
+        { "type": "file_absent", "path": "{outdir}/{stem}.drawio" }
+      ],
+      "markers": ["fast"]
+    }
+  ]
+}

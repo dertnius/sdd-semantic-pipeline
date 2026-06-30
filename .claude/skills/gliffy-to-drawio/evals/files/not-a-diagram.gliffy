@@ -1,0 +1,4 @@
+{
+  "this": "is valid JSON but has no Gliffy 'stage' key",
+  "so": "parse_gliffy must reject it as a ConversionError, not crash"
+}

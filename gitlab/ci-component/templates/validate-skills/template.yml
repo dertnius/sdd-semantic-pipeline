@@ -1,0 +1,148 @@
+# validate-skills — a drop-in CI gate that validates Agent Skills (SKILL.md) against the
+# Agent Skills open standard (agentskills.io/specification), the same way
+# gitlab.com/gitlab-org/ci-cd/gitlab-ci-skill gates its own SKILL.md in CI.
+#
+# A consuming SKILL repo includes THIS component and keeps its skills under skills_dir:
+#
+#   include:
+#     - component: $CI_SERVER_FQDN/<group>/ci-components/validate-skills@1.0.0
+#       inputs: { skills_dir: ".claude/skills" }
+#
+# SELF-CONTAINED + OFFLINE BY DESIGN. Unlike the upstream gitlab-ci-skill (which `git
+# fetch`es the agentskills `skills-ref` validator from github.com at run time — unreliable
+# behind a corporate proxy / air-gap), this component validates with an INLINE, stdlib-only
+# Python checker. No pip, no pandoc, no Nexus proxy, no GitHub — only a Python interpreter.
+#
+# A CI/CD Component cannot ship a loose file into the consumer's checkout, so the validator
+# logic is INLINED below (same reason docx-to-chunks inlines its PowerShell). KEEP IT IN
+# SYNC with the canonical rules in src/tools/scripts/check_copilot.py::check_skills (C6) of
+# the sdd-semantic-pipeline repo — that function is the single source of truth.
+#
+# INPUTS interpolate at include/merge time with $[[ inputs.NAME ]]. ${NEXUS_DOCKER_REGISTRY}
+# stays a runtime ${VAR} (a GROUP-level CI/CD variable) — it is only the DEFAULT image; a
+# non-Nexus consumer overrides `image` with e.g. python:3.11-slim and needs no NEXUS_* vars.
+spec:
+  inputs:
+    skills_dir:
+      default: ".claude/skills"
+      description: "Dir holding <name>/SKILL.md skill folders (e.g. .claude/skills, .github/skills, .agents/skills)."
+    image:
+      default: "${NEXUS_DOCKER_REGISTRY}/python:3.11-slim"
+      description: "Container image with a Python 3 interpreter. Non-Nexus consumers: set e.g. python:3.11-slim."
+    fail_on_empty:
+      type: boolean
+      default: true
+      description: "Fail if no SKILL.md is found under skills_dir (catches a misconfigured path)."
+---
+# `default:` (not top-level) so a consuming job that sets its own `image:` overrides only
+# that job, instead of replacing the shared config wholesale on merge.
+default:
+  image: "$[[ inputs.image ]]"
+
+stages:
+  - validate
+
+variables:
+  SKILLS_DIR: "$[[ inputs.skills_dir ]]"
+  FAIL_ON_EMPTY: "$[[ inputs.fail_on_empty ]]"   # boolean input -> string "true"/"false"
+
+# ── validate: SKILL.md frontmatter conforms to the Agent Skills standard ──────
+# Pure stdlib Python; mirrors check_copilot.py::check_skills (C6). Writes the report
+# itself and exits non-zero on any error (no `tee` pipe -> no pipefail exit-code trap).
+validate:skills:
+  stage: validate
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  script:
+    - |
+      python3 - "$SKILLS_DIR" "$FAIL_ON_EMPTY" <<'PY'
+      # Mirrors src/tools/scripts/check_copilot.py::check_skills (C6) — KEEP IN SYNC.
+      import glob, os, re, sys
+
+      skills_dir = sys.argv[1] if len(sys.argv) > 1 else ".claude/skills"
+      fail_on_empty = (sys.argv[2].strip().lower() == "true") if len(sys.argv) > 2 else True
+
+      # Agent Skills `name` grammar (lowercase letters/digits/hyphens, no leading/trailing
+      # hyphen); the `--` ban and the 64-char cap are checked separately for clearer messages.
+      NAME_RE = re.compile(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$")
+      FM_KEY_RE = re.compile(r"^([A-Za-z_][\w-]*):\s*(.*)$")
+
+      def frontmatter_block(text):
+          lines = text.splitlines()
+          if not lines or lines[0].strip() != "---":
+              return None
+          for i in range(1, len(lines)):
+              if lines[i].strip() == "---":
+                  return lines[1:i]
+          return None
+
+      def fm_keys(block):
+          out = {}
+          for ln in block:
+              m = FM_KEY_RE.match(ln)
+              if m:
+                  out[m.group(1)] = m.group(2).strip().strip("'\"").strip()
+          return out
+
+      # (path, enforce_name_equals_dir): glob the conventional <skills_dir>/<name>/SKILL.md;
+      # fall back to a single skill at <skills_dir>/SKILL.md (root-skill repos) where the
+      # checkout dir name is arbitrary, so the name==dir rule is relaxed for that one.
+      entries = [(p, True) for p in sorted(glob.glob(os.path.join(skills_dir, "*", "SKILL.md")))]
+      if not entries and os.path.isfile(os.path.join(skills_dir, "SKILL.md")):
+          entries = [(os.path.join(skills_dir, "SKILL.md"), False)]
+
+      errors = []
+      if not entries:
+          msg = "no SKILL.md found under %s/*/ (or %s/SKILL.md)" % (skills_dir, skills_dir)
+          if fail_on_empty:
+              errors.append(msg)
+          else:
+              print("WARN: " + msg)
+
+      for path, enforce_dir in entries:
+          skill_dir = os.path.basename(os.path.dirname(path))
+          try:
+              text = open(path, encoding="utf-8").read()
+          except OSError as exc:
+              errors.append("%s: cannot read (%s)" % (path, exc))
+              continue
+          block = frontmatter_block(text)
+          if block is None:
+              errors.append("%s: missing/unterminated YAML frontmatter" % path)
+              continue
+          keys = fm_keys(block)
+          name = keys.get("name", "")
+          if not name:
+              errors.append("%s: skill frontmatter needs a non-empty 'name'" % path)
+          else:
+              if enforce_dir and name != skill_dir:
+                  errors.append("%s: 'name: %s' must equal the skill directory '%s'" % (path, name, skill_dir))
+              if len(name) > 64 or not NAME_RE.match(name) or "--" in name:
+                  errors.append("%s: invalid skill 'name: %s' (lowercase letters/digits/hyphens, no leading/trailing/double hyphen, <=64 chars)" % (path, name))
+          desc = keys.get("description", "")
+          if not desc:
+              errors.append("%s: skill frontmatter needs a non-empty 'description'" % path)
+          elif len(desc) > 1024:
+              errors.append("%s: 'description' exceeds 1024 chars (%d) -- trim it" % (path, len(desc)))
+
+      out = []
+      if errors:
+          out.append("FAIL: skill validation found %d problem(s):" % len(errors))
+          out.extend("  - " + e for e in errors)
+      else:
+          out.append("OK: %d skill(s) valid under %s" % (len(entries), skills_dir))
+      report = "\n".join(out) + "\n"
+      try:
+          with open("skill-validation-report.txt", "w", encoding="utf-8") as fh:
+              fh.write(report)
+      except OSError:
+          pass
+      sys.stdout.write(report)
+      sys.exit(1 if errors else 0)
+      PY
+  artifacts:
+    when: always
+    paths:
+      - skill-validation-report.txt
+    expire_in: 30 days
