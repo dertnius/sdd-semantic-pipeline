@@ -15,6 +15,9 @@ it, then check the result — with AI workers doing the jobs and a human approvi
 - **[how-each-part-works.md](how-each-part-works.md)** — how each worker is built, and how the
   rules (only the Builder writes code, reviewer ≠ builder, an un-skippable security check) are
   actually enforced.
+- **[harness-options.md](harness-options.md)** — which **real tool** runs and enforces it:
+  **GitHub Copilot**, the **Copilot CLI**, or **GitLab** — with a recommendation and the
+  smallest safe setup.
 - **[install.md](install.md)** — a **simple setup checklist**.
 
 ## In one sentence
