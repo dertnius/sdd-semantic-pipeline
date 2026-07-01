@@ -109,6 +109,12 @@ nav:
       - Enrichment algorithm: enrichment-algorithm.md
       - Processing mode & structural model: processing-mode-and-structural.md
       - Technology selection: technology-selection.md
+  - Agents (SDD agent design):
+      - Agents/README.md
+      - Prep brief (read first): Agents/prep-brief.md
+      - Agent architecture: Agents/agent-architecture.md
+      - Per-agent checklists: Agents/agent-checklists.md
+      - Discussion agenda: Agents/discussion-agenda.md
   - Learn (curriculum):
       - Curriculum index: learn/README.md
       - Bridge — C# to Python:
