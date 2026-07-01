@@ -33,6 +33,8 @@ longer *backlog*, not a first-meeting to-do.)
   **GitLab**, and how spec/merge approvals are set up (CODEOWNERS + approval rules).
 - **[synergy-walkthrough.md](synergy-walkthrough.md)** — **all of it together:** the endpoint
   change walked through the tools step by step (Copilot as worker, GitLab as gates).
+- **[grounding-how-to.md](grounding-how-to.md)** — how to **implement the Grounding step** with
+  your harness (Copilot + the repo's `sdd-semantic` MCP server + the `corpus-researcher` agent).
 - **[install.md](install.md)** — a **simple setup checklist**.
 
 ## In one sentence
