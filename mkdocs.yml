@@ -116,6 +116,7 @@ nav:
   - Agents (SDD agent design):
       - Agents/README.md
       - Start here (plain English): Agents/start-here.md
+      - First meeting (decide only these): Agents/first-meeting.md
       - Glossary: Agents/glossary.md
       - Keeping it safe: Agents/keeping-it-safe.md
       - How each part works: Agents/how-each-part-works.md

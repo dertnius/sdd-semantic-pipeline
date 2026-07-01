@@ -3,6 +3,10 @@
 > Companion to [agent-architecture.md](agent-architecture.md). Print this; use it to run
 > the room and record decisions. **Date:** 2026-07-01.
 
+> ⚠️ **This is the full decision _backlog_ — NOT all for the first meeting.** For the first
+> meeting, use **[first-meeting.md](first-meeting.md)** — just **4** decisions. Bring the items
+> below here later, as you actually build.
+
 ## Objective
 
 Leave the room with **(a)** an agreed agent *structure* for SDD and **(b)** a decision on

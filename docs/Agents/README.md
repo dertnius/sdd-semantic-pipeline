@@ -8,6 +8,12 @@ it, then check the result — with AI workers doing the jobs and a human approvi
 1. **[start-here.md](start-here.md)** — the whole idea in **one page**.
 2. **[glossary.md](glossary.md)** — every term in **plain words**.
 
+## 🗣️ Running the first meeting?
+
+**[first-meeting.md](first-meeting.md)** — just **4 decisions** for the first meeting; everything
+else is parked. Start there. (The full [discussion-agenda.md](discussion-agenda.md) is the
+longer *backlog*, not a first-meeting to-do.)
+
 ## Then, if you want a bit more
 
 - **[keeping-it-safe.md](keeping-it-safe.md)** — how **humans, guardrails, and an independent
