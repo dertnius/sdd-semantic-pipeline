@@ -126,6 +126,7 @@ nav:
       - Build the MVP on GitLab: Agents/mvp-on-gitlab.md
       - 'Putting it together (GitLab, step by step)': Agents/synergy-walkthrough.md
       - Implement the Grounding step: Agents/grounding-how-to.md
+      - Search & MCP alternatives: Agents/search-and-mcp-alternatives.md
       - Installing it: Agents/install.md
       - 'Advanced — prep brief': Agents/prep-brief.md
       - 'Advanced — agent architecture': Agents/agent-architecture.md

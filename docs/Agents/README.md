@@ -35,6 +35,8 @@ longer *backlog*, not a first-meeting to-do.)
   change walked through the tools step by step (Copilot as worker, GitLab as gates).
 - **[grounding-how-to.md](grounding-how-to.md)** — how to **implement the Grounding step** with
   your harness (Copilot + the repo's `sdd-semantic` MCP server + the `corpus-researcher` agent).
+- **[search-and-mcp-alternatives.md](search-and-mcp-alternatives.md)** — your **alternatives** for
+  the semantic **search engine** and for **MCP** (the connector), with a recommendation.
 - **[install.md](install.md)** — a **simple setup checklist**.
 
 ## In one sentence
