@@ -117,8 +117,38 @@ keeps it. The merge and security gates are never skippable.*
 
 ---
 
-## On the real tools (one line)
+## How the harness runs this (GitHub, step by step)
 
-On **GitHub**: the Builder is the Copilot coding agent opening a **draft PR**; **Gate 1** is you
-approving the spec, **Gate 2** is you approving/merging the PR, and the **Security guard** is a
-required check. Details: [harness-options.md](harness-options.md).
+The **harness** is the real tool that runs the workers and enforces the gates. On GitHub, the
+whole job becomes: **an Issue → a draft pull request → required checks + a required non-author
+approval → merge.** **GitHub Actions is the spine** (the fixed order of steps); the
+**branch-protection rules are the locks** (your two 🙋 gates + the 🔒 security check). Neither
+is the AI.
+
+| Our step | What actually happens on GitHub |
+|---|---|
+| **Kickoff** | You open an **Issue** ("filter orders by date") and hand it to the pipeline / Copilot coding agent. |
+| 🤖 **1. Router** | A **GitHub Actions** job labels the issue (brownfield, risk:medium) and picks which checks apply. Plain CI, not AI. |
+| 🤖 **2. Grounding** | The agent runs in **its own sandbox** (an Actions environment) using **read-only** search tools — reusing the repo's `sdd-semantic` **MCP server**. |
+| 🤖 **3. Specifier** | The agent commits the **spec** to a **`copilot/…` branch** and opens a **draft pull request**. Your "extend vs. new endpoint" choice is written right there in the PR. |
+| 🙋 **GATE 1** | **Branch protection requires approval from a non-author**, so the PR can't move until **you review and approve the spec**. (The agent can't approve — or even mark the PR "ready".) |
+| 🤖 **4. Test-Author** | The agent, scoped to `tests/`, commits the tests to the same PR. |
+| 🤖 **5. Builder** | The **Copilot coding agent** writes the code on the `copilot/…` branch. It can **only** push there — **never to `main`** — and its CI **won't even run until a human clicks "Approve and run workflows".** |
+| 🤖 **6. Reviewer** | **Copilot code review** auto-comments (advice only). The "facts must hold" part is **required status checks** in Actions: the **tests** job, the **coverage** gate (`fail_under=70`), and a small **"every requirement has a test"** check. Red checks → back to the Builder. |
+| 🔒 **7. Security guard** | **CodeQL + secret scanning + dependency review** run as **required, fail-closed** checks. A finding **blocks the merge** — nobody can wave it through. |
+| 🙋 **GATE 2** | The **ruleset on `main`** won't merge until every required check is green **and** a **non-author human approves**. **You click Approve, then Merge** — the agent can't. |
+
+**Two things to remember:**
+
+- The AI's *entire* output is a **draft PR it cannot merge**. **GitHub does the enforcing** — the
+  locks are on the platform, not in the AI's good behavior.
+- The **fixed order** lives in `.github/workflows/` (which the repo already has); the **gates**
+  are one **branch-protection ruleset**. Turn on "require non-author approval", mark the tests +
+  security + traceability checks **required**, and close the bypass doors — that's the whole setup.
+
+**On GitLab it's the same story, different names:** the agent opens a **Merge Request**;
+`.gitlab-ci.yml` is the spine; **required pipeline jobs** (tests, coverage, SAST/secret/dependency
+scans) + **MR approval rules** with **"prevent approval by author"** are the gates; and a
+**scan-result policy** can make the security check impossible to turn off.
+
+More detail on the harness choices: [harness-options.md](harness-options.md).
