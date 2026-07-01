@@ -52,7 +52,11 @@ markdown_extensions:
   - toc:
       permalink: true
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight
   - pymdownx.tabbed:
       alternate_style: true
@@ -111,10 +115,15 @@ nav:
       - Technology selection: technology-selection.md
   - Agents (SDD agent design):
       - Agents/README.md
-      - Prep brief (read first): Agents/prep-brief.md
-      - Agent architecture: Agents/agent-architecture.md
-      - Per-agent checklists: Agents/agent-checklists.md
-      - Discussion agenda: Agents/discussion-agenda.md
+      - Start here (plain English): Agents/start-here.md
+      - Glossary: Agents/glossary.md
+      - Keeping it safe: Agents/keeping-it-safe.md
+      - Installing it: Agents/install.md
+      - 'Advanced — prep brief': Agents/prep-brief.md
+      - 'Advanced — agent architecture': Agents/agent-architecture.md
+      - 'Advanced — per-agent checklists': Agents/agent-checklists.md
+      - 'Advanced — discussion agenda': Agents/discussion-agenda.md
+      - 'Advanced — operations (HITL, guardrails, routing, testing, install)': Agents/operations.md
   - Learn (curriculum):
       - Curriculum index: learn/README.md
       - Bridge — C# to Python:
