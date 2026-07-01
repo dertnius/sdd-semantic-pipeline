@@ -118,6 +118,7 @@ nav:
       - Start here (plain English): Agents/start-here.md
       - Glossary: Agents/glossary.md
       - Keeping it safe: Agents/keeping-it-safe.md
+      - How each part works: Agents/how-each-part-works.md
       - Installing it: Agents/install.md
       - 'Advanced — prep brief': Agents/prep-brief.md
       - 'Advanced — agent architecture': Agents/agent-architecture.md

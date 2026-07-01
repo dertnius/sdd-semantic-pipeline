@@ -12,6 +12,9 @@ it, then check the result — with AI workers doing the jobs and a human approvi
 
 - **[keeping-it-safe.md](keeping-it-safe.md)** — how **humans, guardrails, and an independent
   checker** keep it safe (the part that matters most).
+- **[how-each-part-works.md](how-each-part-works.md)** — how each worker is built, and how the
+  rules (only the Builder writes code, reviewer ≠ builder, an un-skippable security check) are
+  actually enforced.
 - **[install.md](install.md)** — a **simple setup checklist**.
 
 ## In one sentence
