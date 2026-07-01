@@ -31,6 +31,8 @@ longer *backlog*, not a first-meeting to-do.)
   VS Code Copilot, the Copilot CLI, and GitLab (with or without Duo) each take, and how to mix them.
 - **[mvp-on-gitlab.md](mvp-on-gitlab.md)** — **the chosen path:** exactly how to build the MVP on
   **GitLab**, and how spec/merge approvals are set up (CODEOWNERS + approval rules).
+- **[synergy-walkthrough.md](synergy-walkthrough.md)** — **all of it together:** the endpoint
+  change walked through the tools step by step (Copilot as worker, GitLab as gates).
 - **[install.md](install.md)** — a **simple setup checklist**.
 
 ## In one sentence

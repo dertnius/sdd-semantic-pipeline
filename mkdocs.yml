@@ -124,6 +124,7 @@ nav:
       - Which tool runs it (GitHub/GitLab): Agents/harness-options.md
       - How the tools work together: Agents/harness-synergy.md
       - Build the MVP on GitLab: Agents/mvp-on-gitlab.md
+      - 'Putting it together (GitLab, step by step)': Agents/synergy-walkthrough.md
       - Installing it: Agents/install.md
       - 'Advanced — prep brief': Agents/prep-brief.md
       - 'Advanced — agent architecture': Agents/agent-architecture.md
