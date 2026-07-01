@@ -32,6 +32,37 @@ swap at the end. Plain English. Markers: 🤖 AI worker · 🙋 **you** approve 
 | 8 | 🔒 Security | **GitLab CI** | SAST / secret / dependency scans run; a finding **blocks**. | required scans / scan-result policy |
 | 9 | 🙋 **Approve the merge** | **you** (merge approver) | Approve; pipeline green; a maintainer merges. | approval rule — **prevent approval by author** |
 
+## How each step connects to the next (the baton)
+
+The steps **don't talk to each other directly.** Each step **reads what the previous step wrote,
+and writes its own result** — all in one shared place: **GitLab** (first the **Issue**, then the
+**branch / draft MR**). Moving to the next step is triggered either by a **person picking it up**
+or by **CI firing automatically**.
+
+**So how is step 2 connected to step 1?**
+
+- **Step 1 (Router)** doesn't hand anything to a person — it **writes labels on the GitLab
+  Issue** (e.g. `brownfield`, `risk:medium`). That's its output.
+- **Step 2 (Grounding)** **starts from that Issue**: it reads the Router's labels (which tell it
+  *"this is existing code — do a full grounding pass"*) and then produces the **Grounding Brief**.
+- **The connection is the labelled Issue in GitLab** — not a direct tool-to-tool link. GitLab is
+  the shared **hub** every tool reads from and writes to.
+
+The whole baton-pass, one line each:
+
+| Hand-off | What's passed (the baton) | What triggers the next step |
+|---|---|---|
+| **1 → 2** | the **Issue + Router's labels** | a person opens it (or CI fires on the label) |
+| 2 → 3 | the **Grounding Brief** | the Specifier reads the brief |
+| 3 → 4 | the **spec, in a draft MR** | you get a review request |
+| 4 → 5/6 | the **approved spec** in the MR | Test-Author / Builder add to the same MR |
+| 6 → 7 | the Builder's **pushed commits** | the MR **pipeline runs automatically** |
+| 7/8 → 9 | **green pipeline + your approval** | a maintainer merges |
+
+**The rule underneath it all:** *workers pass work as written artifacts, never by chatting to
+each other* — and here those artifacts live in the **Issue** and then the **MR**. That's what
+makes the whole line auditable: you can see every baton pass.
+
 ## The synergy in one glance
 
 > **Copilot thinks and drafts** (steps 2–3, 5–6) → **GitLab holds and gates** (the MR: steps 4,
