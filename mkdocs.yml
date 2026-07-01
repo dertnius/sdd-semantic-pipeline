@@ -119,6 +119,7 @@ nav:
       - Glossary: Agents/glossary.md
       - Keeping it safe: Agents/keeping-it-safe.md
       - How each part works: Agents/how-each-part-works.md
+      - 'Worked example: endpoint change': Agents/example-endpoint-change.md
       - Which tool runs it (GitHub/GitLab): Agents/harness-options.md
       - Installing it: Agents/install.md
       - 'Advanced — prep brief': Agents/prep-brief.md
