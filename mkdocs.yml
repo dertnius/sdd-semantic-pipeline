@@ -122,6 +122,7 @@ nav:
       - How each part works: Agents/how-each-part-works.md
       - 'Worked example: endpoint change': Agents/example-endpoint-change.md
       - Which tool runs it (GitHub/GitLab): Agents/harness-options.md
+      - How the tools work together: Agents/harness-synergy.md
       - Installing it: Agents/install.md
       - 'Advanced — prep brief': Agents/prep-brief.md
       - 'Advanced — agent architecture': Agents/agent-architecture.md

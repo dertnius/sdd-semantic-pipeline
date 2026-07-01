@@ -27,6 +27,8 @@ longer *backlog*, not a first-meeting to-do.)
 - **[harness-options.md](harness-options.md)** — which **real tool** runs and enforces it:
   **GitHub Copilot**, the **Copilot CLI**, or **GitLab** — with a recommendation and the
   smallest safe setup.
+- **[harness-synergy.md](harness-synergy.md)** — how the tools **work together**: what role
+  VS Code Copilot, the Copilot CLI, and GitLab (with or without Duo) each take, and how to mix them.
 - **[install.md](install.md)** — a **simple setup checklist**.
 
 ## In one sentence
