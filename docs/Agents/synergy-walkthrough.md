@@ -59,6 +59,18 @@ The whole baton-pass, one line each:
 | 6 → 7 | the Builder's **pushed commits** | the MR **pipeline runs automatically** |
 | 7/8 → 9 | **green pipeline + your approval** | a maintainer merges |
 
+```mermaid
+flowchart TD
+    A["GitLab Issue<br/>(Router adds labels)"] --> B["Grounding Brief<br/>(Copilot writes)"]
+    B --> C["Draft MR: the spec<br/>(Copilot)"]
+    C --> D["🙋 You approve the spec<br/>(GitLab: not the author)"]
+    D --> E["MR: tests + code<br/>(Copilot)"]
+    E --> F["Pipeline + security<br/>(GitLab checks)"]
+    F --> G["🙋 You approve the merge<br/>(GitLab)"]
+    G --> H["Merged to main"]
+    F -.->|"red - Copilot fixes"| E
+```
+
 **The rule underneath it all:** *workers pass work as written artifacts, never by chatting to
 each other* — and here those artifacts live in the **Issue** and then the **MR**. That's what
 makes the whole line auditable: you can see every baton pass.
